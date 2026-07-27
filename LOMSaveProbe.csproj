@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>LOMSaveProbe</AssemblyName>
+    <RootNamespace>LOMSave.Probe</RootNamespace>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GameDir Condition="'$(GameDir)' == ''">/VmShare/nas/ubuntu/LegendOfMortal</GameDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="DiceRollTrace.cs" />
+    <Compile Include="LOMSaveProbe.cs" />
+    <Compile Include="ReplayRuntime.cs" />
+    <Compile Include="ReplayStateValidator.cs" />
+    <Compile Include="StoryCommandTrace.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <Reference Include="0Harmony">
+      <HintPath>$(GameDir)/BepInEx/core/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(GameDir)/BepInEx/core/BepInEx.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.Mono">
+      <HintPath>$(GameDir)/BepInEx/core/BepInEx.Unity.Mono.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Fungus">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Fungus.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mortal.Core">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mortal.Story">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Story.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
