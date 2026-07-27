@@ -97,6 +97,7 @@ end
         private static StoryCommandCheckpoint _activeReplayTarget;
         private static List<StoryChoiceDecision> _pendingReplayChoices;
         private static List<StoryChoiceDecision> _activeReplayChoices;
+        private static int _skippedDialogueCount;
         private static readonly List<StoryChoiceDecision> ChoiceHistory =
             new List<StoryChoiceDecision>();
 
@@ -122,6 +123,7 @@ end
             ReplayRuntime.Reset("replay_reconfigured");
             _activeReplayTarget = null;
             _activeReplayChoices = null;
+            _skippedDialogueCount = 0;
             _pendingReplayTarget = target != null
                 && IsSupportedReplayKind(target.Kind)
                 && !string.IsNullOrEmpty(target.Script)
@@ -174,6 +176,7 @@ end
                 _pendingReplayTarget = null;
                 _activeReplayChoices = _pendingReplayChoices;
                 _pendingReplayChoices = null;
+                _skippedDialogueCount = 0;
                 LOMSaveProbePlugin.WriteEvent("story_replay_started", new
                 {
                     script,
@@ -293,7 +296,6 @@ end
                 PayloadPreview = Preview(payload)
             };
             directive = GetReplayDirective(Current);
-            LOMSaveProbePlugin.WriteEvent("story_command_begin", Current);
             return Current;
         }
 
@@ -315,7 +317,7 @@ end
             {
                 if (string.Equals(current.Kind, "say", StringComparison.Ordinal))
                 {
-                    LOMSaveProbePlugin.WriteEvent("story_replay_command_skipped", current);
+                    _skippedDialogueCount++;
                     return SkipDirective;
                 }
 
@@ -353,7 +355,8 @@ end
                 LOMSaveProbePlugin.WriteEvent("story_replay_target_reached", new
                 {
                     current,
-                    target
+                    target,
+                    skippedDialogueCount = _skippedDialogueCount
                 });
                 LOMSaveProbePlugin.ReplayTargetReached(current);
                 return ContinueDirective;
@@ -376,7 +379,8 @@ end
             {
                 reason,
                 current,
-                target
+                target,
+                skippedDialogueCount = _skippedDialogueCount
             });
             LOMSaveProbePlugin.ReplayAborted(reason, target);
         }
@@ -394,15 +398,6 @@ end
             var matched = int.TryParse(tokenText, out token)
                 && Current != null
                 && Current.Token == token;
-            LOMSaveProbePlugin.WriteEvent("story_command_end", new
-            {
-                current = Current,
-                kind,
-                token,
-                matched,
-                resultHash = LOMSaveProbePlugin.Sha256(commandResult),
-                resultPreview = Preview(commandResult)
-            });
             if (matched)
             {
                 RecordReplayDecision(Current, commandResult);

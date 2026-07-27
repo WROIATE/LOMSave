@@ -22,7 +22,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.11.0";
+        public const string PluginVersion = "0.11.1";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -167,8 +167,7 @@ namespace LOMSave.Probe
                     reason,
                     hash = Sha256(json),
                     jsonLength = json.Length,
-                    summary = SelectFields(data),
-                    gameSave = data
+                    summary = SelectFields(data)
                 });
             }
             catch (Exception exception)
@@ -813,9 +812,7 @@ namespace LOMSave.Probe
             {
                 "TimeTick", "CurrentStoryScript", "StartStoryScript", "CurrentScene",
                 "CurrentSceneKey", "CurrentNextScene", "CurrentTravelScript",
-                "FreeRandomState", "CurrentYear", "CurrentMonth", "CurrentStage",
-                "Stats", "Relationships", "Talents", "BattleSkills", "EventFlags",
-                "StorySave", "RestoreData"
+                "CurrentYear", "CurrentMonth", "CurrentStage"
             };
             var result = new Dictionary<string, JToken>();
             foreach (var name in names)
