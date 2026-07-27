@@ -22,7 +22,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.10.2";
+        public const string PluginVersion = "0.11.0";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -853,6 +853,48 @@ namespace LOMSave.Probe
 
     internal static class ProbePatches
     {
+        private const int ManualSaveSlotCount = 50;
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SaveGamePanel), "Awake")]
+        private static void ExpandSaveGameSlots(SaveGamePanel __instance)
+        {
+            ExpandManualSaveSlots(__instance, "SaveGamePanel");
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(LoadGamePanel), "Awake")]
+        private static void ExpandLoadGameSlots(LoadGamePanel __instance)
+        {
+            ExpandManualSaveSlots(__instance, "LoadGamePanel");
+        }
+
+        private static void ExpandManualSaveSlots(object panel, string source)
+        {
+            try
+            {
+                var slotCount = Traverse.Create(panel).Field("_slotCount");
+                var originalCount = slotCount.GetValue<int>();
+                var expandedCount = Math.Max(
+                    originalCount,
+                    ManualSaveSlotCount);
+                slotCount.SetValue(expandedCount);
+                LOMSaveProbePlugin.WriteEvent("manual_save_slots_expanded", new
+                {
+                    source,
+                    originalCount,
+                    expandedCount
+                });
+            }
+            catch (Exception exception)
+            {
+                LOMSaveProbePlugin.WriteError(
+                    "manual_save_slots_expand_failed",
+                    exception,
+                    new { source });
+            }
+        }
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MenuPanel), "ToggleSaveButton", typeof(bool))]
         private static void UnlockMenuSaveButton(ref bool active)
