@@ -17,6 +17,7 @@
     <Compile Include="ReplayRuntime.cs" />
     <Compile Include="ReplayStateValidator.cs" />
     <Compile Include="StoryCommandTrace.cs" />
+    <Compile Include="TeamBattleSkip.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <Reference Include="0Harmony">
       <HintPath>$(GameDir)/BepInEx/core/0Harmony.dll</HintPath>
@@ -36,6 +37,10 @@
     </Reference>
     <Reference Include="Mortal.Core">
       <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mortal.Battle">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Battle.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Mortal.Story">
@@ -60,6 +65,10 @@
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.UI.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
