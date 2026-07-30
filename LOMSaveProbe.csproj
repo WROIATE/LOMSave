@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="AutoDialogueSpeed.cs" />
     <Compile Include="DiceRollTrace.cs" />
     <Compile Include="LOMSaveProbe.cs" />
     <Compile Include="ReplayRuntime.cs" />
