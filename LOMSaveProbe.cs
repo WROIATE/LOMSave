@@ -22,7 +22,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.14.10";
+        public const string PluginVersion = "0.14.14";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
