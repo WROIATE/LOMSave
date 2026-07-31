@@ -5,7 +5,7 @@ namespace LOMSave.Probe
     internal static class ReplayRuntime
     {
         private const float ReplayTimeScale = 50f;
-        private const float MaskTimeoutSeconds = 30f;
+        private const float MaskTimeoutSeconds = 8f;
 
         private static float _timeScaleBeforeReplay = 1f;
         private static bool _speedActive;
@@ -53,22 +53,12 @@ namespace LOMSave.Probe
 
         internal static void Update()
         {
-            if (!_maskVisible
-                || Time.unscaledTime - _maskShownAt < MaskTimeoutSeconds)
-            {
-                return;
-            }
-
-            LOMSaveProbePlugin.WriteEvent("story_replay_mask_timeout", new
-            {
-                timeoutSeconds = MaskTimeoutSeconds
-            });
-            RestoreSpeed();
-            HideMask("timeout");
+            HandleTimeout();
         }
 
         internal static void DrawMask()
         {
+            HandleTimeout();
             if (!_maskVisible)
             {
                 return;
@@ -83,6 +73,25 @@ namespace LOMSave.Probe
                 Texture2D.whiteTexture);
             GUI.color = previousColor;
             GUI.depth = previousDepth;
+        }
+
+        private static void HandleTimeout()
+        {
+            if (!_maskVisible
+                || Time.unscaledTime - _maskShownAt < MaskTimeoutSeconds)
+            {
+                return;
+            }
+
+            LOMSaveProbePlugin.WriteEvent("story_replay_mask_timeout", new
+            {
+                timeoutSeconds = MaskTimeoutSeconds
+            });
+            if (!StoryCommandTrace.AbortActiveReplay("timeout"))
+            {
+                RestoreSpeed();
+            }
+            HideMask("timeout");
         }
 
         internal static void HideMask(string reason)

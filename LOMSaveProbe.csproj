@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ActionAutoSave.cs" />
     <Compile Include="AutoDialogueSpeed.cs" />
     <Compile Include="DiceRollTrace.cs" />
     <Compile Include="LOMSaveProbe.cs" />
@@ -38,6 +39,10 @@
     </Reference>
     <Reference Include="Mortal.Core">
       <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mortal.Free">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Free.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Mortal.Battle">

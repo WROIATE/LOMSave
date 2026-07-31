@@ -116,6 +116,18 @@ end
             return CloneChoices(ChoiceHistory);
         }
 
+        internal static bool AbortActiveReplay(string reason)
+        {
+            var target = _activeReplayTarget;
+            if (target == null)
+            {
+                return false;
+            }
+
+            AbortReplay(reason, Current, target);
+            return true;
+        }
+
         internal static void ConfigureReplay(
             StoryCommandCheckpoint target,
             IList<StoryChoiceDecision> choices = null)

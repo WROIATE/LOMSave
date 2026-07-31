@@ -3,6 +3,7 @@ using BepInEx.Unity.Mono;
 using Fungus;
 using HarmonyLib;
 using Mortal.Core;
+using Mortal.Free;
 using Mortal.Story;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.14.14";
+        public const string PluginVersion = "0.14.19";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -57,6 +58,7 @@ namespace LOMSave.Probe
             try
             {
                 var harmony = new Harmony(PluginGuid);
+                harmony.PatchAll(typeof(ActionAutoSave));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
                 harmony.PatchAll(typeof(ProbePatches));
                 harmony.PatchAll(typeof(DiceRollTrace));
@@ -235,6 +237,22 @@ namespace LOMSave.Probe
         {
             try
             {
+                var currentScene = PlayerStatManagerData.Instance.CurrentScene;
+                if (!string.Equals(
+                        currentScene,
+                        "Story",
+                        StringComparison.Ordinal))
+                {
+                    DeleteSlotState(saveSystem, slot);
+                    WriteEvent("slot_state_save_skipped", new
+                    {
+                        slot,
+                        currentScene,
+                        reason = "non_story_scene"
+                    });
+                    return;
+                }
+
                 string music;
                 string envSound;
                 CaptureAudio(out music, out envSound);
@@ -293,11 +311,28 @@ namespace LOMSave.Probe
             WriteEvent("story_audio_captured", new { music, envSound });
         }
 
-        internal static void LoadSlotState(SaveSystem saveSystem, string slot)
+        internal static void LoadSlotState(
+            SaveSystem saveSystem,
+            string slot,
+            string currentScene)
         {
             _pendingState = null;
             _canRestorePendingState = false;
             StoryCommandTrace.ConfigureReplay(null);
+            if (!string.Equals(
+                    currentScene,
+                    "Story",
+                    StringComparison.Ordinal))
+            {
+                WriteEvent("slot_state_load_skipped", new
+                {
+                    slot,
+                    currentScene,
+                    reason = "non_story_scene"
+                });
+                return;
+            }
+
             try
             {
                 var file = GetSlotStateFile(saveSystem, slot);
@@ -936,7 +971,10 @@ namespace LOMSave.Probe
 
             LOMSaveProbePlugin.WriteGameSave("load_argument", "before_execute_load", gameSave);
             ReplayStateValidator.Prepare(gameSave);
-            LOMSaveProbePlugin.LoadSlotState(__instance, __instance.CurrentSlot);
+            LOMSaveProbePlugin.LoadSlotState(
+                __instance,
+                __instance.CurrentSlot,
+                gameSave == null ? null : gameSave.CurrentScene);
             if (gameSave != null
                 && gameSave.CurrentScene == "Story"
                 && !string.IsNullOrEmpty(gameSave.CurrentStoryScript))
