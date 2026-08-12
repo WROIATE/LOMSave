@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.14.19";
+        public const string PluginVersion = "0.16.3";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -62,6 +62,7 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
                 harmony.PatchAll(typeof(ProbePatches));
                 harmony.PatchAll(typeof(DiceRollTrace));
+                harmony.PatchAll(typeof(OptionImpactPreview));
                 harmony.PatchAll(typeof(TeamBattleSkip));
                 InstallStoryViewPatch(harmony);
                 WriteEvent("patches_installed", new { });
@@ -132,6 +133,7 @@ namespace LOMSave.Probe
         private void OnGUI()
         {
             ReplayRuntime.DrawMask();
+            OptionImpactPreview.Draw();
         }
 
         private void OnDestroy()

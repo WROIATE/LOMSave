@@ -16,6 +16,8 @@
     <Compile Include="AutoDialogueSpeed.cs" />
     <Compile Include="DiceRollTrace.cs" />
     <Compile Include="LOMSaveProbe.cs" />
+    <Compile Include="OptionImpactLocalization.cs" />
+    <Compile Include="OptionImpactPreview.cs" />
     <Compile Include="ReplayRuntime.cs" />
     <Compile Include="ReplayStateValidator.cs" />
     <Compile Include="StoryCommandTrace.cs" />
@@ -53,6 +55,10 @@
       <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Story.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="OBB.Framework">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/OBB.Framework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.dll</HintPath>
       <Private>false</Private>
@@ -63,6 +69,10 @@
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
