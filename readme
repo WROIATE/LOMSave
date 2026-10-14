@@ -1,29 +1,5 @@
-# 活侠传自由存档MOD
-交流QQ群：398012894
-## 功能说明
-提供了在游戏故事情模式中任意位置存读档的功能。
+# 活侠传自由存档增强版
 
-### 工作原理
-保存剧情前的存档和剧情中的选择状态，读档后进行快速重播。
+本分支的功能介绍、安装方法、原作者署名和相较原版的新增内容已整理至 [README.md](README.md)。
 
-### 警告
-本MOD的所有实现均非官方功能，在使用过程中可能会出现不可预知的问题。本人不承担因此造成的任何损失。请谨慎使用。
-
-## 直接使用
-### 方法1
-下载 [Full.rar](https://github.com/NothingNullNull/LOMSave/releases) 直接解压到游戏根目录。
-
-### 方法2
-1. 先安装 BepInEx x86 到游戏目录 [BepInEx](https://github.com/BepInEx/BepInEx)。
-2. 下载 [DLL文件](https://github.com/NothingNullNull/LOMSave/releases)。
-3. 将 `LOMSave.dll` 拷贝到 `BepInEx/plugins` 目录下。
-
-## 如何编译
-
-缺少的引用均位于：
-- `BepInEx\core` 目录（请自行安装 [BepInEx x86](https://github.com/BepInEx/BepInEx/releases)）
-- `LegendOfMortal\Mortal_Data\Managed` 目录（也就是游戏目录下）
-
-编译完成后的dll放置于 `BepInEx` 的 `plugins` 目录下即可运行。
-
-关于 BepInEx 的知识请查看 [BepInEx](https://github.com/BepInEx/BepInEx/)。
+原项目为 [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave)，基线为 `6d40806`；增强版由 WROIATE 维护。
