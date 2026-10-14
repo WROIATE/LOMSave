@@ -1,10 +1,14 @@
 # 活侠传自由存档增强版 0.19.3
 
-基于 [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave) 的旧版 `6d40806`，感谢原作者 NothingNullNull / What、black。增强版由 [WROIATE](https://github.com/WROIATE) 维护；完整功能、原版差异与编译说明见[仓库 README](../../README.md)。
+完整功能、原版差异与编译说明见[仓库 README](https://github.com/WROIATE/LOMSave)。
+
+本项目用于学习与技术研究，不保证程序稳定性或与所有游戏版本、其他 MOD 的兼容性。使用可能造成游戏卡顿、崩溃、存档损坏或进度丢失。请先备份存档，自行评估并承担使用风险。
 
 ## 安装文件
 
 使用 BepInEx 6 Mono。游戏验证环境为 `release_1.0.5000.13`、Unity `2020.3.49f1`。
+
+从 [Release v0.19.3](https://github.com/WROIATE/LOMSave/releases/tag/v0.19.3) 下载 `LOMSave-enhanced-v0.19.3.zip`，将包内的 `BepInEx` 文件夹合并到游戏根目录。安装包包含下表文件和 `LICENSES` 目录；本安装包不包含 BepInEx 框架，需先有可用的 BepInEx 环境。
 
 | 文件 | 位置 |
 | --- | --- |

@@ -2,4 +2,4 @@
 
 本分支的功能介绍、安装方法、原作者署名和相较原版的新增内容已整理至 [README.md](README.md)。
 
-原项目为 [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave)，基线为 `6d40806`；增强版由 WROIATE 维护。
+安装包见 [Release v0.19.3](https://github.com/WROIATE/LOMSave/releases/tag/v0.19.3)。本项目用于学习，不保证稳定性；使用前请备份存档，风险由使用者自行评估和承担。

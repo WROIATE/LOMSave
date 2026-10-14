@@ -2,9 +2,11 @@
 
 基于 [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave) 扩展的《活侠传》便利功能 MOD，当前增强插件版本为 **0.19.3**，游戏加载时名称为 **LOMSave Probe**。
 
-原项目作者和贡献者为 **NothingNullNull / What、black**；剧情前快照、记录选择并快速重播的自由存档思路来自原项目。增强版由 [WROIATE](https://github.com/WROIATE) 维护，保留原项目来源和提交历史。
-
 本分支基于原项目提交 [`6d40806`](https://github.com/NothingNullNull/LOMSave/commit/6d408069b87d95809fe085f16928760958dfe4e7)。上游后来发布了采用新架构的 LOMSave 2.x；**下面的“原版”指这个旧版基线，不是与上游 2.x 的逐项比较**。本分支没有混入 2.x 的重写，也没有验证两者的存档附加文件能相互迁移。
+
+## 使用须知
+
+本项目用于学习与技术研究，不保证程序稳定性，也不保证兼容所有游戏版本或其他 MOD。使用可能造成游戏卡顿、崩溃、存档损坏或进度丢失。请在使用前备份存档，自行评估并承担使用风险。
 
 ## 功能与原版的区别
 
@@ -27,15 +29,17 @@
 已经验证的游戏环境：`release_1.0.5000.13`、Unity `2020.3.49f1`、BepInEx 6 Mono。游戏或框架更新后需重新确认兼容性。
 
 1. 安装与游戏架构匹配的 [BepInEx](https://github.com/BepInEx/BepInEx)，确保已有可用的 BepInEx 6 Mono 环境。
-2. 下载本分支源码压缩包，打开 [`artifacts/LOMSaveProbe`](artifacts/LOMSaveProbe)。其中已包含编译产物。
-3. 将以下文件放进游戏目录的 `BepInEx/plugins/`：
+2. 从 [Release v0.19.3](https://github.com/WROIATE/LOMSave/releases/tag/v0.19.3) 下载 `LOMSave-enhanced-v0.19.3.zip`，将包内的 `BepInEx` 文件夹合并到游戏根目录。`SHA256SUMS.txt` 用于校验安装包。
+3. 安装包会将以下文件放进游戏目录的 `BepInEx/plugins/`：
    - `LOMSaveProbe.dll`
    - `Newtonsoft.Json.dll`
    - `YamlDotNet.dll`
-4. 将 `LOMSaveProbe.CodeNames.yaml` 放进 `BepInEx/config/`。名称表缺失时会回退到游戏原说明或编号。
+4. 安装包内的 `LOMSaveProbe.CodeNames.yaml` 位于 `BepInEx/config/`。名称表缺失时会回退到游戏原说明或编号。
 5. 保留随包提供的两个第三方许可证文件，然后重启游戏。
 
 同一套存档补丁应只安装一份。安装本增强插件时，请把原来的 `LOMSave.dll`、`LOMSave2.dll` 或旧版 `LOMSaveProbe.dll` 移到插件目录外，避免多份存读档补丁同时执行。仓库中的旧版 `LOMSavePlugins.cs` 保留为上游来源，本增强版编译入口是 `LOMSaveProbe.csproj`。
+
+如果需要手动安装，可从 [`artifacts/LOMSaveProbe`](artifacts/LOMSaveProbe) 获取上述文件。
 
 ## 使用
 
@@ -81,6 +85,8 @@ pwsh -File ./Build-Local.ps1 -GameDir '你的 LegendOfMortal 游戏目录'
 
 产物写入 `artifacts/LOMSaveProbe/LOMSaveProbe.dll`；可用 `-OutputPath` 指定其他位置。构建后需手动替换插件并重启游戏。
 
+运行 `pwsh -File ./tools/Build-Package.ps1` 可生成相同目录结构的安装 ZIP 和校验文件，默认输出到 `obj/release/`。
+
 六组检查各自运行在独立 PowerShell 进程中，避免测试替身的类型名互相影响：
 
 ```powershell
@@ -104,5 +110,3 @@ pwsh -File ./tests/Test-CodeNames.ps1
 - **[YaN9Yu96/MortalControlMyDestiny（知天命）](https://github.com/YaN9Yu96/MortalControlMyDestiny)**：参考 DevNote 名称解析和调用游戏原生浮动消息的方式。
 - **[活侠传助手](https://mod.3dmgame.com/mod/256420)**：参考建筑事件查看、分支检查点和指定下次事件的交互与数据挂接思路。
 - **[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json)**、**[YamlDotNet](https://github.com/aaubry/YamlDotNet)**：第三方依赖；各自 MIT 许可证随发布文件保留。
-
-当前基线的原仓库没有独立 LICENSE 文件，本 fork 没有为原作者代码另行声明新的许可证。游戏资源、个人存档、本地备份及无关设计文档不随本仓库提交。
