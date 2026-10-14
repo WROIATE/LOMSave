@@ -16,23 +16,17 @@ namespace LOMSave.Probe
     internal static class OptionImpactPreview
     {
         private const float HoldSeconds = 0.5f;
-        private static readonly Regex IndexMarker = new Regex(
-            @"^\s*--index:(O(?:_\w+)+)",
-            RegexOptions.Multiline);
-        private static readonly Regex ActionPattern = new Regex(
-            @"statmodifymanager\.(?!GetDisplayTime)(\w+)\((.*?)\)");
-        private static readonly Regex BattlePattern = new Regex(
-            "luamanager\\.ChangeScene\\(\\s*\"(Combat|Battle)\"");
-        private static readonly Regex NextScriptPattern = new Regex(
-            "luamanager\\.SetNextScript\\(\\s*\"([^\"]+)\"");
-        private static readonly Dictionary<string, List<OptionImpact>> Impacts =
-            new Dictionary<string, List<OptionImpact>>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, List<LuaImpactScanner.Action>> Actions =
+            new Dictionary<string, List<LuaImpactScanner.Action>>(StringComparer.Ordinal);
+        internal static bool IsOpen { get { return _overlay != null; } }
         private static readonly HashSet<string> LoggedBindings =
             new HashSet<string>(StringComparer.Ordinal);
 
         private static GUIStyle _hintStyle;
         private static string _holdingText;
         private static float _holdProgress;
+        private static BuildingEventLongPress _buildingHold;
+        private static string _holdCaption = "长按查看影响";
         private static GameObject _overlay;
 
         [HarmonyPrefix]
@@ -50,21 +44,21 @@ namespace LOMSave.Probe
         [HarmonyPatch(typeof(NormalOptionButton), "UpdateContent")]
         private static void AfterNormalOptionUpdated(NormalOptionButton __instance)
         {
-            BindFromSource(__instance, "_source", null, '+', false);
+            BindFromSource(__instance, "_source", null, '+', true);
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(BreakOptionButton), "UpdateContent")]
         private static void AfterBreakOptionUpdated(BreakOptionButton __instance)
         {
-            BindFromSource(__instance, "_source", 1, '+', false);
+            BindFromSource(__instance, "_source", 1, '+', true);
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(PositionOptionButton), "UpdateContent")]
         private static void AfterPositionOptionUpdated(PositionOptionButton __instance)
         {
-            BindFromSource(__instance, "_source", 2, '+', false);
+            BindFromSource(__instance, "_source", 2, '+', true);
         }
 
         [HarmonyPostfix]
@@ -82,14 +76,32 @@ namespace LOMSave.Probe
 
         internal static void SetHoldProgress(string text, float progress)
         {
+            _buildingHold = null;
+            _holdCaption = "长按查看影响";
             _holdingText = text;
             _holdProgress = Mathf.Clamp01(progress);
         }
 
+        internal static void SetBuildingHoldProgress(BuildingEventLongPress source, float progress)
+        {
+            _buildingHold = source;
+            _holdCaption = "长按查看事件";
+            _holdingText = _holdCaption;
+            _holdProgress = Mathf.Clamp01(progress);
+        }
+
+        internal static void CancelBuildingHold(BuildingEventLongPress source)
+        {
+            if (!ReferenceEquals(_buildingHold, source)) return;
+            _buildingHold = null;
+            _holdingText = null;
+            _holdProgress = 0f;
+        }
+
         internal static void CancelHold(OptionImpactLongPress source)
         {
-            if (source == null
-                || string.Equals(_holdingText, source.OptionText, StringComparison.Ordinal))
+            if (_buildingHold == null && (source == null
+                || string.Equals(_holdingText, source.OptionText, StringComparison.Ordinal)))
             {
                 _holdingText = null;
                 _holdProgress = 0f;
@@ -98,32 +110,67 @@ namespace LOMSave.Probe
 
         internal static void Show(string key, string text, Font font)
         {
-            List<OptionImpact> impacts;
-            Impacts.TryGetValue(key, out impacts);
+            Show(key, text, font, false);
+        }
+
+        private static void Show(string key, string text, Font font, bool includeLater)
+        {
+            font = PreviewFont.Resolve();
+            List<LuaImpactScanner.Action> actions;
+            Actions.TryGetValue(key, out actions);
+            var impacts = new List<OptionImpact>();
+            if (actions != null)
+                foreach (var action in actions)
+                {
+                    if (!includeLater && action.RouteDepth > 0) continue;
+                    var description = DescribeAction(action.Method, action.Arguments);
+                    if (!string.IsNullOrEmpty(description))
+                        AddImpact(impacts, action.Conditional, description, action.Method);
+                }
 
             var builder = new StringBuilder();
             if (impacts == null || impacts.Count == 0)
             {
-                builder.Append("未解析到可确定的直接影响");
+                builder.Append("此选项主要改变对话或剧情走向，未发现本段数值变化。");
             }
             else
             {
                 foreach (var impact in impacts)
                 {
-                    builder.Append(impact.Conditional ? "条件影响：" : "直接影响：");
+                    builder.Append(impact.Conditional ? "可能：" : "• ");
                     builder.AppendLine(impact.Description);
                 }
             }
             CreateOverlay(
                 string.IsNullOrEmpty(text) ? key : text,
                 builder.ToString().TrimEnd(),
-                font);
+                font,
+                includeLater ? "收起后续影响" : "查看后续影响",
+                () => Show(key, text, font, !includeLater));
+            var events = EventInspector.PoolsFor(actions, "选项 · " + text);
+            if (events.Count > 0)
+            {
+                var panel = _overlay.transform.Find("Backdrop/Panel");
+                var buttonImage = CreateImage("Events", panel, new Color(0.34f, 0.27f, 0.17f));
+                var rect = buttonImage.rectTransform;
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
+                rect.pivot = new Vector2(0.5f, 0f);
+                rect.anchoredPosition = new Vector2(45, 24);
+                rect.sizeDelta = new Vector2(180, 54);
+                ((RectTransform)panel.Find("Close")).anchoredPosition = new Vector2(280, 24);
+                ((RectTransform)panel.Find("More")).anchoredPosition = new Vector2(-210, 24);
+                var button = buttonImage.gameObject.AddComponent<Button>();
+                button.targetGraphic = buttonImage;
+                button.onClick.AddListener(() => { HideOverlay(); EventInspectorPanel.Show(text + " · 事件", events); });
+                var label = CreateText("Label", buttonImage.transform, "查看事件", font, 24, TextAnchor.MiddleCenter, Color.white);
+                Stretch(label.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            }
             _holdingText = null;
             _holdProgress = 0f;
             LOMSaveProbePlugin.WriteEvent("option_impact_preview_shown", new
             {
                 key,
-                impactCount = impacts == null ? 0 : impacts.Count
+                impactCount = impacts.Count, descriptions = builder.ToString(), font = font.name
             });
         }
 
@@ -167,170 +214,35 @@ namespace LOMSave.Probe
 
         private static void ParseScript(string scriptName, string lua, string source)
         {
-            if (string.IsNullOrEmpty(lua))
-            {
-                return;
-            }
-
+            if (string.IsNullOrEmpty(lua)) return;
             try
             {
-                var markers = IndexMarker.Matches(lua);
-                var parsedCount = 0;
-                for (var index = 0; index < markers.Count; index++)
-                {
-                    var marker = markers[index];
-                    var key = marker.Groups[1].Value;
-                    var start = marker.Index + marker.Length;
-                    var end = index + 1 < markers.Count
-                        ? markers[index + 1].Index
-                        : lua.Length;
-                    end = FindOptionBlockEnd(lua, start, end);
-                    var optionBlock = lua.Substring(start, end - start);
-                    var impacts = ParseBlock(optionBlock);
-                    AddRoutedScriptImpacts(optionBlock, impacts, key);
-                    var continuationStart = FindChoiceContinuationStart(lua, start);
-                    if (continuationStart >= 0)
-                    {
-                        var continuationEnd = FindChoiceContinuationEnd(
-                            lua,
-                            continuationStart);
-                        foreach (var impact in ParseBlock(lua.Substring(
-                            continuationStart,
-                            continuationEnd - continuationStart)))
-                        {
-                            AddImpact(impacts, impact.Conditional, impact.Description);
-                        }
-                    }
-                    var mergedImpacts = MergeImpacts(key, impacts);
-                    if (mergedImpacts.Count > 0)
-                    {
-                        parsedCount++;
-                    }
-                }
-
-                if (markers.Count > 0)
-                {
+                var parsed = LuaImpactScanner.Scan(lua, name => LoadStoryScript(name, scriptName));
+                foreach (var pair in parsed) Actions[pair.Key] = pair.Value;
+                if (parsed.Count > 0)
                     LOMSaveProbePlugin.WriteEvent("option_impacts_parse_summary", new
-                    {
-                        scriptName,
-                        source,
-                        markerCount = markers.Count,
-                        parsedCount
-                    });
-                }
+                    { scriptName, source, markerCount = parsed.Count });
             }
             catch (Exception exception)
             {
-                LOMSaveProbePlugin.WriteError(
-                    "option_impacts_parse_failed",
-                    exception,
-                    new { scriptName });
+                LOMSaveProbePlugin.WriteError("option_impacts_parse_failed", exception, new { scriptName });
             }
-        }
-
-        private static void AddRoutedScriptImpacts(
-            string sourceBlock,
-            List<OptionImpact> impacts,
-            string optionKey)
-        {
-            const int maximumDepth = 4;
-            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var currentBlock = sourceBlock;
-            for (var depth = 0; depth < maximumDepth; depth++)
-            {
-                var route = NextScriptPattern.Match(currentBlock);
-                if (!route.Success)
-                {
-                    return;
-                }
-
-                var scriptName = route.Groups[1].Value;
-                if (string.IsNullOrEmpty(scriptName) || !visited.Add(scriptName))
-                {
-                    return;
-                }
-
-                var script = LoadStoryScript(scriptName, optionKey);
-                if (string.IsNullOrEmpty(script))
-                {
-                    return;
-                }
-
-                var routedEnd = FindRoutedScriptEnd(script);
-                currentBlock = script.Substring(0, routedEnd);
-                foreach (var impact in ParseBlock(currentBlock))
-                {
-                    AddImpact(impacts, impact.Conditional, impact.Description);
-                }
-            }
-        }
-
-        private static List<OptionImpact> MergeImpacts(
-            string key,
-            List<OptionImpact> parsedImpacts)
-        {
-            List<OptionImpact> mergedImpacts;
-            if (!Impacts.TryGetValue(key, out mergedImpacts))
-            {
-                mergedImpacts = new List<OptionImpact>();
-                Impacts[key] = mergedImpacts;
-            }
-
-            foreach (var impact in parsedImpacts)
-            {
-                AddImpact(mergedImpacts, impact.Conditional, impact.Description);
-            }
-            return mergedImpacts;
-        }
-
-        private static List<OptionImpact> ParseBlock(string block)
-        {
-            var result = new List<OptionImpact>();
-            var conditionalDepth = 0;
-            var lines = block.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            foreach (var sourceLine in lines)
-            {
-                var line = sourceLine.Trim();
-                if (StartsIfBlock(line))
-                {
-                    conditionalDepth++;
-                }
-
-                foreach (Match match in ActionPattern.Matches(line))
-                {
-                    var description = DescribeAction(
-                        match.Groups[1].Value,
-                        SplitArguments(match.Groups[2].Value));
-                    if (!string.IsNullOrEmpty(description))
-                    {
-                        AddImpact(result, conditionalDepth > 0, description);
-                    }
-                }
-
-                foreach (Match match in BattlePattern.Matches(line))
-                {
-                    AddImpact(
-                        result,
-                        conditionalDepth > 0,
-                        match.Groups[1].Value == "Battle" ? "进入混战" : "进入对决");
-                }
-
-                if (line == "end" || line.StartsWith("end ", StringComparison.Ordinal))
-                {
-                    conditionalDepth = Mathf.Max(0, conditionalDepth - 1);
-                }
-            }
-            return result;
         }
 
         private static void AddImpact(
             List<OptionImpact> impacts,
             bool conditional,
-            string description)
+            string description,
+            string method)
         {
+            // Repeated deltas may be separate changes along the same path.
+            // Only collapse idempotent assignments and duplicate record entries.
+            var canCollapse = method == "SetFlag" || method == "SetPlayer"
+                || method == "UpdateSetPlayerStat" || method == "SetCharacter"
+                || method == "AddStory";
             foreach (var impact in impacts)
             {
-                if (impact.Conditional == conditional
+                if (canCollapse && impact.Conditional == conditional
                     && string.Equals(impact.Description, description, StringComparison.Ordinal))
                 {
                     return;
@@ -343,139 +255,7 @@ namespace LOMSave.Probe
             });
         }
 
-        private static int FindOptionBlockEnd(string lua, int start, int maximumEnd)
-        {
-            var conditionalDepth = 0;
-            var position = start;
-            while (position < maximumEnd)
-            {
-                var lineEnd = lua.IndexOf('\n', position);
-                if (lineEnd < 0 || lineEnd > maximumEnd)
-                {
-                    lineEnd = maximumEnd;
-                }
-                var line = lua.Substring(position, lineEnd - position).Trim();
-                if (StartsIfBlock(line))
-                {
-                    conditionalDepth++;
-                }
-                else if (line.StartsWith("elseif ", StringComparison.Ordinal) || line == "else")
-                {
-                    if (conditionalDepth == 0)
-                    {
-                        return position;
-                    }
-                }
-                else if (line == "end" || line.StartsWith("end ", StringComparison.Ordinal))
-                {
-                    if (conditionalDepth == 0)
-                    {
-                        return position;
-                    }
-                    conditionalDepth--;
-                }
-                position = lineEnd + 1;
-            }
-            return maximumEnd;
-        }
-
-        private static int FindChoiceContinuationStart(string lua, int start)
-        {
-            var conditionalDepth = 0;
-            var position = start;
-            while (position < lua.Length)
-            {
-                var lineEnd = lua.IndexOf('\n', position);
-                if (lineEnd < 0)
-                {
-                    lineEnd = lua.Length;
-                }
-                var line = lua.Substring(position, lineEnd - position).Trim();
-                if (StartsIfBlock(line))
-                {
-                    conditionalDepth++;
-                }
-                else if (line == "end" || line.StartsWith("end ", StringComparison.Ordinal))
-                {
-                    if (conditionalDepth == 0)
-                    {
-                        return lineEnd < lua.Length ? lineEnd + 1 : lua.Length;
-                    }
-                    conditionalDepth--;
-                }
-                position = lineEnd + 1;
-            }
-            return -1;
-        }
-
-        private static int FindChoiceContinuationEnd(string lua, int start)
-        {
-            var position = start;
-            while (position < lua.Length)
-            {
-                var lineEnd = lua.IndexOf('\n', position);
-                if (lineEnd < 0)
-                {
-                    lineEnd = lua.Length;
-                }
-                var line = lua.Substring(position, lineEnd - position).Trim();
-                if (line.IndexOf("= choose(", StringComparison.Ordinal) >= 0
-                    || line.IndexOf("= choosetimer(", StringComparison.Ordinal) >= 0
-                    || line.IndexOf("luamanager.SetNextScript(", StringComparison.Ordinal) >= 0)
-                {
-                    return position;
-                }
-                if (line.IndexOf("luamanager.ChangeScene(", StringComparison.Ordinal) >= 0)
-                {
-                    return lineEnd;
-                }
-                if (line.IndexOf(
-                    "statmodifymanager.AddStory(",
-                    StringComparison.Ordinal) >= 0)
-                {
-                    return lineEnd;
-                }
-                position = lineEnd + 1;
-            }
-            return lua.Length;
-        }
-
-        private static int FindRoutedScriptEnd(string lua)
-        {
-            var position = 0;
-            while (position < lua.Length)
-            {
-                var lineEnd = lua.IndexOf('\n', position);
-                if (lineEnd < 0)
-                {
-                    lineEnd = lua.Length;
-                }
-                var line = lua.Substring(position, lineEnd - position).Trim();
-                if (line.IndexOf("= choose(", StringComparison.Ordinal) >= 0
-                    || line.IndexOf("= choosetimer(", StringComparison.Ordinal) >= 0)
-                {
-                    return position;
-                }
-                if (line.IndexOf("luamanager.SetNextScript(", StringComparison.Ordinal) >= 0
-                    || line.IndexOf("luamanager.ChangeScene(", StringComparison.Ordinal) >= 0
-                    || line.IndexOf(
-                        "statmodifymanager.AddStory(",
-                        StringComparison.Ordinal) >= 0)
-                {
-                    return lineEnd;
-                }
-                position = lineEnd + 1;
-            }
-            return lua.Length;
-        }
-
-        private static bool StartsIfBlock(string line)
-        {
-            return line.StartsWith("if ", StringComparison.Ordinal)
-                || line.StartsWith("if(", StringComparison.Ordinal);
-        }
-
-        private static string DescribeAction(string method, string[] arguments)
+        internal static string DescribeAction(string method, string[] arguments)
         {
             if (arguments.Length == 0)
             {
@@ -489,7 +269,7 @@ namespace LOMSave.Probe
             switch (method)
             {
                 case "Player":
-                    return hasValue ? FormatChange(OptionImpactLocalization.GameStat(key), value) : null;
+                    return DescribePlayer(key, value, hasValue, arguments);
                 case "Character":
                     return hasValue
                         ? FormatChange(OptionImpactLocalization.Relationship(key) + "好感度", value)
@@ -505,9 +285,9 @@ namespace LOMSave.Probe
                 case "AddTalent":
                     return hasValue ? "天赋“" + ResolveTalent(key) + "” Lv." + value : null;
                 case "AddFlag":
-                    return hasValue ? FormatChange("标记“" + ResolveFlag(key) + "”", value) : null;
+                    return hasValue ? DescribeFlag(key, value, false) : null;
                 case "SetFlag":
-                    return hasValue ? "设置标记“" + ResolveFlag(key) + "”为 " + value : null;
+                    return hasValue ? DescribeFlag(key, value, true) : null;
                 case "UpdateSetPlayerStat":
                 case "SetPlayer":
                     return hasValue ? "设置" + OptionImpactLocalization.GameStat(key) + "为 " + value : null;
@@ -522,11 +302,13 @@ namespace LOMSave.Probe
                 case "ModifyTalent":
                     return hasValue ? "天赋“" + ResolveTalent(key) + "”调整为 Lv." + value : null;
                 case "AddStory":
-                    return "解锁剧情“" + ResolveStory(key) + "”";
+                    return null; // Journal prose records the scene; it is not an option reward.
+                case "ChangeScene":
+                    return key == "Battle" ? "进入混战" : "进入对决";
+                case "IsTriggerSubMission":
+                    return null;
                 case "Mission":
-                    return arguments.Length > 1
-                        ? "任务“" + key + "”：" + Unquote(arguments[1])
-                        : "更新任务“" + key + "”";
+                    return null; // Internal mission IDs are not player-facing event names.
                 case "AddAchievementLib":
                     return "解锁成就“" + key + "”";
                 case "AddDeadLib":
@@ -544,30 +326,6 @@ namespace LOMSave.Probe
                 default:
                     return null;
             }
-        }
-
-        private static string[] SplitArguments(string value)
-        {
-            var result = new List<string>();
-            var builder = new StringBuilder();
-            var quoted = false;
-            for (var index = 0; index < value.Length; index++)
-            {
-                var character = value[index];
-                if (character == '"' && (index == 0 || value[index - 1] != '\\'))
-                {
-                    quoted = !quoted;
-                }
-                if (character == ',' && !quoted)
-                {
-                    result.Add(builder.ToString().Trim());
-                    builder.Length = 0;
-                    continue;
-                }
-                builder.Append(character);
-            }
-            result.Add(builder.ToString().Trim());
-            return result.ToArray();
         }
 
         private static void BindFromSource(
@@ -590,7 +348,8 @@ namespace LOMSave.Probe
                 var key = partIndex.HasValue && partIndex.Value < parts.Length
                     ? parts[partIndex.Value]
                     : source.text;
-                if (!Impacts.ContainsKey(key)
+                if (Actions.ContainsKey(source.text)) key = source.text;
+                if (!Actions.ContainsKey(key)
                     && !key.StartsWith("O_", StringComparison.Ordinal))
                 {
                     RemoveBinding(component);
@@ -604,18 +363,28 @@ namespace LOMSave.Probe
                 }
                 binding.Bind(
                     key,
-                    ResolveStoryText(key),
+                    ResolveStoryText(partIndex.HasValue && partIndex.Value < parts.Length ? parts[partIndex.Value] : key),
                     HoldSeconds,
                     source.font,
                     allowDisabled);
                 var bindingLogKey = component.GetType().FullName + "|" + key;
                 if (LoggedBindings.Add(bindingLogKey))
                 {
+                    var descriptions = new List<string>();
+                    List<LuaImpactScanner.Action> actions;
+                    if (Actions.TryGetValue(key, out actions))
+                        foreach (var action in actions)
+                        {
+                            var description = DescribeAction(action.Method, action.Arguments);
+                            if (!string.IsNullOrEmpty(description))
+                                descriptions.Add((action.Conditional ? "条件影响：" : "直接影响：") + description);
+                        }
                     LOMSaveProbePlugin.WriteEvent("option_impact_bound", new
                     {
                         key,
                         component = component.GetType().FullName,
-                        allowDisabled
+                        allowDisabled,
+                        descriptions
                     });
                 }
             }
@@ -696,18 +465,30 @@ namespace LOMSave.Probe
 
         private static string ResolveFlag(string key)
         {
+            var mapped = CodeNameMapping.Lookup("flags", key);
+            if (!string.IsNullOrEmpty(mapped)) return mapped;
             try
             {
                 var flag = MissionManagerData.Instance.GetFlag(key);
-                if (flag != null && !string.IsNullOrEmpty(flag.DevNote))
-                {
-                    return flag.DevNote.Split('\n')[0];
-                }
+                if (flag != null) return EventConditions.FlagName(flag);
             }
             catch
             {
             }
             return key;
+        }
+
+        private static string DescribeFlag(string key, int value, bool assignment)
+        {
+            var name = ResolveFlag(key).Trim();
+            if (string.Equals(name, key, StringComparison.Ordinal)
+                || name.IndexOf("暫存", StringComparison.Ordinal) >= 0
+                || name.IndexOf("暂存", StringComparison.Ordinal) >= 0
+                || name.IndexOf("泛用", StringComparison.Ordinal) >= 0
+                || name.IndexOf("臨時", StringComparison.Ordinal) >= 0
+                || name.IndexOf("临时", StringComparison.Ordinal) >= 0
+                || name.Length > 32) return null;
+            return assignment ? name + " = " + value : FormatChange(name, value);
         }
 
         private static string ResolveTeam(string key)
@@ -738,7 +519,7 @@ namespace LOMSave.Probe
             }
             try
             {
-                var localeKey = "Story/" + key;
+                var localeKey = "LegendInfo/" + key;
                 var name = LocalizationManager.Instance.LocaleResolver.GetString(localeKey);
                 if (!string.IsNullOrEmpty(name) && !string.Equals(name, localeKey, StringComparison.Ordinal))
                 {
@@ -749,6 +530,16 @@ namespace LOMSave.Probe
             {
             }
             return key;
+        }
+
+        private static string DescribePlayer(string key, int value, bool hasValue, string[] arguments)
+        {
+            var name = OptionImpactLocalization.GameStat(key);
+            if (!hasValue) return name + "变化（数值由剧情计算）";
+            var mode = arguments.Length > 2 ? Unquote(arguments[2]) : "";
+            if (mode == "center") return name + "向中庸调整 " + Math.Abs(value);
+            if (mode == "mental") return FormatChange(name, value) + "（心相 ≤ 20 时再减 1）";
+            return FormatChange(name, value);
         }
 
         private static string FormatChange(string name, int value)
@@ -796,14 +587,18 @@ namespace LOMSave.Probe
                 50f);
             GUI.Box(
                 rect,
-                "长按查看影响  " + ((1f - _holdProgress) * HoldSeconds).ToString("0.0") + "秒",
+                _holdCaption + "  " + ((1f - _holdProgress) * HoldSeconds).ToString("0.0") + "秒",
                 _hintStyle);
-            GUI.Box(
-                new Rect(rect.x + 8f, rect.yMax - 10f, (rect.width - 16f) * _holdProgress, 4f),
-                GUIContent.none);
+            var color = GUI.color;
+            GUI.color = new Color(0.3f, 0.27f, 0.2f, 1f);
+            GUI.DrawTexture(new Rect(rect.x + 8f, rect.yMax - 10f, rect.width - 16f, 4f), Texture2D.whiteTexture);
+            GUI.color = new Color(0.94f, 0.77f, 0.48f, 1f);
+            GUI.DrawTexture(new Rect(rect.x + 8f, rect.yMax - 10f, (rect.width - 16f) * _holdProgress, 4f), Texture2D.whiteTexture);
+            GUI.color = color;
         }
 
-        private static void CreateOverlay(string optionText, string impactText, Font font)
+        private static void CreateOverlay(string optionText, string impactText, Font font,
+            string toggleText, UnityEngine.Events.UnityAction toggleAction)
         {
             HideOverlay();
 
@@ -911,7 +706,7 @@ namespace LOMSave.Probe
             closeRect.anchorMin = new Vector2(0.5f, 0f);
             closeRect.anchorMax = new Vector2(0.5f, 0f);
             closeRect.pivot = new Vector2(0.5f, 0f);
-            closeRect.anchoredPosition = new Vector2(0f, 24f);
+            closeRect.anchoredPosition = new Vector2(150f, 24f);
             closeRect.sizeDelta = new Vector2(180f, 54f);
             var closeButton = close.gameObject.AddComponent<Button>();
             closeButton.targetGraphic = close;
@@ -925,9 +720,21 @@ namespace LOMSave.Probe
                 TextAnchor.MiddleCenter,
                 Color.white);
             Stretch(closeLabel.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var more = CreateImage("More", panel.transform, new Color(0.24f, 0.22f, 0.18f, 1f));
+            var moreRect = more.rectTransform;
+            moreRect.anchorMin = moreRect.anchorMax = new Vector2(0.5f, 0f);
+            moreRect.pivot = new Vector2(0.5f, 0f);
+            moreRect.anchoredPosition = new Vector2(-130f, 24f);
+            moreRect.sizeDelta = new Vector2(260f, 54f);
+            var moreButton = more.gameObject.AddComponent<Button>();
+            moreButton.targetGraphic = more;
+            moreButton.onClick.AddListener(toggleAction);
+            var moreLabel = CreateText("Label", more.transform, toggleText, font, 24,
+                TextAnchor.MiddleCenter, Color.white);
+            Stretch(moreLabel.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         }
 
-        private static Image CreateImage(
+        internal static Image CreateImage(
             string name,
             Transform parent,
             Color color)
@@ -939,7 +746,7 @@ namespace LOMSave.Probe
             return image;
         }
 
-        private static Text CreateText(
+        internal static Text CreateText(
             string name,
             Transform parent,
             string value,
@@ -963,7 +770,7 @@ namespace LOMSave.Probe
             return text;
         }
 
-        private static void Stretch(
+        internal static void Stretch(
             RectTransform transform,
             Vector2 anchorMin,
             Vector2 anchorMax,
@@ -976,10 +783,11 @@ namespace LOMSave.Probe
             transform.offsetMax = offsetMax;
         }
 
-        private static void HideOverlay()
+        internal static void HideOverlay()
         {
             if (_overlay != null)
             {
+                _overlay.SetActive(false);
                 UnityEngine.Object.Destroy(_overlay);
                 _overlay = null;
             }
@@ -995,7 +803,7 @@ namespace LOMSave.Probe
     internal sealed class OptionImpactLongPress : MonoBehaviour,
         IPointerDownHandler,
         IPointerUpHandler,
-        IPointerExitHandler
+        IPointerExitHandler, IPointerClickHandler
     {
         private Button _button;
         private bool _bound;
@@ -1053,6 +861,12 @@ namespace LOMSave.Probe
             _holdStartedAt = Time.unscaledTime;
         }
 
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_bound && eventData.button == PointerEventData.InputButton.Middle)
+                OptionImpactPreview.Show(_key, OptionText, _font);
+        }
+
         public void OnPointerUp(PointerEventData eventData)
         {
             if (!_holding)
@@ -1090,8 +904,10 @@ namespace LOMSave.Probe
                 return;
             }
 
-            var progress = (Time.unscaledTime - _holdStartedAt) / _holdSeconds;
-            OptionImpactPreview.SetHoldProgress(OptionText, progress);
+            var elapsed = Time.unscaledTime - _holdStartedAt;
+            var progress = elapsed / _holdSeconds;
+            if (PreviewInteraction.ShowHoldProgress(elapsed))
+                OptionImpactPreview.SetHoldProgress(OptionText, progress);
             if (progress < 1f)
             {
                 return;

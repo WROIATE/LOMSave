@@ -118,7 +118,7 @@ end
 
         internal static bool AbortActiveReplay(string reason)
         {
-            var target = _activeReplayTarget;
+            var target = _activeReplayTarget ?? _pendingReplayTarget;
             if (target == null)
             {
                 return false;
@@ -133,6 +133,10 @@ end
             IList<StoryChoiceDecision> choices = null)
         {
             ReplayRuntime.Reset("replay_reconfigured");
+            // Scene initialization may auto-save before Begin runs. Never let
+            // that save inherit a command/choice history from the previous load.
+            Current = null;
+            ChoiceHistory.Clear();
             _activeReplayTarget = null;
             _activeReplayChoices = null;
             _skippedDialogueCount = 0;
@@ -148,6 +152,10 @@ end
             _pendingReplayChoices = _pendingReplayTarget == null
                 ? null
                 : CloneChoices(choices);
+            if (_pendingReplayTarget != null)
+            {
+                ReplayRuntime.Prepare();
+            }
             LOMSaveProbePlugin.WriteEvent("story_replay_configured", new
             {
                 enabled = _pendingReplayTarget != null,
@@ -298,6 +306,7 @@ end
             string payload,
             out string directive)
         {
+            ReplayRuntime.ReportProgress();
             Current = new StoryCommandCheckpoint
             {
                 Token = ++_token,

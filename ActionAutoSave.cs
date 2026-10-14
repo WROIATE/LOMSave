@@ -1,3 +1,4 @@
+using Fungus;
 using HarmonyLib;
 using Mortal.Core;
 using Mortal.Free;
@@ -11,7 +12,7 @@ namespace LOMSave.Probe
     internal static class ActionAutoSave
     {
         private const string Slot = "auto_action";
-        private const string DisplayName = "最近行动存档";
+        private const string DisplayName = "最近行动";
         private const string GameObjectName = "LOMSaveRecentActionAutoSave";
 
         private static readonly MethodInfo AutoSaveDataMethod =
@@ -20,18 +21,47 @@ namespace LOMSave.Probe
                 "AutoSaveData",
                 new[] { typeof(string) });
 
+        private static readonly MethodInfo SaveDataFileMethod =
+            AccessTools.Method(typeof(SaveSystem), "GetSaveDataFile", new[] { typeof(string) });
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(FreeManager), "UpdateActionValue", typeof(int))]
         private static void SaveBeforeAction(int value)
         {
-            if (value >= 0)
+            SaveBeforeAction(value, "free_action");
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(MenuDialog), "AddOption", typeof(string), typeof(bool), typeof(bool), typeof(UnityEngine.Events.UnityAction))]
+        private static void BeforeAddActionOption(string __0, bool __1, bool __2, ref UnityEngine.Events.UnityAction __3)
+        {
+            var cost = ActionAutoSavePolicy.OptionCost(__0, __1, __2);
+            if (cost <= 0 || __3 == null) return;
+            var original = __3;
+            var wrapped = ActionAutoSavePolicy.BeforeOption(cost, original.Invoke, CanSaveStoryOption,
+                actionCost => SaveBeforeAction(-actionCost, "story_option"));
+            __3 = wrapped.Invoke;
+        }
+
+        private static bool CanSaveStoryOption()
+        {
+            var checkpoint = StoryCommandTrace.Current;
+            return checkpoint != null
+                && (checkpoint.Kind == "choose" || checkpoint.Kind == "choosetimer")
+                && string.Equals(checkpoint.Script, PlayerStatManagerData.Instance.CurrentStoryScript, StringComparison.Ordinal)
+                && !ReplayRuntime.IsRestoring && !StoryCommandTrace.IsReplayPending && !ReplayStateValidator.IsRestoring;
+        }
+
+        private static void SaveBeforeAction(int value, string source)
+        {
+            if (value >= 0 || ReplayRuntime.IsRestoring || StoryCommandTrace.IsReplayPending || ReplayStateValidator.IsRestoring)
             {
                 return;
             }
 
             try
             {
-                if (AutoSaveDataMethod == null)
+                if (AutoSaveDataMethod == null || SaveDataFileMethod == null)
                 {
                     throw new MissingMethodException(
                         typeof(SaveSystem).FullName,
@@ -40,14 +70,24 @@ namespace LOMSave.Probe
 
                 var actionCount =
                     PlayerStatManagerData.Instance.CurrentActionCount;
+                var system = SaveSystem.Instance;
+                var file = (string)SaveDataFileMethod.Invoke(system, new object[] { Slot });
+                var previousHash = StorySaveFiles.Hash(file);
                 AutoSaveDataMethod.Invoke(
-                    SaveSystem.Instance,
+                    system,
                     new object[] { Slot });
+                if (StorySaveFiles.CommittedHash(file, previousHash) == null)
+                {
+                    LOMSaveProbePlugin.WriteEvent("action_start_auto_save_skipped",
+                        new { slot = Slot, source, reason = "save_not_committed" });
+                    return;
+                }
                 LOMSaveProbePlugin.WriteEvent(
                     "action_start_auto_save_written",
                     new
                     {
                         slot = Slot,
+                        source,
                         displayName = DisplayName,
                         actionCost = -value,
                         actionCount
@@ -61,6 +101,7 @@ namespace LOMSave.Probe
                     new
                     {
                         slot = Slot,
+                        source,
                         actionCost = -value
                     });
             }
@@ -97,7 +138,8 @@ namespace LOMSave.Probe
                 }
 
                 var template = slots[slots.Length - 1];
-                if (template == null || template.transform.parent == null)
+                var templateRow = FindSlotRow(template);
+                if (templateRow == null || templateRow.parent == null)
                 {
                     LOMSaveProbePlugin.WriteEvent(
                         "action_auto_save_slot_missing",
@@ -106,13 +148,13 @@ namespace LOMSave.Probe
                 }
 
                 clone = UnityEngine.Object.Instantiate(
-                    template.gameObject,
-                    template.transform.parent,
+                    templateRow.gameObject,
+                    templateRow.parent,
                     false);
                 clone.name = GameObjectName;
                 clone.transform.SetSiblingIndex(
-                    template.transform.GetSiblingIndex() + 1);
-                var actionSlot = clone.GetComponent<AutoSaveSlotPanel>();
+                    templateRow.GetSiblingIndex() + 1);
+                var actionSlot = clone.GetComponentInChildren<AutoSaveSlotPanel>(true);
                 if (actionSlot == null)
                 {
                     throw new MissingComponentException(
@@ -122,7 +164,6 @@ namespace LOMSave.Probe
                 Traverse.Create(actionSlot)
                     .Field("_slot")
                     .SetValue(Slot);
-                PositionAfterLastSlot(actionSlot, slots);
                 actionSlot.Setup();
 
                 var expandedSlots =
@@ -130,6 +171,7 @@ namespace LOMSave.Probe
                 Array.Copy(slots, expandedSlots, slots.Length);
                 expandedSlots[expandedSlots.Length - 1] = actionSlot;
                 slotsField.SetValue(expandedSlots);
+                FitAutoSaveSlots(expandedSlots, slots.Length);
                 LOMSaveProbePlugin.WriteEvent(
                     "action_auto_save_slot_added",
                     new
@@ -138,7 +180,7 @@ namespace LOMSave.Probe
                         displayName = DisplayName,
                         originalCount = slots.Length,
                         expandedCount = expandedSlots.Length,
-                        position = actionSlot.transform.localPosition
+                        positionY = clone.transform.localPosition.y
                     });
             }
             catch (Exception exception)
@@ -179,6 +221,15 @@ namespace LOMSave.Probe
                 }
 
                 slotText.text = DisplayName;
+                var category = __instance.transform.Find("Header/Text");
+                if (category != null)
+                {
+                    foreach (var behaviour in category.GetComponents<MonoBehaviour>())
+                        if (behaviour.GetType().FullName == "Lean.Localization.LeanLocalizedText")
+                            behaviour.enabled = false;
+                    var categoryText = category.GetComponent<Text>();
+                    if (categoryText != null) categoryText.text = "行动前";
+                }
             }
             catch (Exception exception)
             {
@@ -189,40 +240,69 @@ namespace LOMSave.Probe
             }
         }
 
-        private static void PositionAfterLastSlot(
-            AutoSaveSlotPanel actionSlot,
-            AutoSaveSlotPanel[] existingSlots)
+        private static RectTransform FindSlotRow(AutoSaveSlotPanel slot)
         {
-            if (existingSlots.Length < 2)
-            {
-                return;
-            }
+            if (slot == null) return null;
+            var row = slot.transform;
+            var delete = slot.DeleteButton;
+            while (row.parent != null && delete != null
+                && !delete.transform.IsChildOf(row))
+                row = row.parent;
+            return row as RectTransform;
+        }
 
-            var actionRect =
-                actionSlot.transform as RectTransform;
-            var lastRect =
-                existingSlots[existingSlots.Length - 1].transform
-                    as RectTransform;
-            var previousRect =
-                existingSlots[existingSlots.Length - 2].transform
-                    as RectTransform;
-            if (actionRect == null
-                || lastRect == null
-                || previousRect == null)
+        private static void FitAutoSaveSlots(
+            AutoSaveSlotPanel[] slots,
+            int originalCount)
+        {
+            var parent = FindSlotRow(slots[0]).parent as RectTransform;
+            var layout = parent.GetComponent<VerticalLayoutGroup>();
+            // The shipped prefab has a VerticalLayoutGroup. Moving the clone's
+            // anchoredPosition in Awake is overwritten by its first layout pass.
+            var originalSpacing = layout == null ? 20f : layout.spacing;
+            var originalHeight = 0f;
+            var expandedHeight = 0f;
+            foreach (var slot in slots)
             {
-                return;
+                var rect = FindSlotRow(slot);
+                expandedHeight += rect.rect.height * rect.localScale.y;
             }
-
-            var step =
-                lastRect.anchoredPosition
-                - previousRect.anchoredPosition;
-            if (step.sqrMagnitude < 0.01f)
+            for (var index = 0; index < originalCount; index++)
             {
-                step = Vector2.down
-                    * Mathf.Max(lastRect.rect.height, 1f);
+                var rect = FindSlotRow(slots[index]);
+                originalHeight += rect.rect.height * rect.localScale.y;
             }
-            actionRect.anchoredPosition =
-                lastRect.anchoredPosition + step;
+            originalHeight += originalSpacing * (originalCount - 1);
+            var spacing = Mathf.Min(4f, Mathf.Max(0f, originalSpacing));
+            var scale = Mathf.Min(1f,
+                (originalHeight - spacing * (slots.Length - 1))
+                / Mathf.Max(expandedHeight, 1f));
+            foreach (var slot in slots)
+            {
+                FindSlotRow(slot).localScale *= scale;
+            }
+            if (layout != null)
+            {
+                layout.spacing = spacing;
+                layout.childControlHeight = false;
+                layout.childForceExpandHeight = false;
+                layout.childScaleHeight = true;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parent);
+            }
+            else
+            {
+                var y = FindSlotRow(slots[0]).localPosition.y;
+                foreach (var slot in slots)
+                {
+                    var row = FindSlotRow(slot);
+                    var position = row.localPosition;
+                    position.y = y;
+                    row.localPosition = position;
+                    y -= row.rect.height * row.localScale.y + spacing;
+                }
+            }
+            LOMSaveProbePlugin.WriteEvent("action_auto_save_layout_fitted",
+                new { originalHeight, scale, spacing, count = slots.Length });
         }
     }
 }

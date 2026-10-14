@@ -71,6 +71,9 @@ namespace LOMSave.Probe
                 Traverse.Create(SaveSystem.Instance)
                     .Method("ExecuteLoadGameData", new[] { typeof(GameSave) })
                     .GetValue(authoritativeSave);
+                // Loading data alone leaves the old Lua coroutine suspended in place.
+                // A real scene reload discards it and begins the checkpoint script afresh.
+                SceneController.Instance.LoadStory();
                 LOMSaveProbePlugin.WriteEvent(
                     "story_replay_fallback_loaded",
                     new

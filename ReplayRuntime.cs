@@ -5,12 +5,19 @@ namespace LOMSave.Probe
     internal static class ReplayRuntime
     {
         private const float ReplayTimeScale = 50f;
-        private const float MaskTimeoutSeconds = 8f;
+        private const float MaskTimeoutSeconds = 30f;
+        private const float SceneLoadTimeoutSeconds = 30f;
 
         private static float _timeScaleBeforeReplay = 1f;
         private static bool _speedActive;
         private static bool _maskVisible;
         private static float _maskShownAt;
+        private static float _lastProgressAt;
+        private static float _timeoutSeconds = MaskTimeoutSeconds;
+
+        internal static bool IsRestoring { get { return _maskVisible; } }
+        internal static bool IsReplaying { get { return _speedActive; } }
+        internal static void ReportProgress() { _lastProgressAt = Time.unscaledTime; }
 
         internal static void Start()
         {
@@ -22,7 +29,13 @@ namespace LOMSave.Probe
             _timeScaleBeforeReplay = Time.timeScale > 0f ? Time.timeScale : 1f;
             _speedActive = true;
             Time.timeScale = ReplayTimeScale;
+            ReplayAudio.Mute();
             ShowMask();
+            // Give scene loading its own grace period; the original replay
+            // deadline starts when Lua actually begins to replay the script.
+            _maskShownAt = Time.unscaledTime;
+            ReportProgress();
+            _timeoutSeconds = MaskTimeoutSeconds;
             LOMSaveProbePlugin.WriteEvent("story_replay_speed_started", new
             {
                 previousTimeScale = _timeScaleBeforeReplay,
@@ -39,6 +52,7 @@ namespace LOMSave.Probe
 
             Time.timeScale = _timeScaleBeforeReplay;
             _speedActive = false;
+            ReportProgress();
             LOMSaveProbePlugin.WriteEvent("story_replay_speed_restored", new
             {
                 restoredTimeScale = Time.timeScale
@@ -53,6 +67,9 @@ namespace LOMSave.Probe
 
         internal static void Update()
         {
+            // Menu closure and loading callbacks may reset the game's global speed.
+            if (_speedActive) Time.timeScale = ReplayTimeScale;
+            if (!Application.isFocused) ReportProgress();
             HandleTimeout();
         }
 
@@ -78,14 +95,15 @@ namespace LOMSave.Probe
         private static void HandleTimeout()
         {
             if (!_maskVisible
-                || Time.unscaledTime - _maskShownAt < MaskTimeoutSeconds)
+                || !Application.isFocused
+                || Time.unscaledTime - _lastProgressAt < _timeoutSeconds)
             {
                 return;
             }
 
             LOMSaveProbePlugin.WriteEvent("story_replay_mask_timeout", new
             {
-                timeoutSeconds = MaskTimeoutSeconds
+                timeoutSeconds = _timeoutSeconds
             });
             if (!StoryCommandTrace.AbortActiveReplay("timeout"))
             {
@@ -96,6 +114,7 @@ namespace LOMSave.Probe
 
         internal static void HideMask(string reason)
         {
+            ReplayAudio.Restore();
             if (!_maskVisible)
             {
                 return;
@@ -109,6 +128,13 @@ namespace LOMSave.Probe
             });
         }
 
+        internal static void Prepare()
+        {
+            ReplayAudio.Mute();
+            _timeoutSeconds = SceneLoadTimeoutSeconds;
+            ShowMask();
+        }
+
         private static void ShowMask()
         {
             if (_maskVisible)
@@ -117,10 +143,11 @@ namespace LOMSave.Probe
             }
 
             _maskShownAt = Time.unscaledTime;
+            ReportProgress();
             _maskVisible = true;
             LOMSaveProbePlugin.WriteEvent("story_replay_mask_shown", new
             {
-                timeoutSeconds = MaskTimeoutSeconds
+                timeoutSeconds = _timeoutSeconds
             });
         }
     }

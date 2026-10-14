@@ -13,18 +13,47 @@
 
   <ItemGroup>
     <Compile Include="ActionAutoSave.cs" />
+    <Compile Include="ActionAutoSavePolicy.cs" />
     <Compile Include="AutoDialogueSpeed.cs" />
+    <Compile Include="DialoguePacer.cs" />
+    <Compile Include="DialogueTiming.cs" />
+    <Compile Include="SaveNotes.cs" />
+    <Compile Include="SaveNoteStore.cs" />
+    <Compile Include="LuaImpactScanner.cs" />
+    <Compile Include="EventConditions.cs" />
+    <Compile Include="EventInspector.cs" />
+    <Compile Include="BuildingEventLongPress.cs" />
+    <Compile Include="PreviewInteraction.cs" />
+    <Compile Include="EventInspectorPanel.cs" />
+    <Compile Include="CheckpointRecall.cs" />
+    <Compile Include="CheckpointNameRules.cs" />
+    <Compile Include="CodeNameMapStore.cs" />
+    <Compile Include="CodeNameMapping.cs" />
+    <Compile Include="CheckpointToast.cs" />
+    <Compile Include="PreviewFont.cs" />
+    <Compile Include="CheckpointNotificationBuffer.cs" />
     <Compile Include="DiceRollTrace.cs" />
     <Compile Include="LOMSaveProbe.cs" />
     <Compile Include="OptionImpactLocalization.cs" />
     <Compile Include="OptionImpactPreview.cs" />
     <Compile Include="ReplayRuntime.cs" />
+    <Compile Include="ReplayAudio.cs" />
+    <Compile Include="ReplayInput.cs" />
     <Compile Include="ReplayStateValidator.cs" />
     <Compile Include="StoryCommandTrace.cs" />
+    <Compile Include="StorySaveFiles.cs" />
     <Compile Include="TeamBattleSkip.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <Reference Include="YamlDotNet">
+      <HintPath>artifacts/LOMSaveProbe/YamlDotNet.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
     <Reference Include="0Harmony">
       <HintPath>$(GameDir)/BepInEx/core/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="AK.Wwise.Unity.API">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/AK.Wwise.Unity.API.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="BepInEx.Core">

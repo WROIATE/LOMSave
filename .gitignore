@@ -1,3 +1,24 @@
 /bin
 /obj
 /.vs
+
+# Local agent state, experiments and rollback copies
+/.agents/
+/.codex/
+/PROBE.md
+/artifacts/backup/
+/artifacts/LOMSaveProbe/CodeNames.ContextReview.json
+/artifacts/LOMSaveProbe/LOMSaveProbe.CodeNames.Sources.yaml
+
+# Build caches and player data
+__pycache__/
+*.pyc
+*.pdb
+*.user
+*.suo
+*.dat
+*.lomsaveprobe.json
+*.note.txt
+*.jsonl
+*.log
+*.tmp

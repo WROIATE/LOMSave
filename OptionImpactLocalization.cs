@@ -9,7 +9,7 @@ namespace LOMSave.Probe
         internal static string GameStat(string key)
         {
             GameStatType type;
-            if (!EnumUtils.TryParseByStringValue(key, out type))
+            if (!EnumUtils.TryParseByStringValue(key, out type) && !Enum.TryParse(key, out type))
             {
                 return Simplified(key);
             }
@@ -41,7 +41,7 @@ namespace LOMSave.Probe
                 : Simplified(key);
         }
 
-        private static string Simplified(string value)
+        internal static string Simplified(string value)
         {
             return value
                 .Replace("體", "体").Replace("內", "内").Replace("輕", "轻")
@@ -59,7 +59,14 @@ namespace LOMSave.Probe
                 .Replace("遠", "远").Replace("宮", "宫").Replace("韞", "韫")
                 .Replace("蘭", "兰").Replace("螢", "萤").Replace("壯", "壮")
                 .Replace("趙", "赵").Replace("車", "车").Replace("軒", "轩")
-                .Replace("塵", "尘").Replace("靈", "灵").Replace("雲", "云");
+                .Replace("塵", "尘").Replace("靈", "灵").Replace("雲", "云")
+                .Replace("動", "动").Replace("兩", "两").Replace("敗", "败")
+                .Replace("買", "买").Replace("賣", "卖").Replace("發", "发")
+                .Replace("採", "采").Replace("氣", "气").Replace("練", "练")
+                .Replace("觸", "触").Replace("條", "条").Replace("當", "当")
+                .Replace("開", "开").Replace("關", "关").Replace("劇", "剧")
+                .Replace("溫", "温").Replace("義", "义").Replace("鋪", "铺")
+                .Replace("請", "请").Replace("進", "进");
         }
     }
 }

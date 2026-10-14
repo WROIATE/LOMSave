@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.16.3";
+        public const string PluginVersion = "0.19.3";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -57,12 +57,19 @@ namespace LOMSave.Probe
 
             try
             {
+                CodeNameMapping.Initialize();
                 var harmony = new Harmony(PluginGuid);
                 harmony.PatchAll(typeof(ActionAutoSave));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
+                harmony.PatchAll(typeof(SaveNotes));
+                harmony.PatchAll(typeof(ReplayAudio));
+                harmony.PatchAll(typeof(ReplayInput));
                 harmony.PatchAll(typeof(ProbePatches));
                 harmony.PatchAll(typeof(DiceRollTrace));
                 harmony.PatchAll(typeof(OptionImpactPreview));
+                harmony.PatchAll(typeof(PreviewInteraction));
+                harmony.PatchAll(typeof(EventInspector));
+                harmony.PatchAll(typeof(CheckpointRecall));
                 harmony.PatchAll(typeof(TeamBattleSkip));
                 InstallStoryViewPatch(harmony);
                 WriteEvent("patches_installed", new { });
@@ -121,12 +128,15 @@ namespace LOMSave.Probe
 
         private void Update()
         {
+            PreviewInteraction.Update();
+            CodeNameMapping.Update();
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 CaptureCurrentState("manual_f10");
             }
             TryRestartAtStoryBeginning();
             ReplayRuntime.Update();
+            CheckpointToast.Update();
             TryRestorePendingState();
         }
 
@@ -235,22 +245,29 @@ namespace LOMSave.Probe
             WriteEvent("story_view_changed", new { view });
         }
 
-        internal static void SaveSlotState(SaveSystem saveSystem, string slot)
+        internal static void SaveSlotState(string saveFile, GameSave gameSave, string saveFileHash)
         {
+            var file = saveFile + ".lomsaveprobe.json";
             try
             {
-                var currentScene = PlayerStatManagerData.Instance.CurrentScene;
+                var currentScene = gameSave.CurrentScene;
+                var script = string.IsNullOrEmpty(gameSave.CurrentStoryScript) ? gameSave.StartStoryScript : gameSave.CurrentStoryScript;
+                var command = StoryCommandTrace.Current;
                 if (!string.Equals(
                         currentScene,
                         "Story",
-                        StringComparison.Ordinal))
+                        StringComparison.Ordinal)
+                    || command == null || !string.Equals(command.Script, script, StringComparison.Ordinal))
                 {
-                    DeleteSlotState(saveSystem, slot);
+                    // A new native story-start save must not inherit the previous
+                    // script's UI/checkpoint; free/battle overwrites clear it too.
+                    if (File.Exists(file)) File.Delete(file);
                     WriteEvent("slot_state_save_skipped", new
                     {
-                        slot,
+                        saveFile,
                         currentScene,
-                        reason = "non_story_scene"
+                        script,
+                        reason = currentScene != "Story" ? "non_story_scene" : "matching_checkpoint_missing"
                     });
                     return;
                 }
@@ -260,22 +277,24 @@ namespace LOMSave.Probe
                 CaptureAudio(out music, out envSound);
                 var state = new ProbeSaveState
                 {
-                    Version = 9,
+                    Version = StorySaveFiles.StateVersion,
+                    SaveTimeTick = gameSave.TimeTick,
+                    SaveFileHash = saveFileHash,
                     View = _currentView,
                     Music = music,
                     EnvSound = envSound,
                     Portraits = CapturePortraits(),
-                    Command = StoryCommandTrace.Current,
+                    Command = command,
                     ChoiceHistory = StoryCommandTrace.CaptureChoiceHistory(),
                     StoryBeginningSave = _storyBeginningSave == null
                         ? null
                         : (JObject)_storyBeginningSave.DeepClone()
                 };
-                var file = GetSlotStateFile(saveSystem, slot);
                 File.WriteAllText(file, JsonConvert.SerializeObject(state), Encoding.UTF8);
                 WriteEvent("slot_state_saved", new
                 {
-                    slot,
+                    saveFile,
+                    state.SaveTimeTick,
                     state.View,
                     state.Music,
                     state.EnvSound,
@@ -287,7 +306,7 @@ namespace LOMSave.Probe
             }
             catch (Exception exception)
             {
-                WriteError("slot_state_save_failed", exception, new { slot });
+                WriteError("slot_state_save_failed", exception, new { saveFile });
             }
         }
 
@@ -316,8 +335,9 @@ namespace LOMSave.Probe
         internal static void LoadSlotState(
             SaveSystem saveSystem,
             string slot,
-            string currentScene)
+            GameSave gameSave)
         {
+            var currentScene = gameSave == null ? null : gameSave.CurrentScene;
             _pendingState = null;
             _canRestorePendingState = false;
             StoryCommandTrace.ConfigureReplay(null);
@@ -346,6 +366,18 @@ namespace LOMSave.Probe
 
                 var state = JsonConvert.DeserializeObject<ProbeSaveState>(
                     File.ReadAllText(file, Encoding.UTF8));
+                if (state == null) return;
+                var script = string.IsNullOrEmpty(gameSave.CurrentStoryScript) ? gameSave.StartStoryScript : gameSave.CurrentStoryScript;
+                var mismatch = StorySaveFiles.Mismatch(state.Version, state.SaveTimeTick, gameSave.TimeTick,
+                    state.SaveFileHash, state.Version >= StorySaveFiles.StateVersion
+                        ? StorySaveFiles.Hash(file.Substring(0, file.Length - ".lomsaveprobe.json".Length)) : null,
+                    state.Command == null ? null : state.Command.Script, script);
+                if (mismatch != null)
+                {
+                    WriteEvent("slot_state_rejected", new { slot, file, reason = mismatch, script,
+                        checkpointScript = state.Command == null ? null : state.Command.Script });
+                    return;
+                }
                 if (state != null && state.Version < 6 && state.Portraits != null)
                 {
                     WriteEvent("legacy_portraits_discarded", new
@@ -361,9 +393,16 @@ namespace LOMSave.Probe
                 StoryCommandTrace.ConfigureReplay(
                     state == null ? null : state.Command,
                     state == null ? null : state.ChoiceHistory);
+                if (state.Command != null && !StoryCommandTrace.IsReplayPending)
+                {
+                    _pendingState = null;
+                    WriteEvent("slot_state_rejected", new { slot, file, reason = "unsupported_checkpoint" });
+                    return;
+                }
                 WriteEvent("slot_state_loaded", new
                 {
                     slot,
+                    file,
                     version = state == null ? 0 : state.Version,
                     view = state == null ? null : state.View,
                     music = state == null ? null : state.Music,
@@ -382,6 +421,7 @@ namespace LOMSave.Probe
             }
             catch (Exception exception)
             {
+                _pendingState = null;
                 StoryCommandTrace.ConfigureReplay(null);
                 WriteError("slot_state_load_failed", exception, new { slot });
             }
@@ -812,6 +852,10 @@ namespace LOMSave.Probe
                     return;
                 }
 
+                // Clear replay audio first, including ambient tracks when the
+                // saved scene intentionally had no music or environment sound.
+                AkSoundEngine.StopAll();
+                soundManager.StopMusic();
                 if (!string.IsNullOrEmpty(state.Music))
                 {
                     soundManager.PlayMusic(state.Music);
@@ -867,6 +911,8 @@ namespace LOMSave.Probe
         private sealed class ProbeSaveState
         {
             public int Version;
+            public long SaveTimeTick;
+            public string SaveFileHash;
             public string View;
             public string Music;
             public string EnvSound;
@@ -952,7 +998,60 @@ namespace LOMSave.Probe
         private static void BeforeSaveGameData(SaveSystem __instance, string slot)
         {
             LOMSaveProbePlugin.CaptureCurrentState("before_manual_save:" + slot);
-            LOMSaveProbePlugin.SaveSlotState(__instance, slot);
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(SaveSystem), "ExecuteSaveData", typeof(string), typeof(object))]
+        private static void BeforeSaveFile(string __0, object __1, out string __state)
+        {
+            __state = null;
+            if (!(__1 is GameSave) && !(__1 is AutoGameSave)) return;
+            try { __state = StorySaveFiles.Hash(__0); }
+            catch (Exception e) { LOMSaveProbePlugin.WriteError("slot_state_save_stamp_failed", e, new { file = __0 }); }
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(SaveSystem), "ExecuteSaveData", typeof(string), typeof(object))]
+        private static void AfterSaveFile(string __0, object __1, string __state)
+        {
+            if (__state == null || ReplayRuntime.IsRestoring || StoryCommandTrace.IsReplayPending) return;
+            try
+            {
+                var gameSave = __1 as GameSave ?? (__1 as AutoGameSave)?.GameSave;
+                if (gameSave == null) return;
+                var committedHash = StorySaveFiles.CommittedHash(__0, __state);
+                if (committedHash == null)
+                {
+                    LOMSaveProbePlugin.WriteEvent("slot_state_save_skipped", new { saveFile = __0, reason = "save_not_committed" });
+                    return;
+                }
+                LOMSaveProbePlugin.SaveSlotState(__0, gameSave, committedHash);
+            }
+            catch (Exception e) { LOMSaveProbePlugin.WriteError("slot_state_save_failed", e, new { saveFile = __0 }); }
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(SaveSystem), "AutoSaveData", typeof(string))]
+        private static bool BeforeAutoSaveData()
+        { return !ReplayRuntime.IsRestoring && !StoryCommandTrace.IsReplayPending; }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(SaveSystem), "AutoLoadGameData", typeof(string))]
+        private static void BeforeAutoLoadGameData(string slot, out string __state)
+        { __state = SaveSlotContext.Begin(slot); }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(SaveSystem), "LoadGameData")]
+        private static void BeforeLoadGameData(SaveSystem __instance, out string __state)
+        { __state = SaveSlotContext.Begin(__instance.CurrentSlot); }
+
+        [HarmonyFinalizer, HarmonyPatch(typeof(SaveSystem), "AutoLoadGameData", typeof(string))]
+        private static Exception AfterAutoLoadGameData(Exception __exception, string __state)
+        {
+            SaveSlotContext.End(__state);
+            return __exception;
+        }
+
+        [HarmonyFinalizer, HarmonyPatch(typeof(SaveSystem), "LoadGameData")]
+        private static Exception AfterLoadGameData(Exception __exception, string __state)
+        {
+            SaveSlotContext.End(__state);
+            return __exception;
         }
 
         [HarmonyPrefix]
@@ -975,10 +1074,11 @@ namespace LOMSave.Probe
             ReplayStateValidator.Prepare(gameSave);
             LOMSaveProbePlugin.LoadSlotState(
                 __instance,
-                __instance.CurrentSlot,
-                gameSave == null ? null : gameSave.CurrentScene);
+                SaveSlotContext.Resolve(__instance.CurrentSlot),
+                gameSave);
             if (gameSave != null
                 && gameSave.CurrentScene == "Story"
+                && StoryCommandTrace.IsReplayPending
                 && !string.IsNullOrEmpty(gameSave.CurrentStoryScript))
             {
                 var originalStartScript = gameSave.StartStoryScript;

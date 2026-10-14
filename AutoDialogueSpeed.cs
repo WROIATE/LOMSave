@@ -5,6 +5,7 @@ using Mortal.Story;
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LOMSave.Probe
@@ -17,17 +18,15 @@ namespace LOMSave.Probe
             "LOMSave_AutoDialogueDynamicDelay";
         private const string DynamicControlName =
             "LOMSaveAutoDialogueDynamicDelay";
-        private const float DefaultDelaySeconds = 8f;
-        private const float BaseDelaySeconds = 0.8f;
-        private const float MinimumDelaySeconds = 1.2f;
-        private const float MaximumDelaySeconds = 15f;
-        private const float CharactersPerSecond = 7f;
         private const float MinimumSpeed = 0.5f;
         private const float MaximumSpeed = 5f;
-        private const float TopRowExpansion = 0.6f;
-        private const float BottomRowInset = 0.15f;
-        private const int MaximumDialogueCaptureFrames = 10;
+        private const string DialogueSectionName = "LOMSaveDialogueSettings";
+        private const string CheckpointControlName = "LOMSaveRealtimeCheckpoints";
+        private static SystemSettingPanel _settingsPanel;
+        internal static bool SettingsVisible { get { return _settingsPanel != null && _settingsPanel.gameObject.activeInHierarchy; } }
 
+
+        private static SayDialog _latestDialogue;
         private static string _latestDialogueText;
         private static int _latestDialogueVersion;
 
@@ -37,9 +36,7 @@ namespace LOMSave.Probe
         {
             try
             {
-                var masterSlider = Traverse.Create(__instance)
-                    .Field("_masterVolume")
-                    .GetValue<Slider>();
+                _settingsPanel = __instance;
                 var soundSlider = Traverse.Create(__instance)
                     .Field("_soundVolume")
                     .GetValue<Slider>();
@@ -49,14 +46,17 @@ namespace LOMSave.Probe
                 var toggleTemplate = Traverse.Create(__instance)
                     .Field("_skipUnreadStory")
                     .GetValue<Toggle>();
-                var masterRow = FindSettingRow(masterSlider);
                 var musicRow = FindSettingRow(musicSlider);
                 var soundRow = FindSettingRow(soundSlider);
+                if (soundRow == null || soundRow.parent == null
+                    || soundRow.parent.parent == null) return;
+                var section = CreateDialogueSection(soundRow.parent);
                 var verticalRowStep = GetVerticalRowStep(
                     musicRow,
                     soundRow);
                 var speedRow = AddSpeedControl(
                     soundSlider,
+                    section,
                     verticalRowStep);
                 if (speedRow == null)
                 {
@@ -70,26 +70,20 @@ namespace LOMSave.Probe
                     speedRow,
                     speedSlider,
                     verticalRowStep);
-                CompactSettingRows(
-                    soundRow == null ? null : soundRow.parent,
-                    new[]
-                    {
-                        masterRow,
-                        musicRow,
-                        soundRow,
-                        speedRow,
-                        dynamicRow
-                    },
-                    new Selectable[]
-                    {
-                        masterSlider,
-                        musicSlider,
-                        soundSlider,
-                        speedSlider,
-                        dynamicRow == null
-                            ? null
-                            : dynamicRow.GetComponentInChildren<Toggle>(true)
-                    });
+                var sectionRect = (RectTransform)section;
+                MoveControlToY(section, speedRow, speedSlider,
+                    sectionRect.rect.yMax - 135f);
+                if (dynamicRow != null)
+                    MoveControlToY(section, dynamicRow,
+                        dynamicRow.GetComponentInChildren<Toggle>(true),
+                        sectionRect.rect.yMax - 205f);
+                var checkpointRow = AddCheckpointControl(toggleTemplate, section,
+                    dynamicRow == null ? (Selectable)speedSlider : dynamicRow.GetComponentInChildren<Toggle>(true));
+                if (checkpointRow != null)
+                    MoveControlToY(section, checkpointRow,
+                        checkpointRow.GetComponentInChildren<Toggle>(true),
+                        sectionRect.rect.yMax - 275f);
+                AddSettingsScroll(section, soundRow.parent);
             }
             catch (Exception exception)
             {
@@ -100,25 +94,32 @@ namespace LOMSave.Probe
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(SayDialog), nameof(SayDialog.Say))]
-        private static void CaptureDialogueText(string text)
+        [HarmonyPatch(typeof(Writer), nameof(Writer.Write))]
+        private static void CaptureDialogueText(Writer __instance, string content)
         {
-            _latestDialogueText = text;
+            // Lua calls DoSay directly; Say alone misses the dialogue currently on screen.
+            var dialog = __instance.GetComponent<SayDialog>();
+            if (dialog == null) return;
+            _latestDialogue = dialog;
+            _latestDialogueText = content;
             _latestDialogueVersion++;
+            LOMSaveProbePlugin.WriteEvent("auto_dialogue_captured", new
+            { version = _latestDialogueVersion, text = content });
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(StoryManager), "StartAutoDialogue")]
-        private static void ApplyDelay(ref IEnumerator __result)
+        private static void ApplyDelay(StoryManager __instance, ref IEnumerator __result)
         {
             if (__result != null)
             {
-                __result = ReplaceAutoWait(__result);
+                __result = RunAutoDialogue(__instance);
             }
         }
 
         private static Transform AddSpeedControl(
             Slider soundSlider,
+            Transform section,
             float verticalRowStep)
         {
             var template = FindSettingRow(soundSlider);
@@ -130,7 +131,7 @@ namespace LOMSave.Probe
                 return null;
             }
 
-            var existing = template.parent.Find(SpeedControlName);
+            var existing = section.Find(SpeedControlName);
             if (existing != null)
             {
                 var existingSlider =
@@ -157,10 +158,10 @@ namespace LOMSave.Probe
 
             var row = UnityEngine.Object.Instantiate(
                 template.gameObject,
-                template.parent,
+                section,
                 false);
             row.name = SpeedControlName;
-            row.transform.SetSiblingIndex(template.GetSiblingIndex() + 1);
+            row.transform.SetAsLastSibling();
             SetRowY(
                 row.transform,
                 template.localPosition.y + verticalRowStep);
@@ -194,11 +195,16 @@ namespace LOMSave.Probe
             slider.onValueChanged.AddListener(delegate(float value)
             {
                 var speed = Mathf.Clamp(
-                    value,
+                    Mathf.Round(value * 10f) / 10f,
                     MinimumSpeed,
                     MaximumSpeed);
                 PlayerPrefs.SetFloat(SpeedPlayerPrefsKey, speed);
+                slider.SetValueWithoutNotify(speed);
+                UpdateSpeedFeedback(slider);
+                PlayerPrefs.Save();
+                LOMSaveProbePlugin.WriteEvent("auto_dialogue_speed_changed", new { speed });
             });
+            UpdateSpeedFeedback(slider);
 
             LOMSaveProbePlugin.WriteEvent(
                 "auto_dialogue_speed_control_added",
@@ -293,6 +299,8 @@ namespace LOMSave.Probe
                 PlayerPrefs.SetInt(
                     DynamicPlayerPrefsKey,
                     enabled ? 1 : 0);
+                UpdateSpeedFeedback(speedSlider);
+                PlayerPrefs.Save();
             });
 
             LOMSaveProbePlugin.WriteEvent(
@@ -308,126 +316,67 @@ namespace LOMSave.Probe
             return row.transform;
         }
 
-        private static IEnumerator ReplaceAutoWait(IEnumerator original)
+        private static Transform AddCheckpointControl(Toggle templateToggle, Transform section, Selectable previous)
         {
-            while (true)
-            {
-                var previousDialogueVersion = _latestDialogueVersion;
-                if (!original.MoveNext())
-                {
-                    yield break;
-                }
-
-                if (!(original.Current is WaitForSeconds))
-                {
-                    yield return original.Current;
-                    continue;
-                }
-
-                if (!LoadDynamicDelayEnabled())
-                {
-                    yield return new WaitForSeconds(
-                        DefaultDelaySeconds / LoadSpeed());
-                    continue;
-                }
-
-                for (var frame = 0;
-                    frame < MaximumDialogueCaptureFrames
-                        && _latestDialogueVersion == previousDialogueVersion;
-                    frame++)
-                {
-                    yield return null;
-                }
-
-                yield return new WaitForSeconds(
-                    CalculateDynamicDelay(
-                        _latestDialogueText,
-                        LoadSpeed()));
-            }
+            var existing = section.Find(CheckpointControlName);
+            if (existing != null) return existing;
+            var template = FindSettingRow(templateToggle);
+            if (template == null) return null;
+            var row = UnityEngine.Object.Instantiate(template.gameObject, section, false);
+            row.name = CheckpointControlName;
+            var toggle = row.GetComponentInChildren<Toggle>(true);
+            var label = FindToggleRowLabel(row.transform);
+            if (toggle == null || label == null) { UnityEngine.Object.Destroy(row); return null; }
+            HideExtraSelectables(row.transform, toggle);
+            DisableExtraRaycastTargets(row.transform, toggle);
+            RestrictToggleRaycastTargets(toggle);
+            toggle.onValueChanged = new Toggle.ToggleEvent();
+            toggle.group = null;
+            toggle.interactable = true;
+            toggle.SetIsOnWithoutNotify(CheckpointToast.Enabled);
+            SetModLabel(label, SystemSettings.Language == 1 ? "实时剧情判定提示" : "即時劇情判定提示");
+            if (previous != null) InsertNavigationAfter(previous, toggle);
+            toggle.onValueChanged.AddListener(CheckpointToast.SetEnabled);
+            LOMSaveProbePlugin.WriteEvent("checkpoint_toast_control_added", new { enabled = toggle.isOn });
+            return row.transform;
         }
 
-        private static float CalculateDynamicDelay(string text, float speed)
+        private static IEnumerator RunAutoDialogue(StoryManager manager)
         {
-            if (string.IsNullOrEmpty(text))
+            var autoField = AccessTools.Field(typeof(StoryManager), "_autoDialog");
+            var skipField = AccessTools.Field(typeof(StoryManager), "_skipDialog");
+            var pacer = new DialoguePacer();
+            while (manager != null)
             {
-                return DefaultDelaySeconds / speed;
-            }
-
-            var visibleCharacters = 0;
-            var punctuationPause = 0f;
-            var insideAngleTag = false;
-            var insideBraceTag = false;
-            foreach (var character in text)
-            {
-                if (character == '<')
+                var enabled = !manager.IsStoryPause && !ReplayRuntime.IsRestoring
+                    && !OptionImpactPreview.IsOpen && !SaveNotes.IsOpen && !EventInspectorPanel.IsOpen;
+                var skip = enabled && (bool)skipField.GetValue(manager);
+                var automatic = enabled && !skip && (bool)autoField.GetValue(manager);
+                var dialog = _latestDialogue;
+                var writer = dialog == null ? null : dialog.GetComponent<Writer>();
+                var input = dialog == null ? null : dialog.GetComponent<DialogInput>();
+                var ready = dialog != null && dialog.gameObject.activeInHierarchy
+                    && writer != null && writer.IsWaitingForInput && !writer.HasWordsRemaining
+                    && input != null && input.isActiveAndEnabled;
+                var delay = DialogueTiming.Delay(_latestDialogueText, LoadSpeed(), LoadDynamicDelayEnabled());
+                if (pacer.Tick(_latestDialogueVersion, automatic, ready, Time.unscaledDeltaTime, delay))
                 {
-                    insideAngleTag = true;
-                    continue;
+                    input.SetNextLineFlag();
+                    LOMSaveProbePlugin.WriteEvent("auto_dialogue_advanced", new
+                    {
+                        version = _latestDialogueVersion,
+                        text = _latestDialogueText,
+                        delaySeconds = delay,
+                        speed = LoadSpeed()
+                    });
                 }
-                if (character == '>' && insideAngleTag)
+                // Preserve native fast-forward behavior independently of auto pacing.
+                if (skip)
                 {
-                    insideAngleTag = false;
-                    continue;
+                    var active = SayDialog.GetSayDialog();
+                    if (active != null) active.GetComponent<DialogInput>().SetNextLineFlag();
                 }
-                if (character == '{')
-                {
-                    insideBraceTag = true;
-                    continue;
-                }
-                if (character == '}' && insideBraceTag)
-                {
-                    insideBraceTag = false;
-                    continue;
-                }
-                if (insideAngleTag
-                    || insideBraceTag
-                    || char.IsWhiteSpace(character)
-                    || char.IsControl(character))
-                {
-                    continue;
-                }
-
-                visibleCharacters++;
-                punctuationPause += GetPunctuationPause(character);
-            }
-
-            if (visibleCharacters == 0)
-            {
-                return DefaultDelaySeconds / speed;
-            }
-
-            var readingSeconds =
-                visibleCharacters / CharactersPerSecond
-                + punctuationPause;
-            return Mathf.Clamp(
-                BaseDelaySeconds + readingSeconds / speed,
-                MinimumDelaySeconds,
-                MaximumDelaySeconds);
-        }
-
-        private static float GetPunctuationPause(char character)
-        {
-            switch (character)
-            {
-                case ',':
-                case '，':
-                case '、':
-                case ';':
-                case '；':
-                case ':':
-                case '：':
-                    return 0.2f;
-                case '.':
-                case '。':
-                case '!':
-                case '！':
-                case '?':
-                case '？':
-                    return 0.4f;
-                case '…':
-                    return 0.3f;
-                default:
-                    return 0f;
+                yield return null;
             }
         }
 
@@ -502,85 +451,144 @@ namespace LOMSave.Probe
             return -Mathf.Max(rowHeight, 70f);
         }
 
-        private static void CompactSettingRows(
-            Transform referenceParent,
-            Transform[] rows,
-            Selectable[] controls)
+        private static Transform CreateDialogueSection(Transform soundSection)
         {
-            if (referenceParent == null
-                || rows == null
-                || controls == null
-                || rows.Length != 5
-                || controls.Length != 5)
+            var existing = soundSection.parent.Find(DialogueSectionName);
+            if (existing != null) return existing;
+            var template = (RectTransform)soundSection;
+            var section = new GameObject(DialogueSectionName, typeof(RectTransform))
+                .GetComponent<RectTransform>();
+            section.SetParent(template.parent, false);
+            section.anchorMin = template.anchorMin;
+            section.anchorMax = template.anchorMax;
+            section.pivot = template.pivot;
+            section.sizeDelta = new Vector2(template.sizeDelta.x, 350f);
+            section.anchoredPosition = template.anchoredPosition + Vector2.down * 350f;
+            section.localScale = template.localScale;
+
+            // Copy only the native heading and its decorative rules, not the
+            // sound section's controls or event listeners.
+            foreach (Transform child in soundSection)
             {
-                LOMSaveProbePlugin.WriteEvent(
-                    "auto_dialogue_settings_layout_missing",
-                    new { reason = "setting_rows_invalid" });
-                return;
+                if (child.GetComponentInChildren<Text>(true) == null
+                    || child.GetComponentInChildren<Selectable>(true) != null)
+                    continue;
+                var heading = UnityEngine.Object.Instantiate(child.gameObject, section, false);
+                heading.name = "Title";
+                foreach (var label in heading.GetComponentsInChildren<Text>(true))
+                    SetModLabel(label, GetDialogueSectionLabel());
+                break;
             }
-
-            for (var index = 0; index < rows.Length; index++)
-            {
-                if (rows[index] == null || controls[index] == null)
-                {
-                    LOMSaveProbePlugin.WriteEvent(
-                        "auto_dialogue_settings_layout_missing",
-                        new
-                        {
-                            reason = "setting_control_missing",
-                            index
-                        });
-                    return;
-                }
-            }
-
-            var masterPositionY = GetControlY(
-                referenceParent,
-                controls[0]);
-            var musicPositionY = GetControlY(
-                referenceParent,
-                controls[1]);
-            var soundPositionY = GetControlY(
-                referenceParent,
-                controls[2]);
-            var originalStep = soundPositionY - musicPositionY;
-            var firstPositionY =
-                masterPositionY
-                - originalStep * TopRowExpansion;
-            var lastPositionY =
-                soundPositionY
-                - originalStep * BottomRowInset;
-            var compactStep =
-                (lastPositionY - firstPositionY) / 4f;
-
-            for (var index = 0; index < rows.Length; index++)
-            {
-                MoveControlToY(
-                    referenceParent,
-                    rows[index],
-                    controls[index],
-                    firstPositionY + compactStep * index);
-            }
-
-            LOMSaveProbePlugin.WriteEvent(
-                "auto_dialogue_settings_layout_compacted",
-                new
-                {
-                    originalStep,
-                    compactStep,
-                    firstPositionY,
-                    lastPositionY = GetControlY(
-                        referenceParent,
-                        controls[4])
-                });
+            return section;
         }
 
-        private static float GetControlY(
-            Transform referenceParent,
-            Selectable control)
+        private static void AddSettingsScroll(Transform dialogueSection, Transform soundSection)
         {
-            return referenceParent.InverseTransformPoint(
-                control.transform.position).y;
+            var panel = soundSection.parent as RectTransform;
+            if (panel == null || panel.Find("LOMSaveSettingsScroll") != null) return;
+            var sections = new System.Collections.Generic.List<RectTransform>();
+            foreach (Transform child in panel)
+            {
+                // The native settings column consists of Game, Graphics, Sounds
+                // and the legacy Language group. Buttons sit in a separate column.
+                if (child == dialogueSection || child == soundSection
+                    || child.name == "Game" || child.name == "Graphics"
+                    || child.name == "Language")
+                    sections.Add((RectTransform)child);
+            }
+            var scrollRoot = new GameObject("LOMSaveSettingsScroll", typeof(RectTransform),
+                typeof(ScrollRect)).GetComponent<RectTransform>();
+            scrollRoot.SetParent(panel, false);
+            scrollRoot.anchorMin = new Vector2(0.5f, 0f);
+            scrollRoot.anchorMax = new Vector2(0.5f, 1f);
+            scrollRoot.pivot = new Vector2(0.5f, 1f);
+            scrollRoot.sizeDelta = new Vector2(940f, 0f);
+            scrollRoot.anchoredPosition = new Vector2(45f, 0f);
+
+            var viewport = new GameObject("Viewport", typeof(RectTransform),
+                typeof(Image), typeof(RectMask2D)).GetComponent<RectTransform>();
+            viewport.SetParent(scrollRoot, false);
+            viewport.anchorMin = Vector2.zero;
+            viewport.anchorMax = Vector2.one;
+            viewport.offsetMin = Vector2.zero;
+            viewport.offsetMax = new Vector2(-20f, 0f);
+            viewport.GetComponent<Image>().color = Color.clear;
+            var content = new GameObject("Content", typeof(RectTransform))
+                .GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = Vector2.one;
+            content.pivot = new Vector2(0.5f, 1f);
+            content.sizeDelta = new Vector2(0f, 1430f);
+            content.anchoredPosition = Vector2.zero;
+            foreach (var section in sections)
+            {
+                var worldPosition = section.position;
+                section.SetParent(content, true);
+                section.position = worldPosition;
+            }
+            var scroll = scrollRoot.GetComponent<ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 45f;
+            scroll.verticalScrollbar = CreateScrollbar(scrollRoot);
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+            scroll.verticalNormalizedPosition = 1f;
+            scrollRoot.gameObject.AddComponent<SettingsScrollSelection>();
+            LOMSaveProbePlugin.WriteEvent("auto_dialogue_section_added",
+                new { section = GetDialogueSectionLabel(), scrollable = true });
+        }
+
+        private static Scrollbar CreateScrollbar(RectTransform parent)
+        {
+            var rect = new GameObject("Scrollbar", typeof(RectTransform), typeof(Image),
+                typeof(Scrollbar)).GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(1f, 0f);
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.sizeDelta = new Vector2(8f, -40f);
+            rect.anchoredPosition = new Vector2(-4f, 0f);
+            rect.GetComponent<Image>().color = new Color(0.8f, 0.7f, 0.5f, 0.2f);
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image))
+                .GetComponent<RectTransform>();
+            handle.SetParent(rect, false);
+            handle.anchorMin = Vector2.zero;
+            handle.anchorMax = Vector2.one;
+            handle.sizeDelta = Vector2.zero;
+            var image = handle.GetComponent<Image>();
+            image.color = new Color(0.85f, 0.73f, 0.5f, 0.85f);
+            var scrollbar = rect.GetComponent<Scrollbar>();
+            scrollbar.handleRect = handle;
+            scrollbar.targetGraphic = image;
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            return scrollbar;
+        }
+
+        private sealed class SettingsScrollSelection : MonoBehaviour
+        {
+            private GameObject _lastSelection;
+            private void Update()
+            {
+                var selected = EventSystem.current == null
+                    ? null : EventSystem.current.currentSelectedGameObject;
+                if (selected == _lastSelection) return;
+                _lastSelection = selected;
+                var scroll = GetComponent<ScrollRect>();
+                if (selected == null || !selected.transform.IsChildOf(scroll.content)) return;
+                var rect = selected.transform as RectTransform;
+                if (rect == null) return;
+                var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
+                    scroll.viewport, rect);
+                var viewport = scroll.viewport.rect;
+                var offset = bounds.min.y < viewport.yMin
+                    ? viewport.yMin - bounds.min.y
+                    : bounds.max.y > viewport.yMax ? viewport.yMax - bounds.max.y : 0f;
+                scroll.content.anchoredPosition += Vector2.up * offset;
+            }
         }
 
         private static void MoveControlToY(
@@ -771,6 +779,55 @@ namespace LOMSave.Probe
                 MaximumSpeed);
         }
 
+        private static void UpdateSpeedFeedback(Slider slider)
+        {
+            var template = FindSliderRowLabel(slider.transform.parent, slider);
+            if (template == null) return;
+            var value = slider.transform.Find("LOMSaveSpeedValue");
+            if (value == null)
+            {
+                var obj = new GameObject("LOMSaveSpeedValue", typeof(RectTransform), typeof(Text));
+                obj.transform.SetParent(slider.transform, false);
+                value = obj.transform;
+                var rect = (RectTransform)value;
+                rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+                rect.pivot = new Vector2(0f, 0.5f);
+                rect.anchoredPosition = new Vector2(18f, 0f);
+                rect.sizeDelta = new Vector2(115f, 36f);
+                var label = value.GetComponent<Text>();
+                label.font = template.font;
+                label.fontSize = 26;
+                label.alignment = TextAnchor.MiddleLeft;
+                label.verticalOverflow = VerticalWrapMode.Overflow;
+                label.color = new Color(0.94f, 0.77f, 0.48f);
+                label.raycastTarget = false;
+            }
+            value.GetComponent<Text>().text = LoadSpeed().ToString("0.0") + "×";
+            var sample = slider.transform.Find("LOMSaveSpeedSample");
+            if (sample == null)
+            {
+                var obj = new GameObject("LOMSaveSpeedSample", typeof(RectTransform), typeof(Text));
+                obj.transform.SetParent(slider.transform, false);
+                sample = obj.transform;
+                var rect = (RectTransform)sample;
+                rect.anchorMin = new Vector2(0f, 0f);
+                rect.anchorMax = new Vector2(1f, 0f);
+                rect.pivot = new Vector2(0.5f, 1f);
+                rect.anchoredPosition = new Vector2(0f, -6f);
+                rect.sizeDelta = new Vector2(0f, 27f);
+                var label = sample.GetComponent<Text>();
+                label.font = template.font;
+                label.fontSize = 18;
+                label.alignment = TextAnchor.MiddleLeft;
+                label.color = new Color(0.75f, 0.73f, 0.68f);
+                label.raycastTarget = false;
+            }
+            var dynamic = LoadDynamicDelayEnabled();
+            var seconds = DialogueTiming.Delay(new string('字', 20), LoadSpeed(), dynamic);
+            sample.GetComponent<Text>().text = "右移更快 · " + (dynamic ? "20 字阅读计时 " : "每句阅读计时 ")
+                + seconds.ToString("0.0") + " 秒";
+        }
+
         private static bool LoadDynamicDelayEnabled()
         {
             return PlayerPrefs.GetInt(DynamicPlayerPrefsKey, 1) != 0;
@@ -811,6 +868,16 @@ namespace LOMSave.Probe
             }
         }
 
+        private static string GetDialogueSectionLabel()
+        {
+            switch (SystemSettings.Language)
+            {
+                case 1: return "对话设定";
+                case 2: return "대화 설정";
+                default: return "對話設定";
+            }
+        }
+
         private static string GetDynamicDelayLabel()
         {
             switch (SystemSettings.Language)
@@ -841,6 +908,15 @@ namespace LOMSave.Probe
                 if (_slider == null
                     || _sliderRect == null
                     || !_slider.interactable)
+                {
+                    _dragging = false;
+                    return;
+                }
+
+                var scroll = GetComponentInParent<ScrollRect>();
+                if (scroll != null && scroll.viewport != null
+                    && !RectTransformUtility.RectangleContainsScreenPoint(
+                        scroll.viewport, Input.mousePosition, GetEventCamera()))
                 {
                     _dragging = false;
                     return;
