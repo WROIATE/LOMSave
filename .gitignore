@@ -18,7 +18,16 @@ __pycache__/
 *.suo
 *.dat
 *.lomsaveprobe.json
+*.lomsavecalendar.json
 *.note.txt
 *.jsonl
 *.log
 *.tmp
+
+# Superseded UI experiments and local verification fixtures
+/artifacts/verification/0.21.0/
+/artifacts/verification/0.21.1/
+/artifacts/verification/**/test-*.json
+/artifacts/verification/**/test-*.json.bak
+/artifacts/verification/**/*-fixture.json
+/artifacts/verification/**/*-il.txt

@@ -61,6 +61,33 @@ statmodifymanager.Player(""life"", -99, """", 1)
             Check(eventEntry.Count(x => x.Method == "PositionPool") == 1 && eventEntry[0].Arguments[0] == "Room", "Stop entry event discovery at the next decision");
             var eventBranches = LuaImpactScanner.ScanEntry("if flag then\ncheckpointmanager.Position(\"A\")\nelse\ncheckpointmanager.Position(\"B\")\nend", name => null);
             Check(eventBranches.Count == 2 && eventBranches.All(x => x.Conditional), "Keep mutually exclusive candidate pools conditional");
+            var equipment = LuaImpactScanner.ScanEntry(
+                "if condition then\nluamanager.SwapUpgradeItem(\"Future_Weapon\", math.max(1, level))\nend\nluamanager.ChangeScene(\"Pinball\", \"x\", \"Story\")\nstatmodifymanager.Player(\"money\", -99)", name => null);
+            Check(equipment.Count == 2 && equipment[0].Method == "SwapUpgradeItem"
+                && equipment[0].Conditional && equipment[0].Arguments[0] == "\"Future_Weapon\""
+                && equipment[0].Arguments[1] == "math.max(1, level)", "New equipment calls preserve conditions and unevaluated level expressions");
+            Check(equipment[1].Method == "ChangeScene" && equipment[1].Arguments[0] == "Pinball"
+                && !equipment[1].Conditional, "New minigame scene is visible and terminates the old script path");
+            var nextEquipment = LuaImpactScanner.ScanEntry("luamanager.SetNextScript(\"next\")",
+                name => "luamanager.SwapUpgradeItem(\"Armor_New\", -1)");
+            Check(nextEquipment.Count == 1 && nextEquipment[0].RouteDepth == 1
+                && nextEquipment[0].Method == "SwapUpgradeItem", "Equipment swaps participate in subsequent-script previews");
+            var choicesWithEquipment = LuaImpactScanner.Scan(
+                "local options = {}\noptions[1] = \"O_equip\"\noptions[2] = \"O_leave\"\nlocal answer = choose(options)\nif answer == 1 then\nluamanager.SwapUpgradeItem(\"Weapon\", 1)\nelseif answer == 2 then\nluamanager.ChangeScene(\"Free\")\nend", name => null);
+            Check(choicesWithEquipment["O_equip"].Any(x => x.Method == "SwapUpgradeItem")
+                && !choicesWithEquipment["O_leave"].Any(x => x.Method == "SwapUpgradeItem"), "Equipment effects stay with their chosen branch");
+            Check(OptionImpactText.Scene("Pinball") == "进入弹珠台"
+                && OptionImpactText.Scene("Combat") == "进入对决"
+                && OptionImpactText.Scene("Battle") == "进入混战", "Known activities have distinct scene labels");
+            Check(OptionImpactText.Scene("New_Minigame") == "进入场景“New_Minigame”", "Unknown future scenes preserve their ID instead of claiming a duel");
+            Check(new[] { "Free", "Story", "Title", "", null }.All(key => OptionImpactText.Scene(key) == null), "Routine transitions add no preview noise");
+            Check(OptionImpactText.Scene("GameOver") == "进入死亡结局"
+                && OptionImpactText.Scene("End") == "进入结局", "Ending transitions are visible before making a choice");
+            Check(OptionImpactText.UpgradeItem("测试武器", 2, 10) == "替换装备为“测试武器”（等级 2）", "Equipment preview shows the resolved name and target level");
+            Check(OptionImpactText.UpgradeItem("Unknown_Weapon", 99, 10).EndsWith("（等级 10）"), "Equipment target level follows the native upper bound");
+            Check(OptionImpactText.UpgradeItem("Weapon", -1, 10).EndsWith("（保留该装备升级进度）"), "Negative native levels retain the target equipment's progress");
+            Check(OptionImpactText.UpgradeItem("Unknown_Weapon", 2, null).Contains("Unknown_Weapon")
+                && OptionImpactText.UpgradeItem("Weapon", null, 10).EndsWith("（等级由剧情决定）"), "Unresolved metadata and dynamic levels are not fabricated");
             Check(!pacer.Tick(1, true, true, 0.5f, 2f), "Short line gets a reading interval");
             Check(pacer.Tick(1, true, true, 1.5f, 2f), "Short line advances on its own deadline");
             Check(!pacer.Tick(1, true, true, 10f, 2f), "Only one advance per displayed line");
@@ -119,6 +146,14 @@ statmodifymanager.Player(""life"", -99, """", 1)
                 Check(slot39["O_5_4_8_9_005"].Any(x => x.Method == "AddStory" && x.Arguments[0].Contains("008")), "Slot 39 selected record");
                 Check(!slot39["O_5_4_8_9_005"].Any(x => x.Method == "AddStory" && x.Arguments[0].Contains("Ch_5_4_8_9_011")), "Slot 39 excludes the abandoned branch");
                 Check(slot39["O_5_4_8_9_004"].Count(x => x.Method == "Player") >= 3, "Slot 39 losing option has all three immediate stat changes");
+                var brother4 = load("talk_brother4");
+                if (brother4 != null && brother4.Contains("\"Pinball\""))
+                    Check(LuaImpactScanner.Scan(brother4, load).Values.SelectMany(x => x)
+                        .Any(x => x.Method == "ChangeScene" && x.Arguments[0] == "Pinball"), "Current game: fourth brother's pinball option is discovered");
+                var newEquipmentStory = load("s2922_01");
+                if (newEquipmentStory != null)
+                    Check(LuaImpactScanner.ScanEntry(newEquipmentStory, load)
+                        .Any(x => x.Method == "SwapUpgradeItem" && x.Arguments[0] == "\"Melee_90\""), "Current game: equipment replacement is included in the option route");
             }
             var hints = new CheckpointNotificationBuffer();
             hints.Add("A", "hidden", false);

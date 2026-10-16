@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOMSave 0.22.3 滚轮回想检查</title>
+<style>body{max-width:1200px;margin:32px auto;padding:0 24px;font:17px/1.7 system-ui;background:#171611;color:#eee6d5}h1,h2,a{color:#e8c576}img{width:100%;height:auto}figure{margin:26px 0}code{overflow-wrap:anywhere}</style>
+<h1>LOMSave 0.22.3 滚轮回想检查</h1>
+<p>检查日期：2026-10-16；验证收尾：2026-10-17。游戏在重启时由 Steam 自动从 release_1.0.6000.2 更新至 release_1.0.6000.3。相关 StoryManager 方法的 IL 无变化；Unity 2020.3.49f1、BepInEx 6 Mono Windows x64，2560 × 1440。</p>
+<h2>结论与限制</h2>
+<p>用户报告整个窗口无响应，且只发生过一次。本次没有复现该卡死，原日志没有提供对应异常或调用栈，因此不能确认根因，也不能据此宣称偶发问题已彻底修复。</p>
+<p>旧快捷键在 Update 检测滚轮后直接激活原生回想窗口。激活过程涉及 ScrollRect、画布重建与暂停；同帧 EventSystem 仍可能把滚动事件发给刚激活的列表。0.22.3 对这一潜在输入时序冲突增加保护：只排队一次上滑请求，在后续无滚轮输入帧的 LateUpdate 再次检查场景、窗口、输入框、列表和读档状态，然后通过原生 Toggle 打开。未替换回想界面，也未删减历史记录。</p>
+<p>新增 recall_wheel_requested / recall_wheel_open_begin / recall_wheel_opened / recall_wheel_open_failed 日志，记录帧号、打开耗时和暂停状态，以便再次出现时定位。</p>
+<h2>验证</h2>
+<ul>
+<li>12 组自动回归共 381 项检查通过，其中滚轮逻辑 33 项；覆盖原生回调、不同帧打开、连续滚动、反向滚动、原生按钮先打开、场景切换、弹窗中断和打开异常。</li>
+<li>411 个原生引用、121 个 Harmony 目标、33 个反射成员检查通过。</li>
+<li>安装后的 0.22.3 实机：上滑正常打开，列表内再次上滑不会重复请求，关闭后可继续对话。日志记录请求帧 22726、打开帧 22727，打开调用 9.33 ms；之后记录到下一句“掌派人！”。</li>
+<li>临时诊断版使用此前游玩日志构造 1,000 条原生历史记录；原生界面按其 250 条上限排版约 26,824 字符，打开调用约 39 ms，没有复现卡死。此项是诊断版压力检查，不是最终版对卡死的修复证明。临时诊断与测试注入代码未包含在发布 DLL。</li>
+<li>测试前的 139 个文件均已恢复到原始哈希；仅恢复本次改变的 11 个自动存档与记录文件，测试后的文件另存备份。</li>
+</ul>
+<p><a href="regression.txt">自动回归输出</a> · <a href="save-restoration.json">存档校验</a> · <a href="release-verification.json">安装校验</a>。最终版和临时诊断版的原始运行日志保留在本地。</p>
+<figure><img src="wheel-open.png" alt="0.22.3 上滑后正常打开原生回想"><figcaption>上滑后打开回想，关闭按钮可见。图片为原始游戏截图。</figcaption></figure>
+<figure><img src="wheel-inside-recall.png" alt="回想内继续上滑保持正常"><figcaption>回想内继续上滑，打开请求数仍为 1，没有再次打开窗口。</figcaption></figure>
+</html>

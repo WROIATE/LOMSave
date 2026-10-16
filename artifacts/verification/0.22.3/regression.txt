@@ -1,0 +1,13 @@
+Action automatic save checks passed: 32
+27 save-source, commit and checkpoint binding assertions passed
+18 replay lifecycle assertions passed
+94 dialogue, preview and notification assertions passed
+42 building hold and preview input assertions passed
+20 YAML inventory and reload assertions passed; 5949 codes / 5398 names
+13 preview font regression assertions passed
+13 audio restoration assertions passed
+30 persistence, calendar, event and reward assertions passed (1,000 reward samples)
+16 calendar action/load/reset hook assertions passed
+33 recall shortcut input assertions passed
+43 debug menu checks passed.
+12 regression suites passed.

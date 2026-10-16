@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOMSave 0.22.2 旗标排版实测</title>
+<style>body{max-width:1280px;margin:32px auto;padding:0 24px;font:17px/1.7 system-ui;background:#171611;color:#eee6d5}h1,h2,a{color:#e8c576}img{width:100%;height:auto}figure{margin:26px 0}code{overflow-wrap:anywhere}</style>
+<h1>LOMSave 0.22.2 旗标排版实测</h1>
+<p>2026-10-16，游戏 release_1.0.6000.2，2560 × 1440，ScriptTrainer 1.1.2。图片为游戏窗口原始截图。</p>
+<p>上版只调整了名称框高度，数值与按钮仍沿用原布局；名称自动缩字号，导致长短名称大小不同。现将原生 51 项旗标排为两列固定布局：共用角色数值的正文宋体，名称、数值、按钮文字均为 20 号、28 单位行框，行距固定为 28，垂直居中。两列间保留间距，全部旗标在一页显示。</p>
+<p>悬浮提示曾同时追加映射名称和原始说明，简繁体差异绕过了相等判断。现在仅显示一次名称和一行代码，不再追加原说明。</p>
+<figure><img src="debug-uniform-flag-rows.png" alt="两列旗标统一字体字号行高"><figcaption>顶部、长名称、四行泛用事件旗标及底部修罗道均采用相同行框，名称、数值、按钮对齐。</figcaption></figure>
+<figure><img src="debug-tooltip-single-title.png" alt="南宫世家好感度仅显示一次标题"><figcaption>南宫世家好感度的提示仅有名称、代码 H01001 两行。</figcaption></figure>
+<h2>交互与检查</h2>
+<p>点击第一行 A00001 的加号，数值从 0 变为 1；点击减号恢复为 0。关闭菜单、移开鼠标后重新打开，字体和行布局保持一致，无残留悬浮框。</p>
+<p><a href="debug-flag-increment.png">加号实测</a> · <a href="debug-flag-decrement.png">减号实测</a> · <a href="debug-reopen-uniform-rows.png">重新打开菜单</a></p>
+<p><a href="debug-regression-results.txt">43 项调试菜单检查通过</a>，包含 H01001 简繁体原始说明不重复的回归用例。<a href="compatibility-results.txt">411 个原生成员引用、121 个 Harmony 目标、33 个反射成员全部解析通过</a>。</p>
+<p><a href="save-restoration.json">本轮实测后恢复原有 122 个存档文件，122 个哈希全部一致</a>。<a href="release-verification.json">构建、发布目录、游戏目录与 ZIP 中的插件哈希一致</a>。插件和游戏的原始运行日志保留在本地。</p>
+</html>

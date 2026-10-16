@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOMSave 0.22.1 实机验证</title>
+<style>
+body{margin:32px auto;max-width:1280px;padding:0 24px;background:#171611;color:#eee6d5;font:17px/1.7 system-ui,sans-serif}h1,h2{color:#e8c576}a{color:#e8c576}img{width:100%;height:auto;border:1px solid #655b40}figure{margin:28px 0}figcaption{margin-top:8px}table{border-collapse:collapse;width:100%}td,th{padding:10px 14px;border:1px solid #655b40;text-align:left}code{overflow-wrap:anywhere;font-size:14px}
+</style>
+<h1>LOMSave 0.22.1 实机验证</h1>
+<p>2026-10-16 · 游戏 release_1.0.6000.2 · Unity 2020.3.49f1 · BepInEx 6 Mono x64 · ScriptTrainer 1.1.2 · 2560 × 1440。下列图片为游戏窗口原始截图。截图中的备注为验证数据，验证结束后已清除。</p>
+<table>
+<tr><th>检查项</th><th>结果与证据</th></tr>
+<tr><td>全年日期表格</td><td>F10 默认打开全年总览，12 个月 × 上中下旬全部可见；备注格高亮、显示摘要，今天有金色边框。</td></tr>
+<tr><td>总览与详情互通</td><td>点击三年八月下旬进入对应详情；编辑备注后点击“全年总览”，摘要即时更新，JSON 中同日期内容同步保存。</td></tr>
+<tr><td>年份与持久化</td><td>三年有 4 处备注、四年有 1 处独立备注。重启游戏、重新读档后，修改后的八月备注仍保留。</td></tr>
+<tr><td>F9 标题对齐</td><td>四栏标题统一字体、字号、缩放和基线；保留原生加减按钮、51 项旗标。</td></tr>
+<tr><td>旗标悬浮代码</td><td>第一列“南宫世家好感度”显示 H01001；第二列“叶云裳在唐门”显示 E12000。提示使用独立背景、保持在菜单范围内，移出后隐藏。</td></tr>
+<tr><td>重复开关 F9</td><td>修复 ScriptTrainer 重新激活菜单直接子物体导致的旧提示残留；有提示时关闭菜单、移开鼠标再打开，无旧提示。</td></tr>
+<tr><td>回归检查</td><td><a href="regression-results.txt">12 组、360 项断言通过</a>，包含 1,000 次团战奖励采样。<a href="compatibility-results.txt">411 个原生成员引用、121 个 Harmony 目标、33 个反射成员全部解析通过</a>。</td></tr>
+<tr><td>安装与恢复</td><td><a href="release-verification.json">构建、发布目录、游戏目录、ZIP 内插件共 4 份哈希一致</a>；<a href="save-restoration.json">原有 122 个存档文件逐个恢复，122 个哈希一致</a>，清除验证备注及新生成的日历测试文件。</td></tr>
+</table>
+<h2>全年总览与备注编辑</h2>
+<figure><img src="calendar-year-overview.png" alt="全年日历总览"><figcaption>最终构建按 F10 直接打开总览；重启后仍显示编辑后的八月备注。金色边框表示当前三年五月上旬。</figcaption></figure>
+<figure><img src="calendar-overview-to-detail.png" alt="点击日期进入备注详情"><figcaption>从总览点击三年八月下旬，进入该日期的行动与备注详情；“全年总览”可返回表格。</figcaption></figure>
+<figure><img src="calendar-edited-note-overview.png" alt="编辑备注后返回总览"><figcaption>将八月下旬备注改为“验证：准备九月前的药材”，返回总览即保存并显示新摘要。</figcaption></figure>
+<figure><img src="calendar-next-year.png" alt="下一年独立备注"><figcaption>切换到四年，仅显示四年二月中旬的 1 处备注。</figcaption></figure>
+<h2>F9 标题与旗标悬浮代码</h2>
+<figure><img src="debug-headings-aligned.png" alt="四栏标题对齐"><figcaption>角色数值、好感度、两列旗标的标题基线和样式统一。</figcaption></figure>
+<figure><img src="debug-flag-code-tooltip.png" alt="第一列旗标代码提示"><figcaption>南宫世家好感度：H01001；同时保留原始说明。</figcaption></figure>
+<figure><img src="debug-right-column-tooltip.png" alt="第二列旗标代码提示"><figcaption>叶云裳在唐门：E12000，提示在菜单范围内显示。</figcaption></figure>
+<figure><img src="debug-reopen-no-tooltip.png" alt="再次打开无提示残留"><figcaption>关闭时原提示仍在显示，移开鼠标再重新打开 F9，旧提示不会重新出现。</figcaption></figure>
+<p>本次为 0.22.1 增量验证。读档环境音、事件过滤与固定选择、弹珠跳过、团战奖励、行动记录及滚轮回想的完整实测与限制见 <a href="../0.22.0/index.html">0.22.0 实测记录</a>。</p>
+<p>已安装插件 SHA256：<code>987CE51A6EFA9E6014F30B5273D6AF1E26976044662C3A0648C8FEBB532BF8AE</code>。插件和游戏的原始运行日志保留在本地。</p>
+</html>

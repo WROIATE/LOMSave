@@ -1,0 +1,16 @@
+{
+  "restoredFiles": 122,
+  "matchingHashes": 122,
+  "removedTestFiles": [
+    "Save_050.dat.lomsavecalendar.json",
+    "Save_auto_action.dat.lomsavecalendar.json",
+    "Save_auto_action.dat.lomsavecalendar.json.bak",
+    "Save_auto_battle.dat.lomsavecalendar.json",
+    "Save_auto_battle.dat.lomsavecalendar.json.bak"
+  ],
+  "testConfigurationRemoved": [
+    "LOMSaveProbe.CalendarNotes.json",
+    "LOMSaveProbe.Events.json"
+  ],
+  "verifiedAt": "2026-10-16T18:33:46.2021568+08:00"
+}

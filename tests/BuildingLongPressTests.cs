@@ -22,6 +22,7 @@ namespace UnityEngine.EventSystems
     public interface IPointerDownHandler { void OnPointerDown(PointerEventData data); }
     public interface IPointerUpHandler { void OnPointerUp(PointerEventData data); }
     public interface IPointerExitHandler { void OnPointerExit(PointerEventData data); }
+    public interface IPointerClickHandler { void OnPointerClick(PointerEventData data); }
 }
 namespace Mortal.Free { public class PositionController { } public class FreeManager { } }
 namespace Mortal.Story { public class StoryManager { } }
@@ -111,6 +112,11 @@ namespace LOMSave.Probe
             hold.OnPointerDown(new PointerEventData { button = PointerEventData.InputButton.Right });
             Time.unscaledTime = 1; Invoke(hold, "Update");
             Check(EventInspector.OpenCount == 0, "Right button must not start a building preview");
+            hold.OnPointerClick(new PointerEventData { button = PointerEventData.InputButton.Middle });
+            Check(EventInspector.OpenCount == 1, "Middle click opens building events without an action");
+            EventInspector.Allowed = false;
+            hold.OnPointerClick(new PointerEventData { button = PointerEventData.InputButton.Middle });
+            Check(EventInspector.OpenCount == 1, "Middle click respects the same modal and scene guards");
             CheckMenuDismissal();
             return _checks + " building hold and preview input assertions passed";
         }

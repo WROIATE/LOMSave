@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOMSave 0.22.0 游戏验证与截图</title>
+<style>
+body{margin:0;background:#f5f1e9;color:#24221d;font:16px/1.7 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1180px;margin:auto;padding:36px 24px}h1{font-size:30px;margin:0}h2{margin-top:38px;font-size:23px}p{max-width:960px}a{color:#77551e}table{border-collapse:collapse;width:100%;background:#fffcf5}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid #d7cbb7}th{background:#e7ddca}figure{margin:0 0 22px;background:#fff;border:1px solid #d7cbb7}figure img{display:block;width:100%;height:auto}figcaption{padding:12px 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.muted{color:#6c6558}code{word-break:break-all;font-size:13px}@media(max-width:750px){.grid{grid-template-columns:1fr}th,td{padding:9px}main{padding:24px 12px}}
+</style><main>
+<h1>LOMSave 0.22.0 · 游戏验证与截图</h1>
+<p class="muted">2026-10-16 · 游戏 release_1.0.6000.2 · Windows · BepInEx 6 Mono。以下图片均为实际游戏窗口截图，点击可查看原图。</p>
+<p>本轮把 F9 恢复为原生加减按钮，保留原有 51 项旗标，补充 28 项属性。左侧共 54 项属性可滚动；旗标沿用原来的两列，无搜索框、分页或额外编辑弹窗。已安装到游戏目录。测试前的 122 个文件已全部还原，SHA256 逐项一致；测试备注和固定事件偏好已清除。</p>
+<table><thead><tr><th>功能</th><th>实际验证结果</th><th>范围与说明</th></tr></thead><tbody>
+<tr><td>F9 原生菜单</td><td>变心 1→2→1；炼丹 34→39→34，累计炼丹 59→64；新增属性滚动正常。原有 51 项旗标完整保留。</td><td>变心 ±1，金钱 ±500，其它沿用原生按钮步长。有映射则显示名称；不能确定含义的编号保留，不编造事件名。</td></tr>
+<tr><td>不可触发事件隐藏</td><td>锻冶场默认隐藏 18 项；“查看不可触发”能展开，权重为零／不满足条件的事件不提供强行选择。</td><td>进入剧情后会缓存游戏的随机事件配置。冷启动直接读养成档时，若随机配置尚未载入，会提示先进入一次剧情；也可在行动选项上中键查看关联事件。</td></tr>
+<tr><td>固定事件</td><td>设定锻冶场固定“大失败”，读另一份档后仍保留；实际再次工作触发 forge_work_201 的锤手剧情。</td><td>固定选择仅在触发条件满足时生效。持久化偏好已在测试后清除。</td></tr>
+<tr><td>弹珠快速跳过</td><td>显示 0／30／60／100 四档；选择 100 分后正常退出小游戏，进入原生大奖分支。回想记录“100 ≥ 100”及大奖次数 1。</td><td>本次实际跑通 100 分分支。0／30／60 仅核对选项、原生阈值和自动化逻辑，没有分别领奖实测。</td></tr>
+<tr><td>团战直接胜利</td><td>同一飞石帮战斗两次快捷胜利，分别得到 410 钱、140 钱。原生页面显示刀剑、拳掌、轻功、名声等属性奖励，随后正常返回剧情。</td><td>支持准备页及暂停页。攻击／生存表现各随机一至三档，综合奖励由原生结算。武学点数的三档奖励路径已核对原生代码；本轮两次实测未抽到该档。</td></tr>
+<tr><td>F10 行动日历</td><td>实际进入锻冶场，行动 4→3，日历出现一条记录；中文备注可编辑。读档后按存档恢复行动记录；重启后日期下方仍显示备注。养成、剧情两种场景均能打开。</td><td>备注独立保存，支持相同游戏日期的跨周目提醒；跨周目存储规则另有回归断言。旧档无法补回启用插件前的行动。</td></tr>
+<tr><td>滚轮上滑回想</td><td>剧情中上滑打开原生回想，显示弹珠的实际判定记录。</td><td>输入框、滚动列表和其它弹窗遮挡时不抢滚轮。</td></tr>
+<tr><td>读档背景音效</td><td>真实雨天档正常恢复雨声；从雨天切换到无环境音剧情时，环境事件名被清空。构造“雨声名仍保留、环境音量 0”的临时存档，游戏读档后音频线程稳定值为 0，音乐为 100。</td><td>音效验证以 Wwise 通道状态和日志为依据，未做听音判断。新档保存音量、淡出目标和剩余时间；旧旁档没有音量时使用剧情重放后的通道状态。</td></tr>
+</tbody></table>
+<h2>F9：恢复原版操作</h2>
+<figure><a href="f9-native-plus-minus.png"><img src="f9-native-plus-minus.png" alt="F9 原生加减按钮和两列旗标"></a><figcaption>最终界面：原生按钮，角色数值、好感度、旗标分列。新增数值在左侧滚动。</figcaption></figure>
+<div class="grid">
+<figure><a href="f9-heart-plus-one.png"><img src="f9-heart-plus-one.png" alt="变心加一"></a><figcaption>变心点击 +1 后由 1 变为 2。</figcaption></figure>
+<figure><a href="f9-alchemy-plus-five.png"><img src="f9-alchemy-plus-five.png" alt="炼丹加五"></a><figcaption>炼丹点击 +5 后为 39，累计炼丹同步为 64。</figcaption></figure>
+</div>
+<h2>日历：行动记录与常驻提醒</h2>
+<figure><a href="calendar-action-history.png"><img src="calendar-action-history.png" alt="日历行动记录与手动备注"></a><figcaption>锻冶场消耗 1 次行动、剩余 3；下方为输入的中文备注。</figcaption></figure>
+<div class="grid">
+<figure><a href="calendar-reminder-after-restart.png"><img src="calendar-reminder-after-restart.png" alt="重启后日期备注"></a><figcaption>重启游戏后，左上角日期下方仍显示当天备注。</figcaption></figure>
+<figure><a href="calendar-story-mode.png"><img src="calendar-story-mode.png" alt="剧情场景打开日历"></a><figcaption>剧情界面中按 F10 打开日历。</figcaption></figure>
+</div>
+<h2>事件：隐藏与固定选择</h2>
+<div class="grid">
+<figure><a href="events-default-hidden.png"><img src="events-default-hidden.png" alt="默认隐藏不可触发事件"></a><figcaption>默认隐藏 18 项不可触发事件。</figcaption></figure>
+<figure><a href="events-show-unavailable.png"><img src="events-show-unavailable.png" alt="手动展开不可触发事件"></a><figcaption>点击查看后展开不可触发项。</figcaption></figure>
+<figure><a href="events-fixed-after-load.png"><img src="events-fixed-after-load.png" alt="固定选择读档后保留"></a><figcaption>读其它存档后固定偏好仍然保留。</figcaption></figure>
+<figure><a href="events-fixed-applied.png"><img src="events-fixed-applied.png" alt="固定事件实际触发"></a><figcaption>实际工作后触发选定的大失败剧情。</figcaption></figure>
+</div>
+<h2>弹珠、回想与团战</h2>
+<div class="grid">
+<figure><a href="pinball-score-thresholds.png"><img src="pinball-score-thresholds.png" alt="弹珠奖励阈值选项"></a><figcaption>按奖励阈值选择总分。</figcaption></figure>
+<figure><a href="pinball-100-grand-prize.png"><img src="pinball-100-grand-prize.png" alt="弹珠大奖"></a><figcaption>100 分进入原生大奖分支。</figcaption></figure>
+<figure><a href="wheel-up-native-recall.png"><img src="wheel-up-native-recall.png" alt="滚轮上滑打开原生回想"></a><figcaption>上滑打开回想，保留本局真实判定记录。</figcaption></figure>
+<figure><a href="team-ready-direct-victory.png"><img src="team-ready-direct-victory.png" alt="团战准备页直接胜利"></a><figcaption>准备页提供原生风格的“直接胜利”入口。</figcaption></figure>
+<figure><a href="team-victory-rewards-run1.png"><img src="team-victory-rewards-run1.png" alt="第一次团战奖励"></a><figcaption>第一次：410 钱，原生属性奖励。</figcaption></figure>
+<figure><a href="team-victory-rewards-run2.png"><img src="team-victory-rewards-run2.png" alt="第二次团战奖励"></a><figcaption>第二次：140 钱，表现与属性奖励变化。</figcaption></figure>
+</div>
+<h2>检查记录</h2>
+<p>12 套回归测试，共 353 项断言全部通过，包括 1,000 次奖励抽样。兼容性检查通过：401 个原生引用、120 个 Harmony 目标、32 个反射成员。</p>
+<p><a href="regression-results.txt">回归输出</a> · <a href="save-restoration.json">122 个文件还原核验</a>。原始运行日志与测试存档保留在本地。</p>
+<p class="muted">最终运行日志未出现插件失败事件。退出游戏时 Player.log 记录了一次原生 Mortal.Story.FlowchartPlaceholder.OnDestroy 空引用，发生于应用退出阶段；本轮未改动原生退出逻辑。</p>
+<p class="muted">最终 DLL SHA256：<code>40068AC97FF6C2D938362A8FE5EAC1B976CAB33331D8AFBE1367A278817099E5</code>。游戏安装目录与 artifacts 中的 DLL 哈希一致。</p>
+</main></html>

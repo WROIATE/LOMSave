@@ -1,0 +1,14 @@
+{
+  "version": "0.22.3",
+  "gameVersion": "release_1.0.6000.3",
+  "dllSha256": "BAE5EA04A1E7F2E710A7F268AC15C0FB6E1A01BAE058BB74D0D0A1D577E334C7",
+  "installedMatches": true,
+  "packagedMatches": true,
+  "regressionSuites": 12,
+  "regressionAssertions": 381,
+  "nativeReferences": 411,
+  "harmonyTargets": 121,
+  "reflectionMembers": 33,
+  "originalFreezeReproduced": false,
+  "verifiedAt": "2026-10-17T00:47:20.4241847+08:00"
+}

@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path $PSScriptRoot -Parent
 $taskSource = Join-Path $taskRoot 'artifacts/LOMSaveProbe'
 $taskVersionMatch = [regex]::Match(
-    [IO.File]::ReadAllText((Join-Path $taskRoot 'LOMSaveProbe.cs')),
+    [IO.File]::ReadAllText((Join-Path $taskRoot 'src/Plugin/LOMSaveProbe.cs')),
     'public const string PluginVersion = "(?<version>\d+\.\d+\.\d+)";')
 if (!$taskVersionMatch.Success) { throw 'Cannot read plugin version.' }
 $taskVersion = $taskVersionMatch.Groups['version'].Value

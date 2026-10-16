@@ -1,12 +1,15 @@
+param([string]$StoryDirectory)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Add-Type -Path @(
-    (Join-Path $root 'LuaImpactScanner.cs'),
-    (Join-Path $root 'DialoguePacer.cs'),
-    (Join-Path $root 'DialogueTiming.cs'),
-    (Join-Path $root 'SaveNoteStore.cs'),
-    (Join-Path $root 'CheckpointNotificationBuffer.cs'),
-    (Join-Path $root 'CheckpointNameRules.cs'),
+    (Join-Path $root 'src/Options/LuaImpactScanner.cs'),
+    (Join-Path $root 'src/Options/OptionImpactText.cs'),
+    (Join-Path $root 'src/Dialogue/DialoguePacer.cs'),
+    (Join-Path $root 'src/Dialogue/DialogueTiming.cs'),
+    (Join-Path $root 'src/Saves/SaveNoteStore.cs'),
+    (Join-Path $root 'src/Checkpoints/CheckpointNotificationBuffer.cs'),
+    (Join-Path $root 'src/Localization/CheckpointNameRules.cs'),
     (Join-Path $PSScriptRoot 'DialogueAndImpactTests.cs')
 )
-[LOMSave.Probe.DialogueAndImpactTests]::Run((Join-Path $root 'obj\story'))
+if (!$StoryDirectory) { $StoryDirectory = Join-Path $root 'obj\story' }
+[LOMSave.Probe.DialogueAndImpactTests]::Run($StoryDirectory)

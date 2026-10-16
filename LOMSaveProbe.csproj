@@ -12,37 +12,51 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ActionAutoSave.cs" />
-    <Compile Include="ActionAutoSavePolicy.cs" />
-    <Compile Include="AutoDialogueSpeed.cs" />
-    <Compile Include="DialoguePacer.cs" />
-    <Compile Include="DialogueTiming.cs" />
-    <Compile Include="SaveNotes.cs" />
-    <Compile Include="SaveNoteStore.cs" />
-    <Compile Include="LuaImpactScanner.cs" />
-    <Compile Include="EventConditions.cs" />
-    <Compile Include="EventInspector.cs" />
-    <Compile Include="BuildingEventLongPress.cs" />
-    <Compile Include="PreviewInteraction.cs" />
-    <Compile Include="EventInspectorPanel.cs" />
-    <Compile Include="CheckpointRecall.cs" />
-    <Compile Include="CheckpointNameRules.cs" />
-    <Compile Include="CodeNameMapStore.cs" />
-    <Compile Include="CodeNameMapping.cs" />
-    <Compile Include="CheckpointToast.cs" />
-    <Compile Include="PreviewFont.cs" />
-    <Compile Include="CheckpointNotificationBuffer.cs" />
-    <Compile Include="DiceRollTrace.cs" />
-    <Compile Include="LOMSaveProbe.cs" />
-    <Compile Include="OptionImpactLocalization.cs" />
-    <Compile Include="OptionImpactPreview.cs" />
-    <Compile Include="ReplayRuntime.cs" />
-    <Compile Include="ReplayAudio.cs" />
-    <Compile Include="ReplayInput.cs" />
-    <Compile Include="ReplayStateValidator.cs" />
-    <Compile Include="StoryCommandTrace.cs" />
-    <Compile Include="StorySaveFiles.cs" />
-    <Compile Include="TeamBattleSkip.cs" />
+    <Compile Include="src/Saves/ActionAutoSave.cs" />
+    <Compile Include="src/Saves/ActionAutoSavePolicy.cs" />
+    <Compile Include="src/Dialogue/AutoDialogueSpeed.cs" />
+    <Compile Include="src/Dialogue/DialoguePacer.cs" />
+    <Compile Include="src/Dialogue/DialogueTiming.cs" />
+    <Compile Include="src/Saves/SaveNotes.cs" />
+    <Compile Include="src/Saves/SaveNoteStore.cs" />
+    <Compile Include="src/Options/LuaImpactScanner.cs" />
+    <Compile Include="src/Options/OptionImpactText.cs" />
+    <Compile Include="src/Events/EventConditions.cs" />
+    <Compile Include="src/Events/EventInspector.cs" />
+    <Compile Include="src/Events/BuildingEventLongPress.cs" />
+    <Compile Include="src/UI/PreviewInteraction.cs" />
+    <Compile Include="src/Events/EventInspectorPanel.cs" />
+    <Compile Include="src/Checkpoints/CheckpointRecall.cs" />
+    <Compile Include="src/Localization/CheckpointNameRules.cs" />
+    <Compile Include="src/Localization/CodeNameMapStore.cs" />
+    <Compile Include="src/Localization/CodeNameMapping.cs" />
+    <Compile Include="src/Checkpoints/CheckpointToast.cs" />
+    <Compile Include="src/UI/PreviewFont.cs" />
+    <Compile Include="src/Checkpoints/CheckpointNotificationBuffer.cs" />
+    <Compile Include="src/Replay/DiceRollTrace.cs" />
+    <Compile Include="src/Plugin/LOMSaveProbe.cs" />
+    <Compile Include="src/Options/OptionImpactLocalization.cs" />
+    <Compile Include="src/Options/OptionImpactPreview.cs" />
+    <Compile Include="src/Replay/ReplayRuntime.cs" />
+    <Compile Include="src/Replay/ReplayAudio.cs" />
+    <Compile Include="src/Replay/ReplayInput.cs" />
+    <Compile Include="src/Replay/ReplayStateValidator.cs" />
+    <Compile Include="src/Replay/StoryCommandTrace.cs" />
+    <Compile Include="src/Saves/StorySaveFiles.cs" />
+    <Compile Include="src/Battle/TeamBattleSkip.cs" />
+    <Compile Include="src/Battle/BattleRewardPolicy.cs" />
+    <Compile Include="src/Saves/LocalJsonFile.cs" />
+    <Compile Include="src/Events/EventSelectionStore.cs" />
+    <Compile Include="src/Replay/AudioSceneState.cs" />
+    <Compile Include="src/Replay/RecallShortcut.cs" />
+    <Compile Include="src/UI/FeaturePanel.cs" />
+    <Compile Include="src/Minigames/PinballSkip.cs" />
+    <Compile Include="src/Minigames/PinballRewards.cs" />
+    <Compile Include="src/Calendar/CalendarStore.cs" />
+    <Compile Include="src/Calendar/ActionCalendar.cs" />
+    <Compile Include="src/Calendar/CalendarPanel.cs" />
+    <Compile Include="src/Debug/DebugMenuData.cs" />
+    <Compile Include="src/Debug/DebugMenuEnhancements.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <Reference Include="YamlDotNet">
       <HintPath>artifacts/LOMSaveProbe/YamlDotNet.dll</HintPath>
@@ -78,6 +92,10 @@
     </Reference>
     <Reference Include="Mortal.Battle">
       <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Battle.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mortal.Pinball">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Pinball.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Mortal.Story">

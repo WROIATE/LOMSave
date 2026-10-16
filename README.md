@@ -1,6 +1,6 @@
 # 活侠传自由存档 · 增强版
 
-基于 [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave) 扩展的《活侠传》便利功能 MOD，当前增强插件版本为 **0.19.3**，游戏加载时名称为 **LOMSave Probe**。
+基于 [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave) 扩展的《活侠传》便利功能 MOD，当前增强插件版本为 **0.22.3**，游戏加载时名称为 **LOMSave Probe**。
 
 本分支基于原项目提交 [`6d40806`](https://github.com/NothingNullNull/LOMSave/commit/6d408069b87d95809fe085f16928760958dfe4e7)。上游后来发布了采用新架构的 LOMSave 2.x；**下面的“原版”指这个旧版基线，不是与上游 2.x 的逐项比较**。本分支没有混入 2.x 的重写，也没有验证两者的存档附加文件能相互迁移。
 
@@ -16,20 +16,24 @@
 | 手动存档槽 | 原生数量 | 扩展为 50 个，增加可编辑备注 |
 | 行动前自动存档 | 使用原生自动档 | 增加独立的“最近行动”档；唐门养成和外地共用行动菜单都能在行动前保存 |
 | 自动播放 | 原生节奏 | 0.5～5 倍速度，可按文本长度调整，放在独立“对话设定”中 |
-| 选项影响预览 | 未提供 | 长按查看本段属性、好感、物品、天赋等影响，可展开后续影响和关联事件 |
-| 建筑事件预览 | 未提供 | 长按建筑查看当前人物事件、随机事件候选及条件，并可指定兼容事件池的下次事件 |
+| 选项影响预览 | 未提供 | 长按查看本段属性、好感、物品、天赋、装备替换和弹珠台等影响，可展开后续影响和关联事件 |
+| 建筑事件预览 | 未提供 | 默认隐藏确定不能触发的事件，可手动展开；支持单次指定与跨读档、重启的固定选择 |
 | 剧情判定提示 | 未提供 | 在回想中记录判定；可开启实时提示，逐条出现、依次淡出 |
 | 编码名称 | 使用原始游戏说明 | 增加 YAML 名称表，支持修改后自动重新加载；无可靠名称时保留编号 |
-| 混战快捷结束 | 未提供 | 增加快捷胜利按钮，调用游戏结算并模拟部分拾钱逻辑 |
+| 混战快捷结束 | 未提供 | 快捷胜利模拟拾钱与表现，调用原生属性、点数和金钱结算 |
+| 四师兄弹珠 | 未提供 | 按奖励阈值选择 0／30／60／100 分快速结束 |
+| 行动日历 | 未提供 | F10 打开；自动记录行动，手动备注跨周目按日期常驻提醒 |
+| 回想快捷键 | 原生按键 | 剧情中鼠标滚轮向上打开回想 |
+| F9 调试面板增强 | 未提供 | 保留原生加减按钮，补全变心与养成点数；原有 51 项旗标按映射显示中文 |
 
 预览属于剧情信息提示：静态分析不能覆盖所有动态 Lua 表达式，候选事件也不代表一定触发。条件、随机权重和后续影响会按可解析的数据展示。
 
 ## 安装
 
-已经验证的游戏环境：`release_1.0.5000.13`、Unity `2020.3.49f1`、BepInEx 6 Mono。游戏或框架更新后需重新确认兼容性。
+当前构建与名称表适配 `release_1.0.6000.3`，实机环境为 Unity `2020.3.49f1`、BepInEx 6 Mono Windows x64。整体功能实测见 `artifacts/verification/0.22.0/`，全年日历和 F9 标题的增量实测见 `artifacts/verification/0.22.1/`，旗标行对齐与悬浮名称去重见 `artifacts/verification/0.22.2/`，滚轮回想触发保护与诊断见 `artifacts/verification/0.22.3/`。
 
-1. 安装与游戏架构匹配的 [BepInEx](https://github.com/BepInEx/BepInEx)，确保已有可用的 BepInEx 6 Mono 环境。
-2. 从 [Release v0.19.3](https://github.com/WROIATE/LOMSave/releases/tag/v0.19.3) 下载 `LOMSave-enhanced-v0.19.3.zip`，将包内的 `BepInEx` 文件夹合并到游戏根目录。`SHA256SUMS.txt` 用于校验安装包。
+1. 安装与游戏架构匹配的 [BepInEx 6 Unity.Mono](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_mono.html)。`release_1.0.6000.0` 已使用 **64 位程序，需要 Windows x64 包**；旧版 x86 的 `winhttp.dll` 无法加载新版游戏中的任何插件，单独替换插件 DLL 不能解决。
+2. 从 [Releases](https://github.com/WROIATE/LOMSave/releases) 下载对应版本的 `LOMSave-enhanced-v版本号.zip`，将包内的 `BepInEx` 文件夹合并到游戏根目录。`SHA256SUMS.txt` 用于校验安装包；尚未发布的本地构建可按下文手动安装。
 3. 安装包会将以下文件放进游戏目录的 `BepInEx/plugins/`：
    - `LOMSaveProbe.dll`
    - `Newtonsoft.Json.dll`
@@ -37,11 +41,22 @@
 4. 安装包内的 `LOMSaveProbe.CodeNames.yaml` 位于 `BepInEx/config/`。名称表缺失时会回退到游戏原说明或编号。
 5. 保留随包提供的两个第三方许可证文件，然后重启游戏。
 
-同一套存档补丁应只安装一份。安装本增强插件时，请把原来的 `LOMSave.dll`、`LOMSave2.dll` 或旧版 `LOMSaveProbe.dll` 移到插件目录外，避免多份存读档补丁同时执行。仓库中的旧版 `LOMSavePlugins.cs` 保留为上游来源，本增强版编译入口是 `LOMSaveProbe.csproj`。
+可运行 `pwsh -File ./tools/Test-GameEnvironment.ps1 -GameDir '游戏目录'` 检查游戏与原生引导器的架构是否匹配。游戏启动后还应检查 `BepInEx/LogOutput.log` 的更新时间，以及其中是否出现本插件的加载记录；只有编译通过不能证明插件已在游戏内运行。
+
+同一套存档补丁应只安装一份。安装本增强插件时，请把原来的 `LOMSave.dll`、`LOMSave2.dll` 或旧版 `LOMSaveProbe.dll` 移到插件目录外，避免多份存读档补丁同时执行。上游旧版源码保留在 [`src/Legacy`](src/Legacy)，本增强版编译入口是 `LOMSaveProbe.csproj`。
 
 如果需要手动安装，可从 [`artifacts/LOMSaveProbe`](artifacts/LOMSaveProbe) 获取上述文件。
 
 ## 使用
+
+### F9 调试面板
+
+安装 ScriptTrainer 等已能打开原生调试面板的插件后，继续使用原来的 F9 入口。增强插件接入该面板，不新增重复的 F9 快捷键，也不改写 ScriptTrainer。
+
+- 保留原来的加减按钮、字体和好感度栏。左侧“角色数值”补全为 54 项，可滚动查看；变心、炼丹、武学、锻造及累计点数排在前面。
+- 点击按钮立即生效：变心每次 ±1（游戏范围 0–10），银两每次 ±500，其余沿用原生 ±5。数值旁保留加成显示。
+- 使用游戏原生数值修改逻辑：增加养成点数会同步增加对应累计点数，减少当前点数不会抹去历史累计。累计点数也有单独按钮。调试修改行动次数不会生成日历行动记录，修改随正常游戏存档保存。
+- 右侧仅保留原生的 51 项旗标，不再枚举全部旗标或增加搜索、分页。映射缺失时保留原说明／编号；悬停仅显示一次名称和“代码：编号”，提示框保持在屏幕内。两列旗标采用统一字体、固定字号和行高，名称、数值与加减按钮在同一行居中对齐，长名称不再自动缩小。四栏标题统一字号、字体和基线。映射名称是已有资料的摘要，不保证每项旗标都与单一剧情事件对应。
 
 ### 存档、备注与“最近行动”
 
@@ -51,15 +66,21 @@
 
 剧情进度保存在原存档旁的 `<存档文件>.lomsaveprobe.json` 中，包含脚本、台词／选项检查点、已选分支和画面／声音状态。手动档、原生剧情自动档及“最近行动”分别读取自己的附加记录，并校验保存时间、文件哈希与脚本。
 
-复制或备份存档时，应一起保留 `.dat`、`.lomsaveprobe.json` 和可选的 `.note.txt`。没有匹配附加记录的旧档按游戏原生流程读取，不能凭空恢复过去的精确台词位置。重放失败时会取消恢复或回退到剧情起点；过场、复杂循环和其他 MOD 改写的脚本不能保证都能精确还原。
+复制或备份存档时，应一起保留 `.dat`、`.lomsaveprobe.json`、`.lomsavecalendar.json` 和可选的 `.note.txt`。没有匹配附加记录的旧档按游戏原生流程读取，不能凭空恢复过去的精确台词位置。重放失败时会取消恢复或回退到剧情起点；过场、复杂循环和其他 MOD 改写的脚本不能保证都能精确还原。
+
+0.20.0 开始同时保存背景音乐、环境音的通道音量、低通和尚未结束的渐变，修复雨声已经渐弱至静音却因名称残留而在读档后重新响起的问题。旧附加记录缺少音量时，使用剧情重放得到的通道状态。
 
 ### 长按预览
 
 - 长按选项约 **0.5 秒**打开影响预览；按住 **0.2 秒**后才显示进度反馈。
-- 长按养成地图的建筑查看人物事件和随机候选；普通点击仍执行游戏原操作。
+- 长按或中键点击养成地图的建筑查看人物事件和随机候选；普通点击仍执行游戏原操作。中键也可打开选项影响预览。
+- 随机事件配置由游戏剧情场景提供；首次直接读取养成档时可能尚未加载，页面会显示提示。进入一次剧情后会缓存配置，之后返回养成地图也可查看。
 - “查看后续影响”“查看事件”用于展开更多信息。
 - “设为下次事件”只对界面标记为可指定的兼容事件池生效，可取消。
+- 默认隐藏确定不能触发的随机事件，点击“查看不可触发”展开；含随机或无法静态确认的条件会保留显示。
+- “固定选择”按事件池／人物事件所在建筑保存，可跨读档和重启使用。每次触发仍检查当前条件，不符合时交由游戏正常选择；同一事件池的单次指定优先。可单独取消或清除全部固定。
 - **右键关闭当前预览窗口**，不会同时打开游戏设置。
+- 选项、事件预览和实时判定统一使用游戏正文的思源宋体；不随当前对话框切换为行书，字体不可用时回退系统中文字体。
 
 ### 对话设定与实时判定
 
@@ -69,11 +90,55 @@
 
 实时判定提示默认关闭。开启后，条件及通过／未通过结果会以独立消息逐条展示；回想也会记录新触发的判定。它们不改写人物台词，也不重新执行随机判定。
 
+剧情中鼠标滚轮向上可打开原生回想；回想已打开、菜单／预览／日历遮挡、输入框或可滚动列表处于鼠标下方、读档重放时不触发。
+
+### 弹珠与混战快捷结算
+
+四师兄弹珠界面右上角“快速结束 · 选分数”提供 **0 分、30 分（三奖）、60 分（二奖）、100 分（大奖）**。阈值来自 `release_1.0.6000.0` 的 `Pinball_Score_001`；选择的是本局总分，返回剧情后由游戏按照分数、剧情条件和已领奖次数发放奖励。已经摇坏机器时不提供快捷选分。
+
+混战准备页和暂停菜单提供“直接胜利”。准备页入口会先执行原生出征、等待战场准备完成，再结算，适用于禁止暂停的战斗。快捷胜利会模拟攻击与生存表现，各自覆盖原生的一至三档奖励，并保留已经取得的更高表现。综合表现、属性和点数奖励由游戏原生结算一次性发放。金钱仍受敌人掉落类型与概率影响，额外模拟一局内的拾取比例和浮动预算，最多增加 2,500 两；已捡到的金钱保留。快捷奖励使用独立随机源，不改动剧情随机序列。
+
+### 行动日历与日期备注
+
+在养成地图或可操作的剧情界面按 **F10** 打开／关闭日历，默认展示全年总览：12 个月为行、上中下旬为列，共 36 个日期。有备注的日期显示金色标记和备注摘要，今天有金色边框；可切换年份或回到当前年份。点击日期进入行动与备注详情，“全年总览”可返回表格，“今日详情”可直接打开当前日期。
+
+详情页保留按月浏览上、中、下旬；可为未来日期提前添加备注，或点击“回到当前日期”。切换日期、返回总览、关闭窗口会保存备注，也可手动点击保存；留空保存可清除。打开日历时暂停游戏，右键或 Esc 也可关闭。
+
+每次实际扣除行动次数后，自动记录建筑／行动选项、消耗次数和剩余次数。记录跟随各存档的 `.lomsavecalendar.json`，读回旧进度会恢复当时的行动记录；加载、剧情重放、每旬行动次数重置不会产生重复记录。旧存档在启用新版本之后开始记录，不能补回历史操作。
+
+手动备注按**游戏年份＋月份＋旬**保存在 `BepInEx/config/LOMSaveProbe.CalendarNotes.json`，与存档行动记录分开。新周目或重读同一日期时，在左上角日期下方常驻显示备注。固定事件偏好保存在同目录 `LOMSaveProbe.Events.json`；迁移到另一台电脑时可一并复制这两个文件。
+
 ### 名称映射
 
-编辑 `BepInEx/config/LOMSaveProbe.CodeNames.yaml` 中的 `name` 并保存，插件约每秒检查并重新加载。当前表统计 4,825 个编码，其中 4,335 个有非空名称；部分名称依据上下文归纳，不是官方 DevNote。
+编辑 `BepInEx/config/LOMSaveProbe.CodeNames.yaml` 中的 `name` 并保存，插件约每秒检查并重新加载。当前表基于 `release_1.0.6000.0`，统计 5,949 个编码，其中 5,398 个有非空名称；已重新扫描旧判断条件的变化，部分名称依据上下文归纳，不是官方 DevNote。
 
 分类包括 `flags`、`conditions`、`switches`、`events`、`missions`、`mission_groups`。空名称或未收录编号回退原生说明／编号；格式错误时继续使用上一份有效映射。已写入的旧回想不会重写，已打开的预览需重新打开。
+
+## 代码目录
+
+源码按功能放在 `src/`，项目文件和 `Build-Local.ps1` 保留在仓库顶层。
+
+```text
+src/
+  Plugin/        插件入口、初始化与游戏生命周期挂接
+  Saves/         自动存档、存档文件与备注
+  Replay/        剧情重放、命令与骰子记录、声音和输入恢复
+  Dialogue/      自动播放与文本计时
+  Options/       选项影响扫描、预览与文字格式
+  Events/        建筑长按、事件候选和条件查看
+  Checkpoints/   剧情判定记录、回想与实时消息
+  Localization/  编码名称表、加载与名称回退规则
+  UI/            预览字体与共用输入处理
+  Battle/        混战快捷结束
+  Minigames/     弹珠快捷选分与结算
+  Calendar/      行动记录、日期备注与日历界面
+  Legacy/        上游旧版源码与程序集信息
+tests/           回归测试与运行脚本
+tools/           名称表导出、上下文分析与打包工具
+artifacts/       插件构建产物与运行依赖
+```
+
+`LOMSaveProbe.csproj` 只编译增强版源码；`LOMSave.csproj` 和原有解决方案保留为上游旧版项目入口。
 
 ## 编译与检查
 
@@ -87,22 +152,29 @@ pwsh -File ./Build-Local.ps1 -GameDir '你的 LegendOfMortal 游戏目录'
 
 运行 `pwsh -File ./tools/Build-Package.ps1` 可生成相同目录结构的安装 ZIP 和校验文件，默认输出到 `obj/release/`。
 
-六组检查各自运行在独立 PowerShell 进程中，避免测试替身的类型名互相影响：
+各组检查分别运行在独立 PowerShell 进程中，避免测试替身的类型名互相影响：
+
+运行 `pwsh -File ./tests/Test-All.ps1` 可执行全部 11 组回归；也可分别执行下列脚本。构建后用 `pwsh -File ./tools/Test-PluginCompatibility.ps1 -PluginPath 'artifacts/LOMSaveProbe/LOMSaveProbe.dll'` 检查本地游戏接口与补丁目标。
 
 ```powershell
 pwsh -File ./tests/Test-ActionAutoSave.ps1
 pwsh -File ./tests/Test-StorySaveFiles.ps1
 pwsh -File ./tests/Test-ReplayRuntime.ps1
-pwsh -File ./tests/Test-DialogueAndImpact.ps1
+pwsh -File ./tests/Test-DialogueAndImpact.ps1 # 可用 -StoryDirectory 指定新导出的脚本目录
 pwsh -File ./tests/Test-BuildingLongPress.ps1
 pwsh -File ./tests/Test-CodeNames.ps1
+pwsh -File ./tests/Test-PreviewFont.ps1
+pwsh -File ./tests/Test-AudioSceneState.ps1
+pwsh -File ./tests/Test-FeatureData.ps1
+pwsh -File ./tests/Test-CalendarRuntime.ps1
+pwsh -File ./tests/Test-RecallShortcut.ps1
 ```
 
 这些检查覆盖保存时序、恢复生命周期、文本计时、预览输入和 YAML 加载，不能代替实际游戏内验证。
 
 `tools/` 提供从本地游戏数据导出名称、归纳未命名条件的工具。Python 依赖为 UnityPy；可用 `python -m pip install -r tools/requirements.txt` 安装，然后运行 `tools/Update-CodeNameContexts.ps1 -GameDir '游戏目录' -Python 'python解释器路径'`。生成的详细溯源与分析报告仅用于本地开发，游戏只需要主名称表。
 
-诊断日志位于 `BepInEx/LOMSaveProbe/`；`F10` 可追加状态快照。日志可能包含存档状态和台词，分享前请检查内容。
+诊断日志位于 `BepInEx/LOMSaveProbe/`；`Ctrl+F10` 可追加状态快照。日志可能包含存档状态和台词，分享前请检查内容。
 
 ## 致谢与来源
 

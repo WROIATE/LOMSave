@@ -67,7 +67,7 @@ def export(game, output, analysis_output=None, enums_json=None, sources_output=N
     data = game / "Mortal_Data"
     objects, classes, catalog, scripts, locales = {}, {}, {}, {}, {}
     ambiguous_locales = set()
-    conversion = dict(re.findall(r'\.Replace\("(.)", "(.)"\)', (ROOT / "OptionImpactLocalization.cs").read_text(encoding="utf-8-sig")))
+    conversion = dict(re.findall(r'\.Replace\("(.)", "(.)"\)', (ROOT / "src/Options/OptionImpactLocalization.cs").read_text(encoding="utf-8-sig")))
     simplify = lambda text: "".join(conversion.get(c, c) for c in text)
 
     # Inventory every serialized asset file, rather than a chosen list of IDs.
