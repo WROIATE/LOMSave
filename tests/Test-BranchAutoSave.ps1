@@ -6,6 +6,7 @@ Add-Type -Path @(
     (Join-Path $root 'src/Saves/BranchAutoSave.cs'),
     (Join-Path $root 'src/Saves/StorySaveFiles.cs'),
     (Join-Path $root 'src/Replay/StoryCommandTrace.cs'),
+    (Join-Path $root 'src/Replay/StoryReplayJournal.cs'),
     (Join-Path $root 'src/Replay/ReplayMissionGuard.cs'),
     (Join-Path $root 'src/Replay/DiceRollTrace.cs'),
     (Join-Path $PSScriptRoot 'BranchAutoSaveTests.cs')

@@ -1,0 +1,9 @@
+Continuation tests passed: excluded prior effects, preserved shadowed locals, original branch despite changed flags, choice snapshot, alternate choice and parent continuation.
+Actor lifecycle tests passed: native and instrumented cleanup preserve absent branch actors; direct resume loads only required presentation actors.
+{
+  "scripts": 2068,
+  "points": 77717,
+  "seconds": 41.2516038,
+  "slow": [],
+  "failed": []
+}

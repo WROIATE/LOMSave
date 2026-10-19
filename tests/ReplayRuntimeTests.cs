@@ -88,6 +88,7 @@ namespace LOMSave.Probe
         }
         public static string Run()
         {
+            ReplayRuntime.Clock = () => UnityEngine.Time.unscaledTime;
             ReplayRuntime.Prepare();
             Check(AkSoundEngine.OutputVolume == 0f, "Loading must be silent");
             Check(Mortal.Core.SystemSettings.MasterVolume == 73, "Do not overwrite user volume");
@@ -110,10 +111,13 @@ namespace LOMSave.Probe
             Check(AkSoundEngine.OutputVolume == 41f, "Cleanup is idempotent");
 
             ReplayRuntime.Prepare();
+            var timedOutGeneration = ReplayRuntime.Generation;
             UnityEngine.Time.unscaledTime += 31f;
             ReplayRuntime.Update();
             Check(AkSoundEngine.OutputVolume == 41f && StoryCommandTrace.Aborts == 1,
                 "Scene load timeout must release audio");
+            Check(ReplayRuntime.Generation != timedOutGeneration,
+                "Timeout must invalidate suspended recovery work");
             ReplayRuntime.Prepare();
             ReplayRuntime.Start();
             UnityEngine.Time.unscaledTime += 20f;

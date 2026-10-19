@@ -13,10 +13,10 @@ try {
     $env:TEMP = $taskTemp
     $env:TMP = $taskTemp
     $scripts = @('ActionAutoSave','ActionAutoSaveRuntime','BranchAutoSave','StorySaveFiles','ReplayRuntime','DialogueAndImpact','BuildingLongPress',
-        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','EventInspector','StoryReplay','CalendarRuntime','RecallShortcut','DebugMenu')
+        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','EventInspector','StoryReplay','StoryContinuation','ReplayCharacter','ReplayStateValidation','CalendarRuntime','RecallShortcut','DebugMenu')
     foreach ($name in $scripts) {
         $arguments = @('-NoProfile', '-File', (Join-Path $PSScriptRoot "Test-$name.ps1"))
-        if ($name -eq 'DialogueAndImpact') { $arguments += @('-StoryDirectory', $StoryDirectory) }
+        if ($name -in @('DialogueAndImpact','ReplayCharacter')) { $arguments += @('-StoryDirectory', $StoryDirectory) }
         & (Join-Path $PSHOME 'pwsh.exe') @arguments
         if ($LASTEXITCODE -ne 0) { throw "$name regression failed ($LASTEXITCODE)." }
     }

@@ -1,0 +1,41 @@
+{
+  "version": "0.25.0",
+  "gameVersion": "release_1.0.6000.4",
+  "sha256": "95EA3B0F2616D68D8792125E69C4E8A64126A1235D7269EAE823392AC81EC1B8",
+  "offline": {
+    "reflectionMembers": 49,
+    "suites": 20,
+    "corpusScripts": 2068,
+    "nativeReferences": 447,
+    "harmonyTargets": 145,
+    "corpusFailures": 0,
+    "patchClasses": 21,
+    "corpusPoints": 77717,
+    "corpusSeconds": 43.8204725
+  },
+  "live": [
+    "legacy temple load",
+    "stable dialogue direct load",
+    "cold dialogue load",
+    "dice restore and native result continuation",
+    "final cross-scene F8",
+    "forge picture warm and cold restore",
+    "forge continuation without duplicate rewards",
+    "native story auto save/load",
+    "fixed event persisted and triggered",
+    "event and option previews"
+  ],
+  "recoveryMaskSeconds": {
+    "diceFinal": 1.5392516,
+    "forgeColdFinal": 2.6260968,
+    "templeCold": 2.0828343,
+    "forgeWarmFinal": 2.0347465,
+    "templeWarm": 1.426278
+  },
+  "restoration": {
+    "differences": 0,
+    "configs": 5,
+    "verifiedHashes": 184,
+    "saves": 179
+  }
+}

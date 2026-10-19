@@ -41,10 +41,16 @@
     <Compile Include="src/Options/OptionImpactPreview.cs" />
     <Compile Include="src/Replay/ReplayRuntime.cs" />
     <Compile Include="src/Replay/ReplayMissionGuard.cs" />
+    <Compile Include="src/Replay/ReplayCharacterContext.cs" />
+    <Compile Include="src/Replay/StoryReplayJournal.cs" />
+    <Compile Include="src/Replay/StoryReplayResources.cs" />
     <Compile Include="src/Replay/ReplayAudio.cs" />
     <Compile Include="src/Replay/ReplayInput.cs" />
     <Compile Include="src/Replay/ReplayStateValidator.cs" />
+    <Compile Include="src/Replay/ReplayOriginPolicy.cs" />
     <Compile Include="src/Replay/StoryCommandTrace.cs" />
+    <Compile Include="src/Replay/StoryContinuationCompiler.cs" />
+    <Compile Include="src/Replay/StoryContinuation.cs" />
     <Compile Include="src/Saves/StorySaveFiles.cs" />
     <Compile Include="src/Battle/TeamBattleSkip.cs" />
     <Compile Include="src/Battle/BattleRewardPolicy.cs" />
@@ -83,6 +89,10 @@
     </Reference>
     <Reference Include="Fungus">
       <HintPath>$(GameDir)/Mortal_Data/Managed/Fungus.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="DOTween">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/DOTween.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Mortal.Core">

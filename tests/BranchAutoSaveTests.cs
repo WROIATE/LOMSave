@@ -71,7 +71,11 @@ namespace Mortal.Core
 {
     public class GameSave { public string CurrentScene = "Story", CurrentStoryScript, StartStoryScript; public long TimeTick; public int Flag; }
     public class AutoGameSave { public string Slot; public GameSave GameSave; }
-    public class PlayerStatManagerData { public static PlayerStatManagerData Instance = new PlayerStatManagerData(); public string CurrentStoryScript; }
+    public enum GameStatType { 命運 = 7 }
+    public sealed class GameStat { public int Value = 10; public void AddValue(int amount, bool update) { Value += amount; } }
+    public sealed class PlayerStatData { private GameStat fate = new GameStat(); public GameStat Get(GameStatType type) { return fate; } }
+    public class PlayerStatManagerData
+    { public static PlayerStatManagerData Instance = new PlayerStatManagerData(); public string CurrentStoryScript; public PlayerStatData Stats = new PlayerStatData(); }
     public class SceneController
     {
         public static SceneController Instance = new SceneController(); public bool IsPrepare, IsLoading; public int Loads;
@@ -157,12 +161,13 @@ namespace LOMSave.Probe
     { internal static T Read<T>(object value, string name) { return (T)value.GetType().GetField(name).GetValue(value); } }
     internal static class LOMSaveProbePlugin
     {
+        internal static bool ValidateDirectCommand(StoryCommandCheckpoint checkpoint) { return true; }
         internal static int Reached; internal static List<string> Errors = new List<string>();
         internal static string Sha256(string value)
         { using (var hash = SHA256.Create()) return BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(value))).Replace("-", "").ToLowerInvariant(); }
         internal static void WriteEvent(string name, object payload) { }
         internal static void WriteError(string name, Exception error, object context = null) { Errors.Add(name); }
-        internal static void ReplayTargetReached(StoryCommandCheckpoint checkpoint) { Reached++; ReplayRuntime.IsReplaying = false; }
+        internal static bool ReplayTargetReached(StoryCommandCheckpoint checkpoint) { Reached++; ReplayRuntime.IsReplaying = false; return true; }
         internal static void ReplayAborted(string reason, StoryCommandCheckpoint checkpoint) { ReplayRuntime.Reset(reason); }
     }
     public static class BranchAutoSaveTests

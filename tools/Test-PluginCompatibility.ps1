@@ -43,6 +43,13 @@ try {
             $problems.Add("Harmony class is not registered: $($type.FullName)")
         }
         foreach ($method in $type.Methods) {
+            # Harmony also discovers callbacks by convention, even without an
+            # attribute. A business method named Prepare can silently disable
+            # every patch in its class when Harmony calls it with nulls.
+            if ($hasPatches -and $method.Name -in @('Prepare','Cleanup','TargetMethod','TargetMethods') -and
+                !@($method.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq ('HarmonyLib.Harmony' + $method.Name) }).Count) {
+                $problems.Add("Implicit Harmony lifecycle callback requires an explicit attribute or a different name: $method")
+            }
             foreach ($attribute in $method.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'HarmonyLib.HarmonyPatch' }) {
                 $patchCount++
                 $targetType = $null; $targetName = $null; $argumentTypes = $null
@@ -80,10 +87,14 @@ try {
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SoundManager'; Fields = @('_currentMusic','_currentEnvSound','_rtpcBackgroundMusic','_rtpcEnvSound','_rtpcMusicLowpass') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.GameDateTimeText'; Fields = @('_text') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.PlayerStatusPanel'; Fields = @('_testPanel') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.PlayerStatManagerData'; Fields = @('_startStoryScript') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.TestGameStatPanel'; Fields = @('_stat','_nameText') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.TestFlagStatPanel'; Fields = @('_stat','_nameText','_valueText','_textTip','_tip') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.CheckPointManager'; Fields = @('_position') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.StoryManager'; Fields = @('_logButton','_logOpen','_panelOpen'); Properties = @('IsStoryPause') },
+        @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.CharacterPlaceholder'; Fields = @('_characters') },
+        @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.StoryCharacterController'; Fields = @('_dicPortrait') },
+        @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.DiceMenuDialog'; Fields = @('_defaultDiceMax','_currentRandomValue','_resultCount','_resultSelection','_header','_additions') },
         @{ Assembly = 'Mortal.Pinball'; Type = 'Mortal.Pinball.PinballManager'; Fields = @('_isBroken','_spring','_currentScore','_totalScore'); Methods = @('DisableMarblePhysicsBehaviour','SetScoreTriggerActive','ExitScene') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.GameLevelManager'; Fields = @('_progressLevelData_01','_progressLevelData_02','_pausePanel') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.ReadyPanel'; Fields = @('_startButton') },

@@ -34,6 +34,7 @@ if not LOM_SAVE_PROBE_COMMAND_TRACE then
     local function directive(value)
         local text = tostring(value or """")
         local token, action = string.match(text, ""^([^|]+)|([^|]+)$"")
+        if action == ""abort"" then error(""LOMSave replay stopped"") end
         return token or text, action or ""continue""
     end
 
@@ -48,6 +49,9 @@ if not LOM_SAVE_PROBE_COMMAND_TRACE then
             local token, action = directive(emit(""say"", ""begin"", text))
             if action == ""skip"" then
                 emit(""say"", ""end"", token .. ""|"")
+                -- Let native portrait/tween coroutines advance between lines.
+                -- No dialogue UI or real-time reading delay is introduced.
+                coroutine.yield()
                 return
             end
             local result = original_say(text, voiceclip)
@@ -87,6 +91,14 @@ if not LOM_SAVE_PROBE_COMMAND_TRACE then
             emit(""choosetimer"", ""end"", token .. ""|"" .. tostring(result))
             return result
         end
+    end
+
+    local original_random = math.random
+    math.random = function(...)
+        local value = original_random(...)
+        local recorded = emit(""random"", ""end"", serialize({...}) .. ""|"" .. tostring(value))
+        if recorded == ""abort"" then error(""LOMSave replay random mismatch"") end
+        return tonumber(recorded) or value
     end
 end
 ";
@@ -130,13 +142,16 @@ end
 
         internal static void ConfigureReplay(
             StoryCommandCheckpoint target,
-            IList<StoryChoiceDecision> choices = null)
+            IList<StoryChoiceDecision> choices = null,
+            IList<StoryScriptVisit> visits = null,
+            IList<StoryReplayOutcome> outcomes = null)
         {
             ReplayRuntime.Reset("replay_reconfigured");
             // Scene initialization may auto-save before Begin runs. Never let
             // that save inherit a command/choice history from the previous load.
             Current = null;
             ChoiceHistory.Clear();
+            StoryReplayJournal.Configure(visits, outcomes);
             _activeReplayTarget = null;
             _activeReplayChoices = null;
             _skippedDialogueCount = 0;
@@ -179,13 +194,20 @@ end
                 && target.PayloadHash != null && target.PayloadHash.Length == 64;
         }
 
-        internal static bool Begin()
+        internal static bool Begin(string fingerprint = null, string nativeStart = null)
         {
             _sequence = 0;
             Current = null;
-            ChoiceHistory.Clear();
             var script = PlayerStatManagerData.Instance.CurrentStoryScript;
-            if (_pendingReplayTarget != null && !string.Equals(
+            var restoring = IsReplayPending;
+            var routeError = StoryReplayJournal.Begin(LuaManager.Instance, script, fingerprint, restoring, nativeStart);
+            if (StoryReplayJournal.StartsAnchor) ChoiceHistory.Clear();
+            if (routeError != null)
+            {
+                AbortActiveReplay(routeError);
+                return false;
+            }
+            if (!StoryReplayJournal.IsDeterministic && _pendingReplayTarget != null && !string.Equals(
                 _pendingReplayTarget.Script, script, StringComparison.Ordinal))
             {
                 // Do not run an unrelated chapter under the loading mask.
@@ -195,10 +217,10 @@ end
             }
             if (_activeReplayTarget == null
                 && _pendingReplayTarget != null
-                && string.Equals(
+                && (StoryReplayJournal.IsDeterministic || string.Equals(
                     _pendingReplayTarget.Script,
                     script,
-                    StringComparison.Ordinal))
+                    StringComparison.Ordinal)))
             {
                 _activeReplayTarget = _pendingReplayTarget;
                 _pendingReplayTarget = null;
@@ -263,6 +285,16 @@ end
                 kindSeparator + 1,
                 phaseSeparator - kindSeparator - 1);
             var payload = body.Substring(phaseSeparator + 1);
+            if (kind == "random" && phase == "end")
+            {
+                var separator = payload.LastIndexOf('|');
+                if (separator >= 0)
+                {
+                    try { result = RecordOutcome("random", payload.Substring(0, separator), payload.Substring(separator + 1)); }
+                    catch (InvalidOperationException) { result = "abort"; }
+                }
+                return true;
+            }
             if (phase == "begin")
             {
                 string directive;
@@ -290,9 +322,22 @@ end
             string payload,
             out int? replayResult)
         {
+            int ignored;
+            return BeginExternal(kind, payload, out replayResult, out ignored);
+        }
+
+        internal static int BeginExternal(
+            string kind,
+            string payload,
+            out int? replayResult,
+            out int fatePointCost)
+        {
             string directive;
             var checkpoint = BeginCommand(kind, payload, out directive);
             replayResult = null;
+            fatePointCost = 0;
+            if (directive == "abort")
+                throw new InvalidOperationException("LOMSave replay stopped before external command: " + kind);
             if (directive.StartsWith(
                     ReplayResultDirectivePrefix,
                     StringComparison.Ordinal)
@@ -301,13 +346,14 @@ end
                     out var parsedResult))
             {
                 replayResult = parsedResult;
+                fatePointCost = Math.Max(0, FindReplayDecision(checkpoint)?.FatePointCost ?? 0);
             }
             return checkpoint.Token;
         }
 
-        internal static void EndExternal(string kind, int token, string result)
+        internal static void EndExternal(string kind, int token, string result, int fatePointCost = 0)
         {
-            End(kind, token + "|" + (result ?? string.Empty));
+            End(kind, token + "|" + (result ?? string.Empty), fatePointCost);
         }
 
         private static StoryCommandCheckpoint BeginCommand(
@@ -319,6 +365,7 @@ end
             Current = new StoryCommandCheckpoint
             {
                 Token = ++_token,
+                Visit = StoryReplayJournal.Visit,
                 Script = PlayerStatManagerData.Instance.CurrentStoryScript,
                 Sequence = ++_sequence,
                 Kind = kind,
@@ -328,6 +375,8 @@ end
             // Capture before native choose/dice execution and before replay can
             // clear its guards at a reached or rejected target.
             BranchAutoSave.BeforeBranch(Current, payload);
+            if (!LOMSaveProbePlugin.ValidateDirectCommand(Current))
+            { directive = "abort"; return Current; }
             directive = GetReplayDirective(Current);
             return Current;
         }
@@ -340,13 +389,14 @@ end
                 return ContinueDirective;
             }
 
-            if (!string.Equals(current.Script, target.Script, StringComparison.Ordinal))
+            var earlierVisit = StoryReplayJournal.IsDeterministic && current.Visit < target.Visit;
+            if (!earlierVisit && !string.Equals(current.Script, target.Script, StringComparison.Ordinal))
             {
                 AbortReplay("script_changed", current, target);
-                return ContinueDirective;
+                return "abort";
             }
 
-            if (current.Sequence < target.Sequence)
+            if (earlierVisit || current.Sequence < target.Sequence)
             {
                 if (string.Equals(current.Kind, "say", StringComparison.Ordinal))
                 {
@@ -373,16 +423,22 @@ end
                 }
 
                 AbortReplay("choice_history_missing", current, target);
-                return ContinueDirective;
+                return "abort";
             }
 
-            if (current.Sequence == target.Sequence
+            if ((!StoryReplayJournal.IsDeterministic || current.Visit == target.Visit)
+                && current.Sequence == target.Sequence
                 && string.Equals(current.Kind, target.Kind, StringComparison.Ordinal)
                 && string.Equals(
                     current.PayloadHash,
                     target.PayloadHash,
                     StringComparison.Ordinal))
             {
+                if (!StoryReplayJournal.Finish())
+                {
+                    AbortReplay("route_outcomes_remaining", current, target);
+                    return "abort";
+                }
                 _activeReplayTarget = null;
                 _activeReplayChoices = null;
                 LOMSaveProbePlugin.WriteEvent("story_replay_target_reached", new
@@ -391,12 +447,16 @@ end
                     target,
                     skippedDialogueCount = _skippedDialogueCount
                 });
-                LOMSaveProbePlugin.ReplayTargetReached(current);
+                if (!LOMSaveProbePlugin.ReplayTargetReached(current))
+                {
+                    AbortReplay("state_mismatch", current, target);
+                    return "abort";
+                }
                 return ContinueDirective;
             }
 
             AbortReplay("checkpoint_mismatch", current, target);
-            return ContinueDirective;
+            return "abort";
         }
 
         private static void AbortReplay(
@@ -408,6 +468,7 @@ end
             _pendingReplayTarget = null;
             _activeReplayChoices = null;
             _pendingReplayChoices = null;
+            StoryReplayJournal.Configure(null, null);
             LOMSaveProbePlugin.WriteEvent("story_replay_aborted", new
             {
                 reason,
@@ -418,7 +479,7 @@ end
             LOMSaveProbePlugin.ReplayAborted(reason, target);
         }
 
-        private static void End(string kind, string payload)
+        private static void End(string kind, string payload, int fatePointCost = 0)
         {
             var resultSeparator = payload.IndexOf('|');
             var tokenText = resultSeparator < 0
@@ -433,14 +494,15 @@ end
                 && Current.Token == token;
             if (matched)
             {
-                RecordReplayDecision(Current, commandResult);
+                RecordReplayDecision(Current, commandResult, fatePointCost);
                 Current = null;
             }
         }
 
         private static void RecordReplayDecision(
             StoryCommandCheckpoint checkpoint,
-            string result)
+            string result,
+            int fatePointCost)
         {
             if (!IsReplayableDecisionKind(checkpoint.Kind)
                 || !int.TryParse(result, out var numericResult))
@@ -448,13 +510,17 @@ end
                 return;
             }
 
+            if (ChoiceHistory.Count >= 4096) { ChoiceHistory.Clear(); StoryReplayJournal.Invalidate(); }
+
             ChoiceHistory.Add(new StoryChoiceDecision
             {
+                Visit = checkpoint.Visit,
                 Script = checkpoint.Script,
                 Sequence = checkpoint.Sequence,
                 Kind = checkpoint.Kind,
                 PayloadHash = checkpoint.PayloadHash,
-                Result = numericResult
+                Result = numericResult,
+                FatePointCost = checkpoint.Kind == DiceKind ? Math.Max(0, fatePointCost) : 0
             });
         }
 
@@ -471,6 +537,7 @@ end
             {
                 if (decision != null
                     && decision.Sequence == checkpoint.Sequence
+                    && (!StoryReplayJournal.IsDeterministic || decision.Visit == checkpoint.Visit)
                     && string.Equals(
                         decision.Script,
                         checkpoint.Script,
@@ -480,6 +547,7 @@ end
                         checkpoint.Kind,
                         StringComparison.Ordinal))
                 {
+                    if (StoryReplayJournal.IsDeterministic && decision.PayloadHash != checkpoint.PayloadHash) return null;
                     return decision;
                 }
             }
@@ -511,11 +579,13 @@ end
 
                 result.Add(new StoryChoiceDecision
                 {
+                    Visit = choice.Visit,
                     Script = choice.Script,
                     Sequence = choice.Sequence,
                     Kind = choice.Kind,
                     PayloadHash = choice.PayloadHash,
-                    Result = choice.Result
+                    Result = choice.Result,
+                    FatePointCost = choice.FatePointCost
                 });
             }
             return result;
@@ -528,10 +598,20 @@ end
                 ? value
                 : value.Substring(0, maximumLength);
         }
+
+        internal static string RecordOutcome(string kind, string key, string actual)
+        {
+            string value;
+            var error = StoryReplayJournal.Outcome(kind, key, actual, out value);
+            if (error == null) return value;
+            AbortActiveReplay(error);
+            throw new InvalidOperationException("Replay outcome mismatch: " + kind + " / " + key);
+        }
     }
 
     internal sealed class StoryCommandCheckpoint
     {
+        public int Visit;
         public int Token;
         public string Script;
         public int Sequence;
@@ -542,10 +622,12 @@ end
 
     internal sealed class StoryChoiceDecision
     {
+        public int Visit;
         public string Script;
         public int Sequence;
         public string Kind;
         public string PayloadHash;
         public int Result;
+        public int FatePointCost;
     }
 }

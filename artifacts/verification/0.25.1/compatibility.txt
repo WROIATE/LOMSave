@@ -1,0 +1,1 @@
+447 native references, 145 Harmony targets and 49 reflection members resolved; 21 patch classes registered.

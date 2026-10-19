@@ -1,0 +1,47 @@
+{
+  "version": "0.25.1",
+  "gameVersion": "release_1.0.6000.4",
+  "sha256": "109BAFC74D4CFB300D930FFA4073DD634A3E40DB5B7845481D79127B9FF002A6",
+  "offline": {
+    "corpusFailures": 0,
+    "suites": 20,
+    "reflectionMembers": 49,
+    "corpusSeconds": 41.2516038,
+    "corpusPoints": 77717,
+    "nativeReferences": 447,
+    "corpusScripts": 2068,
+    "harmonyTargets": 145,
+    "patchClasses": 21
+  },
+  "live": {
+    "historicalStatementsExecuted": 0,
+    "eventPreviewsRetested": false,
+    "coldDirectStateDifferences": 0,
+    "nativeCtrlFunctionInvoked": true,
+    "continuedToNextDialogue": true,
+    "legacyBranchStateDifferences": [
+      0,
+      0
+    ],
+    "physicalCtrlHoldTested": false,
+    "fixedEventsRetested": false,
+    "coldDirectMaskSeconds": 2.0728429,
+    "legacyBranchMaskSeconds": [
+      20.083623,
+      16.490306
+    ],
+    "temporaryHelperRemoved": true,
+    "originalBranchRoutePasses": 2
+  },
+  "restoration": {
+    "saves": 183,
+    "hashDifferences": 0,
+    "verifiedHashes": 188,
+    "configs": 5
+  },
+  "limitations": [
+    "Old version 11 branch saves still use compatibility replay.",
+    "Physical held Ctrl was represented by invoking its native SkipDialog handler.",
+    "Native FlowchartPlaceholder.OnDestroy logged an exit cleanup exception; the tested story execution completed."
+  ]
+}

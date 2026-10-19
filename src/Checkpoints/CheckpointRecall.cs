@@ -90,7 +90,7 @@ namespace LOMSave.Probe
 
         [HarmonyFinalizer, HarmonyPatch(typeof(CheckPointManager), "Condition")]
         [HarmonyPatch(typeof(CheckPointManager), "Switch")]
-        private static void Cleanup(Trace __state)
+        private static void CleanupTrace(Trace __state)
         {
             if (__state != null && Active.Count > 0 && ReferenceEquals(Active.Peek(), __state)) Active.Pop();
         }

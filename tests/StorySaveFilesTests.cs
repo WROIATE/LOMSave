@@ -65,7 +65,8 @@ namespace LOMSave.Probe
             Check(StorySaveFiles.Mismatch(10, 0, 20, committed, committed, "ch2_5_1", "ch2_5_1") == "save_identity_missing", "New-format files need a valid save timestamp");
             Check(StorySaveFiles.Mismatch(10, 20, 20, null, committed, "ch2_5_1", "ch2_5_1") == "save_identity_missing", "A truncated identity cannot enable replay");
             Check(StorySaveFiles.Mismatch(10, 20, 20, committed, committed, "meeting_option_01_temp", "ch2_5_1") == "checkpoint_script_mismatch", "Content identity alone cannot allow a checkpoint from another script");
-            Check(StorySaveFiles.Mismatch(11, 20, 20, committed, committed, "ch2_5_1", "ch2_5_1") == "unsupported_state_version", "Unknown future sidecar versions use the native fallback");
+            Check(StorySaveFiles.Mismatch(11, 20, 20, committed, committed, "ch2_5_1", "ch2_5_1") == null, "Version 11 routes retain version 10 content identity checks");
+            Check(StorySaveFiles.Mismatch(StorySaveFiles.StateVersion + 1, 20, 20, committed, committed, "ch2_5_1", "ch2_5_1") == "unsupported_state_version", "Unknown future sidecar versions are rejected");
             return _checks + " save-source, commit and checkpoint binding assertions passed";
         }
     }

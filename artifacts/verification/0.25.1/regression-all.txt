@@ -1,0 +1,38 @@
+Action automatic save checks passed: 38
+23 action automatic save hook assertions passed
+55 branch autosave, dice, replay and quick-load assertions passed
+29 save-source, commit and checkpoint binding assertions passed
+21 replay lifecycle assertions passed
+104 dialogue, preview and notification assertions passed
+42 building hold and preview input assertions passed
+20 YAML inventory and reload assertions passed; 5949 codes / 5398 names
+13 preview font regression assertions passed
+13 audio restoration assertions passed
+30 persistence, calendar, event and reward assertions passed (1,000 reward samples)
+10 team battle UI/settlement assertions passed
+27 event selection routing assertions passed
+67 story replay and mission routing assertions passed
+6 embedded Lua replay scheduling and RNG assertions passed.
+Continuation tests passed: excluded prior effects, preserved shadowed locals, original branch despite changed flags, choice snapshot, alternate choice and parent continuation.
+Actor lifecycle tests passed: native and instrumented cleanup preserve absent branch actors; direct resume loads only required presentation actors.
+39 replay character context assertions passed
+2 native continuation / embedded Lua assertions passed (failure reproduced; prepared script succeeds).
+31 replay state validation assertions passed
+Error initializing UnityScriptLoader : System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.
+ ---> System.Security.SecurityException: ECall methods must be packaged into a system module.
+   at UnityEngine.ResourcesAPIInternal.LoadAll(String path, Type systemTypeInstance)
+   at UnityEngine.ResourcesAPI.LoadAll(String path, Type systemTypeInstance)
+   at UnityEngine.Resources.LoadAll(String path, Type systemTypeInstance)
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   --- End of inner exception stack trace ---
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at System.Reflection.MethodBase.Invoke(Object obj, Object[] parameters)
+   at MoonSharp.Interpreter.Loaders.UnityAssetsScriptLoader.LoadResourcesWithReflection(String assetsPath)
+2 native temple menu / embedded Lua assertions passed (stale origin failure reproduced; selected target succeeds).
+16 calendar action/load/reset hook assertions passed
+33 recall shortcut input assertions passed
+43 debug menu checks passed.
+20 regression suites passed.

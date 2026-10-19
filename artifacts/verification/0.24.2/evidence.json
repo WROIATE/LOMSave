@@ -1,0 +1,1208 @@
+{
+  "gameVersion": "release_1.0.6000.4",
+  "modVersion": "0.24.2",
+  "note": "Phase 2 exposed old-game-version migration mismatch; phases 3 and 4 use the corrected final DLL. Phase 4 is a fresh process loading the complete three-script forge checkpoint.",
+  "events": [
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:05:19.149665Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_3_break_start_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:05:19.4760583Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 2.940043199999991,
+        "generation": 3,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:05:31.9605078Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_3_break_start_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:05:32.2603673Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 2.049475099999995,
+        "generation": 6,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:05:45.4069669Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_3_break_start_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:05:45.7068612Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 2.0529875000000004,
+        "generation": 9,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:11:09.2742379Z",
+      "scene": "Story",
+      "event": "branch_auto_save_written",
+      "data": {
+        "slot": "auto_branch",
+        "source": "choose",
+        "displayName": "最近分支",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 43.3002
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:11:33.2490021Z",
+      "scene": "Story",
+      "event": "option_impact_preview_shown",
+      "data": {
+        "key": "O_6_10_4_002",
+        "impactCount": 4,
+        "descriptions": "• 嘴力 +1\r\n• 修养 +1\r\n• 处世 -1\r\n• 回程說點什麼 = 2\r\n",
+        "font": "SourceHanSerifTC-Bold"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:11:51.5569326Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_4",
+        "sequence": 59,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:11:51.8502237Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 3.198546399999941,
+        "generation": 12,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:12:17.4795668Z",
+      "scene": "Story",
+      "event": "branch_auto_save_written",
+      "data": {
+        "slot": "auto_branch",
+        "source": "dice",
+        "displayName": "最近分支",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 31.1338
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:14:00.7772128Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_4",
+        "sequence": 74,
+        "kind": "say",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:14:01.070919Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 3.3579200000000355,
+        "generation": 15,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:15:38.4508332Z",
+      "scene": "Free",
+      "event": "building_events_scanned",
+      "data": {
+        "position": "鍛冶場",
+        "script": "forge_001",
+        "checkpointManagerPresent": false,
+        "count": 29
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:15:38.4648146Z",
+      "scene": "Free",
+      "event": "event_inspector_shown",
+      "data": {
+        "title": "锻冶場 · 事件",
+        "count": 29,
+        "entries": [
+          {
+            "Title": "P_大失败_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 15  ·  基础权重 10\n锻造 +5；命运 +1；心相 -66",
+            "CanSelect": true
+          },
+          {
+            "Title": "不滿",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 0  ·  基础权重 30\n修养 -1；处世 +1；南宫來客 糾紛 +2；心相 -26",
+            "CanSelect": false
+          },
+          {
+            "Title": "滿",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 0  ·  基础权重 25\n锻造 +5；银两 +1000；名声 +1；心相 -6；可能：青城派好感度 +1；可能：全真教好感度 +1；可能：峨嵋派好感度 +1；可能：崆峒派好感度 +1…",
+            "CanSelect": false
+          },
+          {
+            "Title": "P_失败_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 25  ·  基础权重 25\n修养 -1；锻造 +5；名声 +1；心相 -25；可能：银两 +1000；可能：四师兄好感度 +2",
+            "CanSelect": true
+          },
+          {
+            "Title": "P_正常_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 50  ·  基础权重 50\n可能：锻造 +10；可能：锻造 +5；可能：锻造 +3；心相 -16",
+            "CanSelect": true
+          },
+          {
+            "Title": "P_成功_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 55  ·  基础权重 25\n锻造 +8；刀剑 +1（心相 ≤ 20 时再减 1）；修养 -1；心相 -16",
+            "CanSelect": true
+          },
+          {
+            "Title": "P_特殊_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 0  ·  基础权重 50\n天赋“兵器损毁” Lv.-1",
+            "CanSelect": false
+          },
+          {
+            "Title": "P_正常_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 50  ·  基础权重 50\n剧情事件",
+            "CanSelect": true
+          },
+          {
+            "Title": "修繕崆峒山道",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n银两 +1000；心相 -15；道德 +1；郁竹好感度 +1；虞小梅好感度 +2；崆峒派好感度 -1",
+            "CanSelect": false
+          },
+          {
+            "Title": "修繕山道dead End",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 10\n进入死亡结局",
+            "CanSelect": false
+          },
+          {
+            "Title": "精美的簪子",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n心相 -20；获得“发簪” ×1",
+            "CanSelect": false
+          },
+          {
+            "Title": "赵活磨喝樂",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n剧情事件",
+            "CanSelect": false
+          },
+          {
+            "Title": "修葺地牢",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 30\n可能：心相 -15；可能：银两 +1000；可能：郁竹好感度 +2；可能：奪魄门好感 +1；可能：飛天门好感 -1；可能：银两 +1000；可能：郁竹好感度 +2；可能：奪魄门好感 +1…",
+            "CanSelect": false
+          },
+          {
+            "Title": "战鬥陀螺殺人事件",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 35\n可能：心相 -5；可能：银两 +500；可能：名声 +1；可能：郁竹好感度 +2；可能：虞小梅好感度 +1；可能：奪魄门好感 -1；可能：心相 -5；可能：银两 +500…",
+            "CanSelect": false
+          },
+          {
+            "Title": "牙控车殺人事件",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 35\n心相 -20；银两 +1000；名声 +1；郁竹好感度 +2；崆峒派好感度 -2",
+            "CanSelect": false
+          },
+          {
+            "Title": "大师兄的機关甲衣",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 50\n获得“逆鳞宝衣” ×1",
+            "CanSelect": false
+          },
+          {
+            "Title": "修葺飛天殿",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 35\n银两 +1500；郁竹好感度 +2；虞小梅好感度 +1；奪魄门好感 -1；飛天门好感 +1",
+            "CanSelect": false
+          },
+          {
+            "Title": "修繕唐门",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 50\n向心 +3；贡献度 +40；郁竹好感度 +3；三师兄好感度 +3；可能：掌门人好感度 +2；可能：二师兄好感度 +2",
+            "CanSelect": false
+          },
+          {
+            "Title": "被小竹趕出门",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 40\n修养 -2；处世 +1；郁竹好感度 -1",
+            "CanSelect": false
+          },
+          {
+            "Title": "補屋頂失败",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 -1000；体力 -1；郁竹好感度 +1；命运 +1；可能：崆峒派好感度 -1",
+            "CanSelect": true
+          },
+          {
+            "Title": "打魚",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 15\n剧情事件",
+            "CanSelect": false
+          },
+          {
+            "Title": "農具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；可能：鐵拳门好感 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "厨具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；可能：飛天门好感 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "獵具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；可能：奪魄门好感 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "磨針",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；郁竹好感度 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "補屋頂",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；郁竹好感度 +1；可能：崆峒派好感度 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "保养工具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n修养 +1；性情 -1；郁竹好感度 +1",
+            "CanSelect": false
+          },
+          {
+            "Title": "香具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n可能：银两 +1000；可能：魏菊好感度 +1；可能：飛天门好感 +1；可能：玄功门好感 +1；可能：掌门人好感度 +1；可能：二师兄好感度 +1；可能：心相 +30；可能：贡献度 +30…",
+            "CanSelect": false
+          },
+          {
+            "Title": "茶具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n可能：银两 +1000；可能：魏菊好感度 +2；可能：玄功门好感 +1；可能：银两 +500；可能：名声 +1；可能：四师兄好感度 +1；可能：银两 +500；可能：心相 -10",
+            "CanSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:15:44.1957508Z",
+      "scene": "Free",
+      "event": "event_inspector_shown",
+      "data": {
+        "title": "锻冶場 · 事件",
+        "count": 29,
+        "entries": [
+          {
+            "Title": "P_大失败_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 15  ·  基础权重 10\n锻造 +5；命运 +1；心相 -66",
+            "CanSelect": true
+          },
+          {
+            "Title": "不滿",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 0  ·  基础权重 30\n修养 -1；处世 +1；南宫來客 糾紛 +2；心相 -26",
+            "CanSelect": false
+          },
+          {
+            "Title": "滿",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 0  ·  基础权重 25\n锻造 +5；银两 +1000；名声 +1；心相 -6；可能：青城派好感度 +1；可能：全真教好感度 +1；可能：峨嵋派好感度 +1；可能：崆峒派好感度 +1…",
+            "CanSelect": false
+          },
+          {
+            "Title": "P_失败_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 25  ·  基础权重 25\n修养 -1；锻造 +5；名声 +1；心相 -25；可能：银两 +1000；可能：四师兄好感度 +2",
+            "CanSelect": true
+          },
+          {
+            "Title": "P_正常_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 50  ·  基础权重 50\n可能：锻造 +10；可能：锻造 +5；可能：锻造 +3；心相 -16",
+            "CanSelect": true
+          },
+          {
+            "Title": "P_成功_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 55  ·  基础权重 25\n锻造 +8；刀剑 +1（心相 ≤ 20 时再减 1）；修养 -1；心相 -16",
+            "CanSelect": true
+          },
+          {
+            "Title": "P_特殊_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 0  ·  基础权重 50\n天赋“兵器损毁” Lv.-1",
+            "CanSelect": false
+          },
+          {
+            "Title": "P_正常_001",
+            "Group": "选项 · forge+work+forge",
+            "Detail": "当前权重 50  ·  基础权重 50\n剧情事件",
+            "CanSelect": true
+          },
+          {
+            "Title": "修繕崆峒山道",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n银两 +1000；心相 -15；道德 +1；郁竹好感度 +1；虞小梅好感度 +2；崆峒派好感度 -1",
+            "CanSelect": false
+          },
+          {
+            "Title": "修繕山道dead End",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 10\n进入死亡结局",
+            "CanSelect": false
+          },
+          {
+            "Title": "精美的簪子",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n心相 -20；获得“发簪” ×1",
+            "CanSelect": false
+          },
+          {
+            "Title": "赵活磨喝樂",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n剧情事件",
+            "CanSelect": false
+          },
+          {
+            "Title": "修葺地牢",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 30\n可能：心相 -15；可能：银两 +1000；可能：郁竹好感度 +2；可能：奪魄门好感 +1；可能：飛天门好感 -1；可能：银两 +1000；可能：郁竹好感度 +2；可能：奪魄门好感 +1…",
+            "CanSelect": false
+          },
+          {
+            "Title": "战鬥陀螺殺人事件",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 35\n可能：心相 -5；可能：银两 +500；可能：名声 +1；可能：郁竹好感度 +2；可能：虞小梅好感度 +1；可能：奪魄门好感 -1；可能：心相 -5；可能：银两 +500…",
+            "CanSelect": false
+          },
+          {
+            "Title": "牙控车殺人事件",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 35\n心相 -20；银两 +1000；名声 +1；郁竹好感度 +2；崆峒派好感度 -2",
+            "CanSelect": false
+          },
+          {
+            "Title": "大师兄的機关甲衣",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 50\n获得“逆鳞宝衣” ×1",
+            "CanSelect": false
+          },
+          {
+            "Title": "修葺飛天殿",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 35\n银两 +1500；郁竹好感度 +2；虞小梅好感度 +1；奪魄门好感 -1；飛天门好感 +1",
+            "CanSelect": false
+          },
+          {
+            "Title": "修繕唐门",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 50\n向心 +3；贡献度 +40；郁竹好感度 +3；三师兄好感度 +3；可能：掌门人好感度 +2；可能：二师兄好感度 +2",
+            "CanSelect": false
+          },
+          {
+            "Title": "被小竹趕出门",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 40\n修养 -2；处世 +1；郁竹好感度 -1",
+            "CanSelect": false
+          },
+          {
+            "Title": "補屋頂失败",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 -1000；体力 -1；郁竹好感度 +1；命运 +1；可能：崆峒派好感度 -1",
+            "CanSelect": true
+          },
+          {
+            "Title": "打魚",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 15\n剧情事件",
+            "CanSelect": false
+          },
+          {
+            "Title": "農具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；可能：鐵拳门好感 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "厨具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；可能：飛天门好感 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "獵具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；可能：奪魄门好感 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "磨針",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；郁竹好感度 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "補屋頂",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 10  ·  基础权重 10\n银两 +500；郁竹好感度 +1；可能：崆峒派好感度 +1",
+            "CanSelect": true
+          },
+          {
+            "Title": "保养工具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n修养 +1；性情 -1；郁竹好感度 +1",
+            "CanSelect": false
+          },
+          {
+            "Title": "香具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n可能：银两 +1000；可能：魏菊好感度 +1；可能：飛天门好感 +1；可能：玄功门好感 +1；可能：掌门人好感度 +1；可能：二师兄好感度 +1；可能：心相 +30；可能：贡献度 +30…",
+            "CanSelect": false
+          },
+          {
+            "Title": "茶具",
+            "Group": "选项 · craft2+free+craft2",
+            "Detail": "当前权重 0  ·  基础权重 25\n可能：银两 +1000；可能：魏菊好感度 +2；可能：玄功门好感 +1；可能：银两 +500；可能：名声 +1；可能：四师兄好感度 +1；可能：银两 +500；可能：心相 -10",
+            "CanSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:15:56.4953956Z",
+      "scene": "Free",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "free_action",
+        "displayName": "最近行动",
+        "actionCost": 1,
+        "actionCount": 4,
+        "elapsedMs": 21.4824
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:16:15.14832Z",
+      "scene": "Story",
+      "event": "next_event_applied",
+      "data": {
+        "name": "Forge_Work_S_01",
+        "script": "forge_work_301"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:18:49.5626743Z",
+      "scene": "Story",
+      "event": "story_replay_path_validated",
+      "data": {
+        "script": "forge_work_301",
+        "sequence": 1,
+        "kind": "say",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:18:49.6366029Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "forge_work_301",
+        "sequence": 1,
+        "kind": "say",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:18:49.7504453Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 1.3192222999999785,
+        "generation": 18,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:19:49.1096256Z",
+      "scene": "Free",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "free_action",
+        "displayName": "最近行动",
+        "actionCost": 1,
+        "actionCount": 4,
+        "elapsedMs": 20.5799
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:21:18.269587Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_4_3_break_start_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:21:18.3980047Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 1.4122462999998788,
+        "generation": 23,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:21:35.5590485Z",
+      "scene": "Story",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "story_option",
+        "displayName": "最近行动",
+        "actionCost": 1,
+        "actionCount": 4,
+        "elapsedMs": 25.8225
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:21:47.7506267Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_4",
+        "sequence": 62,
+        "kind": "dice",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 1,
+      "utc": "2026-10-19T13:21:48.0562084Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 3.258375499999829,
+        "generation": 26,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:23:20.0734019Z",
+      "scene": "Story",
+      "event": "story_replay_path_validated",
+      "data": {
+        "script": "ch6_10_1_part_2",
+        "sequence": 58,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:23:20.1911244Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_1_part_2",
+        "sequence": 58,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:23:20.3328895Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 6.410935799999997,
+        "generation": 3,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:23:33.5235987Z",
+      "scene": "Story",
+      "event": "story_replay_path_validated",
+      "data": {
+        "script": "ch6_10_1_part_2",
+        "sequence": 58,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:23:33.6383772Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_1_part_2",
+        "sequence": 58,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:23:33.7521762Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 5.081583599999995,
+        "generation": 6,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:26:58.6400075Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_requested",
+      "data": {
+        "managerPresent": true,
+        "gameOver": false,
+        "alreadySettled": false
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:26:58.6410047Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_performance",
+      "data": {
+        "track": "01",
+        "before": 0,
+        "after": 300,
+        "maximum": 300
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:26:58.6429978Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_performance",
+      "data": {
+        "track": "02",
+        "before": 10,
+        "after": 179,
+        "maximum": 300
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:26:58.6439941Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_money_simulated",
+      "data": {
+        "enemyCount": 15,
+        "eligibleEnemyCount": 15,
+        "moneyDropCount": 7,
+        "pickupCount": 39,
+        "moneyPerPickup": 10,
+        "money": 390,
+        "cap": 2500
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:26:58.6464907Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_settled",
+      "data": {
+        "IsGameOver": true
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:27:57.4180961Z",
+      "scene": "Story",
+      "event": "story_replay_state_mismatch",
+      "data": {
+        "script": "talk_brother4_option_02_02",
+        "sequence": 9,
+        "kind": "choose",
+        "differenceCount": 747
+      }
+    },
+    {
+      "phase": 2,
+      "utc": "2026-10-19T13:27:57.4757797Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "fallback_story_beginning_loaded",
+        "visibleSeconds": 1.1235174999999913,
+        "generation": 11,
+        "phase": "fallback_story_beginning_loaded"
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:31:06.9060857Z",
+      "scene": "Title",
+      "event": "story_replay_target_migrated",
+      "data": {
+        "fromVersion": "release_1.0.5000.13",
+        "toVersion": "release_1.0.6000.4",
+        "elapsedMilliseconds": 85.051
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:31:08.4781603Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "talk_brother4_option_02_02",
+        "sequence": 9,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:31:08.6750548Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 1.8614579000000049,
+        "generation": 3,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:33:27.8603879Z",
+      "scene": "Story",
+      "event": "branch_auto_save_written",
+      "data": {
+        "slot": "auto_branch",
+        "source": "choose",
+        "displayName": "最近分支",
+        "actionCost": 0,
+        "actionCount": 1,
+        "elapsedMs": 39.8328
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:34:08.6389206Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "S2321_04_02_break_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:34:08.7691973Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 1.7772559,
+        "generation": 6,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:36:52.670587Z",
+      "scene": "Story",
+      "event": "branch_auto_save_written",
+      "data": {
+        "slot": "auto_branch",
+        "source": "choose",
+        "displayName": "最近分支",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 27.0246
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:36:52.6940505Z",
+      "scene": "Story",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_free",
+        "source": "free_menu_checkpoint",
+        "displayName": "养成自动存档",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 21.6524
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:37:15.2501382Z",
+      "scene": "Story",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "story_free_option",
+        "displayName": "最近行动",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 34.5473
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:37:23.9392877Z",
+      "scene": "Story",
+      "event": "branch_auto_save_written",
+      "data": {
+        "slot": "auto_branch",
+        "source": "choose",
+        "displayName": "最近分支",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 28.2087
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:37:23.9617415Z",
+      "scene": "Story",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_free",
+        "source": "free_menu_checkpoint",
+        "displayName": "养成自动存档",
+        "actionCost": 0,
+        "actionCount": 4,
+        "elapsedMs": 21.775
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:37:42.3020653Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "S2321_04_03_break_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:37:42.4262287Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 1.189201100000048,
+        "generation": 9,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:38:44.8933998Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_requested",
+      "data": {
+        "managerPresent": true,
+        "gameOver": false,
+        "alreadySettled": false
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:38:44.8953925Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_performance",
+      "data": {
+        "track": "01",
+        "before": 0,
+        "after": 238,
+        "maximum": 300
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:38:44.896389Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_performance",
+      "data": {
+        "track": "02",
+        "before": 10,
+        "after": 124,
+        "maximum": 300
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:38:44.8978873Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_money_simulated",
+      "data": {
+        "enemyCount": 15,
+        "eligibleEnemyCount": 15,
+        "moneyDropCount": 8,
+        "pickupCount": 56,
+        "moneyPerPickup": 10,
+        "money": 560,
+        "cap": 2500
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:38:44.9023961Z",
+      "scene": "Battle",
+      "event": "team_battle_skip_settled",
+      "data": {
+        "IsGameOver": true
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:41:07.8945636Z",
+      "scene": "Free",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "free_action",
+        "displayName": "最近行动",
+        "actionCost": 1,
+        "actionCount": 4,
+        "elapsedMs": 23.2351
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:41:11.7024485Z",
+      "scene": "Story",
+      "event": "branch_auto_save_written",
+      "data": {
+        "slot": "auto_branch",
+        "source": "choose",
+        "displayName": "最近分支",
+        "actionCost": 0,
+        "actionCount": 3,
+        "elapsedMs": 26.9166
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:41:41.0563755Z",
+      "scene": "Free",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "free_action",
+        "displayName": "最近行动",
+        "actionCost": 1,
+        "actionCount": 4,
+        "elapsedMs": 18.4344
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:42:18.6541184Z",
+      "scene": "Free",
+      "event": "action_start_auto_save_written",
+      "data": {
+        "slot": "auto_action",
+        "source": "free_action",
+        "displayName": "最近行动",
+        "actionCost": 1,
+        "actionCount": 4,
+        "elapsedMs": 18.6902
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:42:52.7942828Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch5_6_1",
+        "sequence": 45,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:42:52.9270745Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 3.3504025999999385,
+        "generation": 15,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:43:56.1126501Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "ch6_10_3_break_start_01",
+        "sequence": 1,
+        "kind": "choose",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 3,
+      "utc": "2026-10-19T13:43:56.4161973Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 2.3071531999999024,
+        "generation": 18,
+        "phase": "ready"
+      }
+    },
+    {
+      "phase": 4,
+      "utc": "2026-10-19T13:45:43.1980101Z",
+      "scene": "Story",
+      "event": "story_replay_path_validated",
+      "data": {
+        "script": "forge_work_301",
+        "sequence": 1,
+        "kind": "say",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 4,
+      "utc": "2026-10-19T13:45:43.2774176Z",
+      "scene": "Story",
+      "event": "story_replay_state_validated",
+      "data": {
+        "script": "forge_work_301",
+        "sequence": 1,
+        "kind": "say",
+        "differenceCount": 0
+      }
+    },
+    {
+      "phase": 4,
+      "utc": "2026-10-19T13:45:43.4004142Z",
+      "scene": "Story",
+      "event": "story_replay_mask_hidden",
+      "data": {
+        "reason": "presentation_restored",
+        "visibleSeconds": 1.8920664999999985,
+        "generation": 3,
+        "phase": "ready"
+      }
+    }
+  ]
+}

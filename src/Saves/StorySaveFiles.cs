@@ -15,7 +15,7 @@ namespace LOMSave.Probe
 
     internal static class StorySaveFiles
     {
-        internal const int StateVersion = 10;
+        internal const int StateVersion = 12;
 
         internal static string Hash(string file)
         {
@@ -35,7 +35,7 @@ namespace LOMSave.Probe
             string savedHash, string fileHash, string checkpointScript, string saveScript)
         {
             if (version > StateVersion) return "unsupported_state_version";
-            if (version >= StateVersion)
+            if (version >= 10)
             {
                 if (savedTick <= 0 || savedHash == null || savedHash.Length != 64) return "save_identity_missing";
                 if (savedTick != loadedTick || !string.Equals(savedHash, fileHash, StringComparison.Ordinal))

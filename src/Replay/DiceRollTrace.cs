@@ -1,4 +1,5 @@
 using HarmonyLib;
+using Mortal.Core;
 using Mortal.Story;
 using Newtonsoft.Json;
 using System.Collections;
@@ -40,23 +41,31 @@ namespace LOMSave.Probe
                 checkName
             });
             int? replayResult;
+            int fatePointCost;
             var token = StoryCommandTrace.BeginExternal(
                 CommandKind,
                 payload,
-                out replayResult);
+                out replayResult,
+                out fatePointCost);
+
+            var fate = PlayerStatManagerData.Instance.Stats.Get(GameStatType.命運);
 
             if (replayResult.HasValue)
             {
+                // Native UseFatePoint spends one point per reroll. Replaying
+                // only the final selection must retain that gameplay effect.
+                if (fatePointCost > 0) fate.AddValue(-fatePointCost, true);
                 Traverse.Create(dialog)
                     .Field("_resultSelection")
                     .SetValue(replayResult.Value);
                 StoryCommandTrace.EndExternal(
                     CommandKind,
                     token,
-                    replayResult.Value.ToString());
+                    replayResult.Value.ToString(), fatePointCost);
                 yield break;
             }
 
+            var fateBefore = fate.Value;
             try
             {
                 if (original != null)
@@ -72,7 +81,7 @@ namespace LOMSave.Probe
                 StoryCommandTrace.EndExternal(
                     CommandKind,
                     token,
-                    dialog.ResultSelection.ToString());
+                    dialog.ResultSelection.ToString(), System.Math.Max(0, fateBefore - fate.Value));
             }
         }
     }

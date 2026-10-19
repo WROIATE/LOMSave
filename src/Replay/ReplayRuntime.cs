@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+using System.Diagnostics;
 
 namespace LOMSave.Probe
 {
@@ -12,14 +14,17 @@ namespace LOMSave.Probe
         private static float _timeScaleBeforeReplay = 1f;
         private static bool _speedActive;
         private static bool _maskVisible;
-        private static float _maskShownAt;
-        private static float _recoveryStartedAt;
-        private static float _lastProgressAt;
+        private static double _maskShownAt;
+        private static double _recoveryStartedAt;
+        private static double _lastProgressAt;
         private static float _timeoutSeconds = MaskTimeoutSeconds;
+        internal static Func<double> Clock = () => (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency;
+        internal static int Generation { get; private set; }
+        internal static string Phase { get; private set; } = "ready";
 
         internal static bool IsRestoring { get { return _maskVisible; } }
         internal static bool IsReplaying { get { return _speedActive; } }
-        internal static void ReportProgress() { _lastProgressAt = Time.unscaledTime; }
+        internal static void ReportProgress() { _lastProgressAt = Clock(); }
 
         internal static void Start()
         {
@@ -35,7 +40,7 @@ namespace LOMSave.Probe
             ShowMask();
             // Give scene loading its own grace period; the original replay
             // deadline starts when Lua actually begins to replay the script.
-            _maskShownAt = Time.unscaledTime;
+            Phase = "replay";
             ReportProgress();
             _timeoutSeconds = MaskTimeoutSeconds;
             LOMSaveProbePlugin.WriteEvent("story_replay_speed_started", new
@@ -54,6 +59,7 @@ namespace LOMSave.Probe
 
             Time.timeScale = _timeScaleBeforeReplay;
             _speedActive = false;
+            Phase = "presentation";
             ReportProgress();
             LOMSaveProbePlugin.WriteEvent("story_replay_speed_restored", new
             {
@@ -63,6 +69,7 @@ namespace LOMSave.Probe
 
         internal static void Reset(string reason)
         {
+            Generation++;
             RestoreSpeed();
             HideMask(reason);
         }
@@ -98,9 +105,9 @@ namespace LOMSave.Probe
         {
             // Focus changes may suspend the inactivity timer, but must never
             // keep a failed recovery masked forever.
-            var totalExpired = Time.unscaledTime - _recoveryStartedAt >= MaximumRecoverySeconds;
+            var totalExpired = Clock() - _recoveryStartedAt >= MaximumRecoverySeconds;
             if (!_maskVisible || (!totalExpired && (!Application.isFocused
-                || Time.unscaledTime - _lastProgressAt < _timeoutSeconds)))
+                || Clock() - _lastProgressAt < _timeoutSeconds)))
             {
                 return;
             }
@@ -110,6 +117,9 @@ namespace LOMSave.Probe
                 timeoutSeconds = totalExpired ? MaximumRecoverySeconds : _timeoutSeconds,
                 reason = totalExpired ? "recovery_deadline" : "no_progress"
             });
+            // Invalidate any suspended Lua/presentation work before releasing
+            // the mask. A late asset completion must not mutate a failed load.
+            Generation++;
             if (!StoryCommandTrace.AbortActiveReplay("timeout"))
             {
                 RestoreSpeed();
@@ -126,15 +136,20 @@ namespace LOMSave.Probe
             }
 
             _maskVisible = false;
+            Phase = reason == "presentation_restored" ? "ready" : reason;
             LOMSaveProbePlugin.WriteEvent("story_replay_mask_hidden", new
             {
                 reason,
-                visibleSeconds = Time.unscaledTime - _maskShownAt
+                visibleSeconds = Clock() - _maskShownAt,
+                generation = Generation,
+                phase = Phase
             });
         }
 
         internal static void Prepare()
         {
+            Generation++;
+            Phase = "loading";
             ReplayAudio.Mute();
             _timeoutSeconds = SceneLoadTimeoutSeconds;
             ShowMask();
@@ -147,8 +162,8 @@ namespace LOMSave.Probe
                 return;
             }
 
-            _maskShownAt = Time.unscaledTime;
-            _recoveryStartedAt = Time.unscaledTime;
+            _maskShownAt = Clock();
+            _recoveryStartedAt = Clock();
             ReportProgress();
             _maskVisible = true;
             LOMSaveProbePlugin.WriteEvent("story_replay_mask_shown", new

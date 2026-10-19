@@ -134,7 +134,7 @@ namespace LOMSave.Probe
             var command = state["Command"]?.ToObject<StoryCommandCheckpoint>();
             if (!StoryCommandTrace.CanReplay(command) || !IsBranch(command.Kind)) return false;
             var script = string.IsNullOrEmpty(save.CurrentStoryScript) ? save.StartStoryScript : save.CurrentStoryScript;
-            return state.Value<int>("Version") == StorySaveFiles.StateVersion
+            return state.Value<int>("Version") >= 10 && state.Value<int>("Version") <= StorySaveFiles.StateVersion
                 && StorySaveFiles.Mismatch(state.Value<int>("Version"), state.Value<long>("SaveTimeTick"), save.TimeTick,
                     state.Value<string>("SaveFileHash"), StorySaveFiles.Hash(file), command.Script, script) == null;
         }
