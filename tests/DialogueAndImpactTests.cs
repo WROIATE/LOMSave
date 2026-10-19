@@ -57,6 +57,37 @@ statmodifymanager.Player(""life"", -99, """", 1)
             var eventActions = LuaImpactScanner.Scan(eventLua, name => "local next = checkpointmanager.Position(\"Door_Work\")\nluamanager.SetNextScript(next)");
             Check(eventActions["O_work"].Count(x => x.Method == "PositionPool") == 1, "Discover the event pool reached by an action's next script");
             Check(!eventActions["O_rest"].Any(x => x.Method == "PositionPool"), "Do not mix event pools from sibling choices");
+            var sharedReads = 0;
+            var sharedLua = "--index:O_shared_1\nluamanager.SetNextScript(\"shared\")\n--index:O_shared_2\nluamanager.SetNextScript(\"SHARED\")";
+            var shared = LuaImpactScanner.Scan(sharedLua, name => { sharedReads++; return "statmodifymanager.Player(\"money\", 7)"; });
+            Check(sharedReads == 1, "Shared routes load once across sibling options, including case variants");
+            Check(shared.Count == 2 && shared.Values.All(x => x.Count == 1 && x[0].Arguments[1] == "7" && x[0].RouteDepth == 1),
+                "Sharing syntax cannot remove an option's effects or change route depth");
+            var refreshed = LuaImpactScanner.Scan(sharedLua, name => "statmodifymanager.Player(\"money\", 9)");
+            Check(refreshed.Values.All(x => x[0].Arguments[1] == "9"), "Independent scans must not inherit another loader's source");
+            var branchReads = 0;
+            var branches = LuaImpactScanner.ScanEntry("if x then\nluamanager.SetNextScript(\"same\")\nelse\nluamanager.SetNextScript(\"same\")\nend",
+                name => { branchReads++; return "statmodifymanager.Player(\"mental\", 2)"; });
+            Check(branchReads == 1 && branches.Count == 2 && branches.All(x => x.Conditional),
+                "Shared syntax retains effects in both mutually exclusive branches");
+            var loopReads = 0;
+            var loopLua = "statmodifymanager.Player(\"money\", 1)\nluamanager.SetNextScript(\"hub\")";
+            var loop = LuaImpactScanner.ScanEntry(loopLua, name => { loopReads++; return loopLua; });
+            Check(loopReads == 1 && loop.Count == 2, "Reusing the root syntax retains per-path cycle protection");
+            var cache = new StoryImpactCache(2);
+            System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<LuaImpactScanner.Action>> cachedActions;
+            Check(!cache.TryGet("hub", sharedLua, out cachedActions), "Unseen scripts have no cached preview");
+            cache.Store("hub", sharedLua, shared);
+            Check(cache.TryGet("HUB", sharedLua, out cachedActions) && object.ReferenceEquals(cachedActions, shared),
+                "Revisiting a full script reuses its raw actions without analysis");
+            Check(!cache.TryGet("hub", sharedLua + "changed", out cachedActions), "Changed source cannot reuse a stale preview");
+            cache.Store("hub", sharedLua + "changed", refreshed);
+            Check(cache.TryGet("hub", sharedLua + "changed", out cachedActions) && cachedActions["O_shared_1"][0].Arguments[1] == "9",
+                "Replacing a cached script replaces its effects");
+            cache.Store("second", "source", shared); cache.Store("third", "source", shared);
+            Check(!cache.TryGet("hub", sharedLua + "changed", out cachedActions)
+                && cache.TryGet("second", "source", out cachedActions) && cache.TryGet("third", "source", out cachedActions),
+                "Cache capacity bounds retained sources and replacement does not duplicate queue entries");
             var eventEntry = LuaImpactScanner.ScanEntry("local next = checkpointmanager.Position(\"Room\")\nlocal choice = choose(options)\ncheckpointmanager.Position(\"Later\")", name => null);
             Check(eventEntry.Count(x => x.Method == "PositionPool") == 1 && eventEntry[0].Arguments[0] == "Room", "Stop entry event discovery at the next decision");
             var eventBranches = LuaImpactScanner.ScanEntry("if flag then\ncheckpointmanager.Position(\"A\")\nelse\ncheckpointmanager.Position(\"B\")\nend", name => null);

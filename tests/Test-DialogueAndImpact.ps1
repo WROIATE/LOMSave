@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Add-Type -Path @(
     (Join-Path $root 'src/Options/LuaImpactScanner.cs'),
+    (Join-Path $root 'src/Options/StoryImpactCache.cs'),
     (Join-Path $root 'src/Options/OptionImpactText.cs'),
     (Join-Path $root 'src/Dialogue/DialoguePacer.cs'),
     (Join-Path $root 'src/Dialogue/DialogueTiming.cs'),

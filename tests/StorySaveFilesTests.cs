@@ -40,7 +40,7 @@ namespace LOMSave.Probe
             finally { SaveSlotContext.End(previous); }
             Check(SaveSlotContext.Resolve("049") == "049", "A failed load cannot leak its source into subsequent loads");
 
-            foreach (var slot in new[] { "auto", "auto_free", "auto_battle", "auto_action", "001", "050" })
+            foreach (var slot in new[] { "auto", "auto_free", "auto_battle", "auto_action", "auto_branch", "001", "050" })
             {
                 previous = SaveSlotContext.Begin(slot);
                 Check(SaveSlotContext.Resolve("049") == slot, "Actual source is preserved: " + slot);

@@ -221,15 +221,38 @@ namespace LOMSave.Probe
             if (string.IsNullOrEmpty(script)) return result;
             var lua = Load(script);
             if (string.IsNullOrEmpty(lua)) return result;
-            result.AddRange(PoolsFor(LuaImpactScanner.ScanEntry(lua, Load), "随机事件"));
+            var sources = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            Action<IEnumerable<LuaImpactScanner.Action>, string> collect = (actions, group) =>
+            {
+                foreach (var key in actions.Where(x => x.Method == "PositionPool").Select(x => x.Arguments[0]).Distinct())
+                {
+                    List<string> groups;
+                    if (!sources.TryGetValue(key, out groups)) sources.Add(key, groups = new List<string>());
+                    if (!groups.Contains(group)) groups.Add(group);
+                }
+            };
+            collect(LuaImpactScanner.ScanEntry(lua, Load), "随机事件");
             foreach (var pair in LuaImpactScanner.Scan(lua, Load))
             {
                 var text = LocalizationManager.Instance.LocaleResolver.GetStoryText(pair.Key);
                 text = string.IsNullOrEmpty(text) ? pair.Key : text;
                 var label = text.Split('+').LastOrDefault(x => Regex.IsMatch(x, @"[\u3400-\u9fff]")) ?? text;
-                result.AddRange(PoolsFor(pair.Value, "选项 · " + Clean(label, 32)));
+                collect(pair.Value, "选项 · " + Clean(label, 32));
             }
-            return result.GroupBy(x => new { x.Group, x.Event }).Select(x => x.First()).ToList();
+            foreach (var source in sources)
+            {
+                const string prefix = "选项 · ";
+                var labels = source.Value.Where(x => x.StartsWith(prefix, StringComparison.Ordinal))
+                    .Select(x => x.Substring(prefix.Length)).Where(x => Regex.IsMatch(x, @"[\u3400-\u9fff]")).Distinct().ToArray();
+                var group = labels.Length > 0 ? prefix + string.Join(" / ", labels) : source.Value[0];
+                if (labels.Length > 0 && source.Value.Contains("随机事件")) group = "随机事件 / " + group;
+                // The outer action and its nested conversation can reach the
+                // same pool. Expand it once, retaining readable source labels.
+                // Different pools remain distinct even when they share events.
+                result.AddRange(PoolsFor(new[] { new LuaImpactScanner.Action {
+                    Method = "PositionPool", Arguments = new[] { source.Key } } }, group));
+            }
+            return result;
         }
 
         internal static void OpenBuilding(PositionController controller)
@@ -254,7 +277,7 @@ namespace LOMSave.Probe
         internal static void Select(Entry entry)
         {
             _pending = entry;
-            LOMSaveProbePlugin.WriteEvent("next_event_selected", new { name = PendingName });
+            LOMSaveProbePlugin.WriteEvent("next_event_selected", new { name = PendingName, scope = Scope(entry), key = Key(entry) });
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(PositionResultData), "GetResult")]
@@ -284,9 +307,11 @@ namespace LOMSave.Probe
             var data = _pending != null && _pending.Mission != null && _pending.Mission.Position == position
                 ? _pending.Mission : manager == null || manager.ActiveSubMissions == null ? null
                 : manager.ActiveSubMissions.Values.FirstOrDefault(x => x != null && x.Position == position && x.name == _fixed.Get("mission:" + (int)position));
-            if (_pending != null && _pending.Mission == data) _pending = null;
             if (data == null || string.IsNullOrEmpty(data.StartScript)) return true;
             if (manager == null || manager.ActiveSubMissions == null || !manager.ActiveSubMissions.Values.Contains(data)) return true;
+            // Random selections have Mission == null. A missing mission must
+            // not consume them before the story reaches PositionResultData.
+            if (_pending != null && _pending.Mission == data) _pending = null;
             PlayerStatManagerData.Instance.SetStoryScript(data.StartScript);
             __result = true;
             LOMSaveProbePlugin.WriteEvent("next_mission_applied", new { name = MissionName(data), data.StartScript });

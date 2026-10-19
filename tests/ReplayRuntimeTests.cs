@@ -125,7 +125,7 @@ namespace LOMSave.Probe
             ReplayRuntime.Update();
             Check(UnityEngine.Time.timeScale == 50f, "Loading callbacks cannot pause replay");
             UnityEngine.Application.isFocused = false;
-            UnityEngine.Time.unscaledTime += 100f;
+            UnityEngine.Time.unscaledTime += 50f;
             ReplayRuntime.Update();
             Check(ReplayRuntime.IsRestoring, "Losing focus must not cause a false timeout");
             UnityEngine.Application.isFocused = true;
@@ -133,6 +133,21 @@ namespace LOMSave.Probe
             ReplayRuntime.DrawMask();
             Check(AkSoundEngine.OutputVolume == 41f && UnityEngine.Time.timeScale == 1f,
                 "Render-path replay timeout must release audio and speed");
+
+            ReplayRuntime.Prepare();
+            UnityEngine.Application.isFocused = false;
+            UnityEngine.Time.unscaledTime += 121f;
+            ReplayRuntime.Update();
+            Check(!ReplayRuntime.IsRestoring && AkSoundEngine.OutputVolume == 41f,
+                "A replay that never starts must release its mask even while unfocused");
+            UnityEngine.Application.isFocused = true;
+            ReplayRuntime.Prepare();
+            ReplayRuntime.Start();
+            UnityEngine.Time.unscaledTime += 121f;
+            ReplayRuntime.ReportProgress();
+            ReplayRuntime.Update();
+            Check(!ReplayRuntime.IsRestoring && UnityEngine.Time.timeScale == 1f,
+                "Repeated progress cannot extend recovery beyond its absolute deadline");
 
             ReplayRuntime.Prepare();
             ReplayRuntime.Start();

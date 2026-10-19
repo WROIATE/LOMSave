@@ -140,15 +140,7 @@ end
             _activeReplayTarget = null;
             _activeReplayChoices = null;
             _skippedDialogueCount = 0;
-            _pendingReplayTarget = target != null
-                && IsSupportedReplayKind(target.Kind)
-                && !string.IsNullOrEmpty(target.Script)
-                && target.Sequence > 0
-                && target.Sequence <= MaximumReplaySequence
-                && target.PayloadHash != null
-                && target.PayloadHash.Length == 64
-                    ? target
-                    : null;
+            _pendingReplayTarget = CanReplay(target) ? target : null;
             _pendingReplayChoices = _pendingReplayTarget == null
                 ? null
                 : CloneChoices(choices);
@@ -179,12 +171,28 @@ end
                 || string.Equals(kind, DiceKind, StringComparison.Ordinal);
         }
 
-        internal static void Begin()
+        internal static bool CanReplay(StoryCommandCheckpoint target)
+        {
+            return target != null && IsSupportedReplayKind(target.Kind)
+                && !string.IsNullOrEmpty(target.Script)
+                && target.Sequence > 0 && target.Sequence <= MaximumReplaySequence
+                && target.PayloadHash != null && target.PayloadHash.Length == 64;
+        }
+
+        internal static bool Begin()
         {
             _sequence = 0;
             Current = null;
             ChoiceHistory.Clear();
             var script = PlayerStatManagerData.Instance.CurrentStoryScript;
+            if (_pendingReplayTarget != null && !string.Equals(
+                _pendingReplayTarget.Script, script, StringComparison.Ordinal))
+            {
+                // Do not run an unrelated chapter under the loading mask.
+                // The existing fallback reloads the checkpoint's own beginning.
+                AbortActiveReplay("startup_script_changed");
+                return false;
+            }
             if (_activeReplayTarget == null
                 && _pendingReplayTarget != null
                 && string.Equals(
@@ -223,6 +231,7 @@ end
                     exception,
                     new { script });
             }
+            return true;
         }
 
         internal static bool TryHandle(string key, out string result)
@@ -316,6 +325,9 @@ end
                 PayloadHash = LOMSaveProbePlugin.Sha256(payload),
                 PayloadPreview = Preview(payload)
             };
+            // Capture before native choose/dice execution and before replay can
+            // clear its guards at a reached or rejected target.
+            BranchAutoSave.BeforeBranch(Current, payload);
             directive = GetReplayDirective(Current);
             return Current;
         }

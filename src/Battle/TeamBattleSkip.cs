@@ -53,9 +53,7 @@ namespace LOMSave.Probe
             while (manager != null && !manager.IsReady && !manager.IsGameOver && Time.realtimeSinceStartup < deadline)
                 yield return null;
             if (manager == null || !manager.IsReady || manager.IsGameOver) yield break;
-            var pause = Traverse.Create(manager).Field("_pausePanel").GetValue<PausePanel>();
-            var win = pause == null ? null : Traverse.Create(pause).Field("_testWinButton").GetValue<Button>();
-            HandleDirectVictory(win);
+            HandleDirectVictory();
         }
 
         [HarmonyPostfix]
@@ -76,11 +74,10 @@ namespace LOMSave.Probe
                     .GetValue<Button>();
                 var manager = GameLevelManager.Instance;
                 displayButton = GetOrCreateButton(
-                    sourceWinButton,
                     giveupButton,
                     titleButton,
                     out var created);
-                SetButtonAction(displayButton, sourceWinButton);
+                SetButtonAction(displayButton);
                 var visible = displayButton != null
                     && manager != null;
 
@@ -90,15 +87,14 @@ namespace LOMSave.Probe
                 }
                 if (displayButton != null)
                 {
+                    RegisterButton(__instance, displayButton);
+                    displayButton.interactable = giveupButton != null && giveupButton.interactable
+                        && manager != null && !manager.IsGameOver;
                     displayButton.gameObject.SetActive(visible);
                 }
 
                 string reason = null;
-                if (sourceWinButton == null)
-                {
-                    reason = "win_action_button_missing";
-                }
-                else if (giveupButton == null)
+                if (giveupButton == null)
                 {
                     reason = "button_template_missing";
                 }
@@ -116,6 +112,7 @@ namespace LOMSave.Probe
                     new
                     {
                         visible,
+                        interactable = displayButton != null && displayButton.interactable,
                         created,
                         reason
                     });
@@ -133,14 +130,12 @@ namespace LOMSave.Probe
         }
 
         private static Button GetOrCreateButton(
-            Button sourceWinButton,
             Button giveupButton,
             Button titleButton,
             out bool created)
         {
             created = false;
-            if (sourceWinButton == null
-                || giveupButton == null
+            if (giveupButton == null
                 || giveupButton.transform.parent == null)
             {
                 return null;
@@ -191,24 +186,34 @@ namespace LOMSave.Probe
             return button;
         }
 
-        private static void SetButtonAction(
-            Button button,
-            Button sourceWinButton)
+        private static void RegisterButton(PausePanel panel, Button button)
         {
-            if (button == null || sourceWinButton == null)
+            var field = Traverse.Create(panel).Field("_interactableButtons");
+            var buttons = field.GetValue<Button[]>() ?? new Button[0];
+            if (Array.IndexOf(buttons, button) >= 0) return;
+            Array.Resize(ref buttons, buttons.Length + 1);
+            buttons[buttons.Length - 1] = button;
+            field.SetValue(buttons);
+        }
+
+        private static void SetButtonAction(Button button)
+        {
+            if (button == null)
             {
                 return;
             }
 
             button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(
-                () => HandleDirectVictory(sourceWinButton));
+            button.onClick.AddListener(HandleDirectVictory);
         }
 
-        private static void HandleDirectVictory(Button sourceWinButton)
+        private static void HandleDirectVictory()
         {
             var manager = GameLevelManager.Instance;
-            if (manager == null || manager.IsGameOver || manager == _settledManager || sourceWinButton == null) return;
+            LOMSaveProbePlugin.WriteEvent("team_battle_skip_requested", new
+            { managerPresent = manager != null, gameOver = manager != null && manager.IsGameOver,
+                alreadySettled = manager != null && manager == _settledManager });
+            if (manager == null || manager.IsGameOver || manager == _settledManager) return;
             _settledManager = manager;
             if (manager != null && !manager.IsGameOver)
             {
@@ -249,7 +254,11 @@ namespace LOMSave.Probe
                 }
             }
 
-            sourceWinButton.onClick.Invoke();
+            // Call the native settlement directly. Its hidden debug button can
+            // be inactive/unwired, and pause must be lifted for the result UI.
+            manager.ContinueGame();
+            manager.ShowGameOver(GameOverType.FriendWin, true);
+            LOMSaveProbePlugin.WriteEvent("team_battle_skip_settled", new { manager.IsGameOver });
         }
 
         private static void SimulatePerformance(GameLevelManager manager)

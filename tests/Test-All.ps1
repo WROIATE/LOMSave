@@ -12,8 +12,8 @@ $previousTmp = $env:TMP
 try {
     $env:TEMP = $taskTemp
     $env:TMP = $taskTemp
-    $scripts = @('ActionAutoSave','StorySaveFiles','ReplayRuntime','DialogueAndImpact','BuildingLongPress',
-        'CodeNames','PreviewFont','AudioSceneState','FeatureData','CalendarRuntime','RecallShortcut','DebugMenu')
+    $scripts = @('ActionAutoSave','ActionAutoSaveRuntime','BranchAutoSave','StorySaveFiles','ReplayRuntime','DialogueAndImpact','BuildingLongPress',
+        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','EventInspector','StoryReplay','CalendarRuntime','RecallShortcut','DebugMenu')
     foreach ($name in $scripts) {
         $arguments = @('-NoProfile', '-File', (Join-Path $PSScriptRoot "Test-$name.ps1"))
         if ($name -eq 'DialogueAndImpact') { $arguments += @('-StoryDirectory', $StoryDirectory) }

@@ -14,6 +14,21 @@ $referenceCount = 0
 $patchCount = 0
 $reflectionCount = 0
 try {
+    # A valid Harmony target is useless if its containing class is never
+    # registered. Verify PatchAll(Type) registrations in the built assembly.
+    $registeredPatchTypes = [Collections.Generic.HashSet[string]]::new()
+    foreach ($type in $plugin.MainModule.GetTypes()) {
+        foreach ($method in $type.Methods) {
+            if (!$method.HasBody) { continue }
+            $instructions = $method.Body.Instructions
+            for ($index = 2; $index -lt $instructions.Count; $index++) {
+                if ([string]$instructions[$index].Operand -match 'HarmonyLib\.Harmony::PatchAll\(System.Type\)' -and
+                    $instructions[$index - 2].OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ldtoken) {
+                    [void]$registeredPatchTypes.Add($instructions[$index - 2].Operand.FullName)
+                }
+            }
+        }
+    }
     foreach ($reference in $plugin.MainModule.GetMemberReferences()) {
         if ($reference.DeclaringType.Scope.Name -notmatch '^(Mortal\.|Fungus|UnityEngine\.)') { continue }
         $referenceCount++
@@ -21,6 +36,12 @@ try {
         catch { $problems.Add("Unresolved: $reference : $_") }
     }
     foreach ($type in $plugin.MainModule.GetTypes()) {
+        $hasPatches = @($type.Methods | Where-Object {
+            @($_.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'HarmonyLib.HarmonyPatch' }).Count -gt 0
+        }).Count -gt 0
+        if ($hasPatches -and !$registeredPatchTypes.Contains($type.FullName)) {
+            $problems.Add("Harmony class is not registered: $($type.FullName)")
+        }
         foreach ($method in $type.Methods) {
             foreach ($attribute in $method.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'HarmonyLib.HarmonyPatch' }) {
                 $patchCount++
@@ -53,6 +74,9 @@ try {
         }
     }
     $contracts = @(
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SaveSystem'; Methods = @('AutoSaveData','GetSaveDataFile') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.LoadGamePanel'; Fields = @('_autoSaveSlot') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.AutoSaveSlotPanel'; Fields = @('_slot','_slotText') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SoundManager'; Fields = @('_currentMusic','_currentEnvSound','_rtpcBackgroundMusic','_rtpcEnvSound','_rtpcMusicLowpass') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.GameDateTimeText'; Fields = @('_text') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.PlayerStatusPanel'; Fields = @('_testPanel') },
@@ -63,7 +87,7 @@ try {
         @{ Assembly = 'Mortal.Pinball'; Type = 'Mortal.Pinball.PinballManager'; Fields = @('_isBroken','_spring','_currentScore','_totalScore'); Methods = @('DisableMarblePhysicsBehaviour','SetScoreTriggerActive','ExitScene') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.GameLevelManager'; Fields = @('_progressLevelData_01','_progressLevelData_02','_pausePanel') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.ReadyPanel'; Fields = @('_startButton') },
-        @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.PausePanel'; Fields = @('_testWinButton') },
+        @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.PausePanel'; Fields = @('_testWinButton','_giveupButton','_interactableButtons') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.ProgressLevelData'; Fields = @('_max','_flagData') }
     )
     foreach ($contract in $contracts) {
@@ -84,5 +108,5 @@ try {
         }
     }
     if ($problems.Count) { $problems | Write-Output; throw 'Plugin API compatibility check failed.' }
-    "$referenceCount native references, $patchCount Harmony targets and $reflectionCount reflection members resolved."
+    "$referenceCount native references, $patchCount Harmony targets and $reflectionCount reflection members resolved; $($registeredPatchTypes.Count) patch classes registered."
 } finally { $plugin.Dispose(); $resolver.Dispose() }

@@ -62,6 +62,23 @@ namespace LOMSave.Probe
             Check(order.Count == 1 && order[0] == "select", "missing or mismatched checkpoint does not save");
             Check(ReferenceEquals(ActionAutoSavePolicy.BeforeOption(0, selected, () => true, save), selected), "zero-cost callback is untouched");
             Check(ActionAutoSavePolicy.BeforeOption(1, null, () => true, save) == null, "missing callback is untouched");
+            Check(ActionAutoSavePolicy.ZeroCostEventOption("event+O_S2321_04_03_Break_01_002+0+0", true, false),
+                "Xiangyang's flag-counted outing is a valid zero-cost activity");
+            Check(!ActionAutoSavePolicy.ZeroCostEventOption("~x", true, false)
+                && !ActionAutoSavePolicy.ZeroCostEventOption("ordinary dialogue", true, false)
+                && !ActionAutoSavePolicy.ZeroCostEventOption("event+O_activity+0+0", false, false)
+                && !ActionAutoSavePolicy.ZeroCostEventOption("event+O_activity+0+0", true, true),
+                "Malformed, hidden and disabled choices never become zero-cost activities");
+            Check(!ActionAutoSavePolicy.ZeroCostEventOption("exit+O_exit+0+0", true, false)
+                && !ActionAutoSavePolicy.ZeroCostEventOption("shop+O_shop+0+0", true, false)
+                && !ActionAutoSavePolicy.ZeroCostEventOption("event+O_event+0+5", true, false),
+                "Free exits, shops and contribution-only choices do not overwrite recent action");
+            order.Clear();
+            ActionAutoSavePolicy.BeforeOption(0, selected, () => true, cost => { Check(cost == 0, "Keep the true zero action cost"); save(cost); }, true)();
+            Check(order.Count == 2 && order[0] == "save" && order[1] == "select", "Auto-free menu saves before its flag-counted activity");
+            order.Clear();
+            ActionAutoSavePolicy.BeforeOption(0, selected, () => false, save, true)();
+            Check(order.Count == 1 && order[0] == "select", "Replay still suppresses flag-counted activity saves");
             Console.WriteLine("Action automatic save checks passed: " + _checks);
         }
     }

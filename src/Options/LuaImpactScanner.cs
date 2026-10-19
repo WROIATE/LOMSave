@@ -50,7 +50,8 @@ namespace LOMSave.Probe
         {
             var result = new List<Action>();
             var budget = 128;
-            Walk(Parse(lua, new List<Marker>()), 0, false, result, load,
+            var root = Parse(lua, new List<Marker>());
+            Walk(root, 0, false, result, ParsedLoader(lua, root, load),
                 new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0, ref budget);
             return result;
         }
@@ -58,7 +59,8 @@ namespace LOMSave.Probe
         internal static Dictionary<string, List<Action>> Scan(string lua, Func<string, string> load)
         {
             var markers = new List<Marker>();
-            Parse(lua, markers);
+            var root = Parse(lua, markers);
+            var parsedLoad = ParsedLoader(lua, root, load);
             var result = new Dictionary<string, List<Action>>(StringComparer.Ordinal);
             foreach (var marker in markers)
             {
@@ -69,7 +71,7 @@ namespace LOMSave.Probe
                 var budget = 128;
                 while (block != null)
                 {
-                    if (Walk(block, start, false, actions, load, visited, 0, ref budget)) break;
+                    if (Walk(block, start, false, actions, parsedLoad, visited, 0, ref budget)) break;
                     var owner = block.Owner;
                     block = block.Parent;
                     if (block != null) start = block.Nodes.IndexOf(owner) + 1;
@@ -78,6 +80,25 @@ namespace LOMSave.Probe
                 result[marker.Key] = actions;
             }
             return result;
+        }
+
+        private static Func<string, Block> ParsedLoader(string rootLua, Block root, Func<string, string> load)
+        {
+            // Every option walks its own routes, but their immutable syntax
+            // trees can be shared. Large hub scripts often route back to the
+            // same source, which previously reparsed it for every option/path.
+            var parsed = new Dictionary<string, Block>(StringComparer.OrdinalIgnoreCase);
+            return name =>
+            {
+                Block block;
+                if (parsed.TryGetValue(name, out block)) return block;
+                var source = load(name);
+                block = string.IsNullOrEmpty(source) ? null
+                    : string.Equals(source, rootLua, StringComparison.Ordinal) ? root
+                    : Parse(source, new List<Marker>());
+                parsed[name] = block;
+                return block;
+            };
         }
 
         private static Block Parse(string lua, List<Marker> markers)
@@ -134,7 +155,7 @@ namespace LOMSave.Probe
 
         // true means this path ended or reached the next player decision.
         private static bool Walk(Block block, int start, bool conditional, List<Action> result,
-            Func<string, string> load, HashSet<string> visited, int depth, ref int budget)
+            Func<string, Block> load, HashSet<string> visited, int depth, ref int budget)
         {
             for (var i = start; i < block.Nodes.Count; i++)
             {
@@ -174,9 +195,9 @@ namespace LOMSave.Probe
                     var name = route.Groups[1].Value;
                     if (depth < 8 && budget-- > 0 && visited.Add(name))
                     {
-                        var source = load(name);
-                        if (!string.IsNullOrEmpty(source))
-                            Walk(Parse(source, new List<Marker>()), 0, conditional, result, load, visited, depth + 1, ref budget);
+                        var next = load(name);
+                        if (next != null)
+                            Walk(next, 0, conditional, result, load, visited, depth + 1, ref budget);
                     }
                     return true;
                 }

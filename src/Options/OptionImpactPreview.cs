@@ -21,6 +21,7 @@ namespace LOMSave.Probe
         internal static bool IsOpen { get { return _overlay != null; } }
         private static readonly HashSet<string> LoggedBindings =
             new HashSet<string>(StringComparer.Ordinal);
+        private static readonly StoryImpactCache ParsedStories = new StoryImpactCache();
 
         private static GUIStyle _hintStyle;
         private static string _holdingText;
@@ -217,11 +218,19 @@ namespace LOMSave.Probe
             if (string.IsNullOrEmpty(lua)) return;
             try
             {
-                var parsed = LuaImpactScanner.Scan(lua, name => LoadStoryScript(name, scriptName));
+                var timer = System.Diagnostics.Stopwatch.StartNew();
+                Dictionary<string, List<LuaImpactScanner.Action>> parsed = null;
+                var fullSource = source == "story_resource";
+                var cached = fullSource && ParsedStories.TryGet(scriptName, lua, out parsed);
+                if (!cached)
+                {
+                    parsed = LuaImpactScanner.Scan(lua, name => LoadStoryScript(name, scriptName));
+                    if (fullSource) ParsedStories.Store(scriptName, lua, parsed);
+                }
                 foreach (var pair in parsed) Actions[pair.Key] = pair.Value;
                 if (parsed.Count > 0)
                     LOMSaveProbePlugin.WriteEvent("option_impacts_parse_summary", new
-                    { scriptName, source, markerCount = parsed.Count });
+                    { scriptName, source, markerCount = parsed.Count, cached, elapsedMilliseconds = timer.Elapsed.TotalMilliseconds });
             }
             catch (Exception exception)
             {

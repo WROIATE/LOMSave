@@ -7,11 +7,13 @@ namespace LOMSave.Probe
         private const float ReplayTimeScale = 50f;
         private const float MaskTimeoutSeconds = 30f;
         private const float SceneLoadTimeoutSeconds = 30f;
+        private const float MaximumRecoverySeconds = 120f;
 
         private static float _timeScaleBeforeReplay = 1f;
         private static bool _speedActive;
         private static bool _maskVisible;
         private static float _maskShownAt;
+        private static float _recoveryStartedAt;
         private static float _lastProgressAt;
         private static float _timeoutSeconds = MaskTimeoutSeconds;
 
@@ -94,16 +96,19 @@ namespace LOMSave.Probe
 
         private static void HandleTimeout()
         {
-            if (!_maskVisible
-                || !Application.isFocused
-                || Time.unscaledTime - _lastProgressAt < _timeoutSeconds)
+            // Focus changes may suspend the inactivity timer, but must never
+            // keep a failed recovery masked forever.
+            var totalExpired = Time.unscaledTime - _recoveryStartedAt >= MaximumRecoverySeconds;
+            if (!_maskVisible || (!totalExpired && (!Application.isFocused
+                || Time.unscaledTime - _lastProgressAt < _timeoutSeconds)))
             {
                 return;
             }
 
             LOMSaveProbePlugin.WriteEvent("story_replay_mask_timeout", new
             {
-                timeoutSeconds = _timeoutSeconds
+                timeoutSeconds = totalExpired ? MaximumRecoverySeconds : _timeoutSeconds,
+                reason = totalExpired ? "recovery_deadline" : "no_progress"
             });
             if (!StoryCommandTrace.AbortActiveReplay("timeout"))
             {
@@ -143,6 +148,7 @@ namespace LOMSave.Probe
             }
 
             _maskShownAt = Time.unscaledTime;
+            _recoveryStartedAt = Time.unscaledTime;
             ReportProgress();
             _maskVisible = true;
             LOMSaveProbePlugin.WriteEvent("story_replay_mask_shown", new

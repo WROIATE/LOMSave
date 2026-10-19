@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.22.3";
+        public const string PluginVersion = "0.23.1";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -67,6 +67,7 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(ReplayAudio));
                 harmony.PatchAll(typeof(SceneAudio));
                 harmony.PatchAll(typeof(ReplayInput));
+                harmony.PatchAll(typeof(ReplayMissionGuard));
                 harmony.PatchAll(typeof(ProbePatches));
                 harmony.PatchAll(typeof(DiceRollTrace));
                 harmony.PatchAll(typeof(OptionImpactPreview));
@@ -139,6 +140,7 @@ namespace LOMSave.Probe
             CodeNameMapping.Update();
             FeaturePanel.Update();
             RecallShortcut.Update();
+            BranchAutoSave.Update();
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) CaptureCurrentState("manual_ctrl_f10");
@@ -1179,15 +1181,16 @@ namespace LOMSave.Probe
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(LuaManager), "ExecuteLuaScript")]
-        private static void BeforeExecuteLuaScript()
+        private static bool BeforeExecuteLuaScript()
         {
-            StoryCommandTrace.Begin();
+            if (!StoryCommandTrace.Begin()) return false;
             LOMSaveProbePlugin.CaptureStoryBeginningState();
             LOMSaveProbePlugin.WriteEvent("lua_execute_story", new
             {
                 script = PlayerStatManagerData.Instance.CurrentStoryScript
             });
             LOMSaveProbePlugin.CaptureCurrentState("before_execute_lua_script");
+            return true;
         }
 
         [HarmonyPrefix]

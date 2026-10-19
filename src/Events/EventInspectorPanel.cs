@@ -52,7 +52,7 @@ namespace LOMSave.Probe
             panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             panel.rectTransform.sizeDelta = new Vector2(1240, 860);
             Label(panel.transform, title, 30, Gold, 36, 20, 1168, 46);
-            Label(panel.transform, "固定选择在条件满足时持续生效；条件待判定的事件保留显示。", 21, Color.white, 36, 76, 1168, 36);
+            Label(panel.transform, "主线、已就绪人物剧情优先；随机指定在对应事件池生效。固定选择跨读档保留。", 21, Color.white, 36, 76, 1168, 36);
             _status = Label(panel.transform, "下次事件：" + EventInspector.PendingName, 21, Gold, 36, 114, 820, 40);
             var hidden = entries.Count(x => x.Eligible == false);
             Button(panel.transform, _showUnavailable ? "隐藏不可触发事件" : "查看不可触发（" + hidden + "）", 900, 110, 304, 42,

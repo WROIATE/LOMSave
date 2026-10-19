@@ -14,12 +14,14 @@
   <ItemGroup>
     <Compile Include="src/Saves/ActionAutoSave.cs" />
     <Compile Include="src/Saves/ActionAutoSavePolicy.cs" />
+    <Compile Include="src/Saves/BranchAutoSave.cs" />
     <Compile Include="src/Dialogue/AutoDialogueSpeed.cs" />
     <Compile Include="src/Dialogue/DialoguePacer.cs" />
     <Compile Include="src/Dialogue/DialogueTiming.cs" />
     <Compile Include="src/Saves/SaveNotes.cs" />
     <Compile Include="src/Saves/SaveNoteStore.cs" />
     <Compile Include="src/Options/LuaImpactScanner.cs" />
+    <Compile Include="src/Options/StoryImpactCache.cs" />
     <Compile Include="src/Options/OptionImpactText.cs" />
     <Compile Include="src/Events/EventConditions.cs" />
     <Compile Include="src/Events/EventInspector.cs" />
@@ -38,6 +40,7 @@
     <Compile Include="src/Options/OptionImpactLocalization.cs" />
     <Compile Include="src/Options/OptionImpactPreview.cs" />
     <Compile Include="src/Replay/ReplayRuntime.cs" />
+    <Compile Include="src/Replay/ReplayMissionGuard.cs" />
     <Compile Include="src/Replay/ReplayAudio.cs" />
     <Compile Include="src/Replay/ReplayInput.cs" />
     <Compile Include="src/Replay/ReplayStateValidator.cs" />

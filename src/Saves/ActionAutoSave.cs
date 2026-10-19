@@ -3,6 +3,7 @@ using HarmonyLib;
 using Mortal.Core;
 using Mortal.Free;
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,17 @@ namespace LOMSave.Probe
         private const string Slot = "auto_action";
         private const string DisplayName = "最近行动";
         private const string GameObjectName = "LOMSaveRecentActionAutoSave";
+        internal const string BranchSlot = "auto_branch";
+        internal const string BranchDisplayName = "最近分支";
+        private static string _freeMenuScript, _pendingFreeMenuScript;
+
+        [HarmonyPrefix, HarmonyPatch(typeof(Mortal.Story.LuaManager), "Init")]
+        private static void BeginScript()
+        { _freeMenuScript = _pendingFreeMenuScript = null; }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(Mortal.Story.LuaManager), "AutoFreeSave")]
+        private static void RememberFreeMenu()
+        { _freeMenuScript = _pendingFreeMenuScript = PlayerStatManagerData.Instance.CurrentStoryScript; }
 
         private static readonly MethodInfo AutoSaveDataMethod =
             AccessTools.Method(
@@ -35,11 +47,21 @@ namespace LOMSave.Probe
         [HarmonyPatch(typeof(MenuDialog), "AddOption", typeof(string), typeof(bool), typeof(bool), typeof(UnityEngine.Events.UnityAction))]
         private static void BeforeAddActionOption(string __0, bool __1, bool __2, ref UnityEngine.Events.UnityAction __3)
         {
+            var script = PlayerStatManagerData.Instance.CurrentStoryScript;
+            if (_pendingFreeMenuScript == script && !string.IsNullOrEmpty(script) && CanSaveStoryOption())
+            {
+                _pendingFreeMenuScript = null;
+                // Native AutoFreeSave precedes choose(), so its first write has
+                // no command checkpoint. Complete it once the choice is known.
+                SaveAutomatic("auto_free", "free_menu_checkpoint", 0);
+            }
             var cost = ActionAutoSavePolicy.OptionCost(__0, __1, __2);
-            if (cost <= 0 || __3 == null) return;
+            var freeMenuOption = _freeMenuScript == script && !string.IsNullOrEmpty(script)
+                && ActionAutoSavePolicy.ZeroCostEventOption(__0, __1, __2);
+            if ((cost <= 0 && !freeMenuOption) || __3 == null) return;
             var original = __3;
             var wrapped = ActionAutoSavePolicy.BeforeOption(cost, original.Invoke, CanSaveStoryOption,
-                actionCost => SaveBeforeAction(-actionCost, "story_option"));
+                actionCost => SaveAutomatic(Slot, freeMenuOption ? "story_free_option" : "story_option", actionCost), freeMenuOption);
             __3 = wrapped.Invoke;
         }
 
@@ -59,6 +81,18 @@ namespace LOMSave.Probe
                 return;
             }
 
+            SaveAutomatic(Slot, source, -value);
+        }
+
+        internal static string GetSaveFile(string slot)
+        { return (string)SaveDataFileMethod.Invoke(SaveSystem.Instance, new object[] { slot }); }
+
+        internal static bool SaveAutomatic(string slot, string source, int actionCost)
+        {
+            if (ReplayRuntime.IsRestoring || StoryCommandTrace.IsReplayPending || ReplayStateValidator.IsRestoring) return false;
+            var eventPrefix = slot == BranchSlot ? "branch_auto_save" : "action_start_auto_save";
+            var started = Stopwatch.GetTimestamp();
+
             try
             {
                 if (AutoSaveDataMethod == null || SaveDataFileMethod == null)
@@ -71,57 +105,66 @@ namespace LOMSave.Probe
                 var actionCount =
                     PlayerStatManagerData.Instance.CurrentActionCount;
                 var system = SaveSystem.Instance;
-                var file = (string)SaveDataFileMethod.Invoke(system, new object[] { Slot });
+                var file = (string)SaveDataFileMethod.Invoke(system, new object[] { slot });
                 var previousHash = StorySaveFiles.Hash(file);
                 AutoSaveDataMethod.Invoke(
                     system,
-                    new object[] { Slot });
+                    new object[] { slot });
                 if (StorySaveFiles.CommittedHash(file, previousHash) == null)
                 {
-                    LOMSaveProbePlugin.WriteEvent("action_start_auto_save_skipped",
-                        new { slot = Slot, source, reason = "save_not_committed" });
-                    return;
+                    LOMSaveProbePlugin.WriteEvent(eventPrefix + "_skipped",
+                        new { slot, source, reason = "save_not_committed" });
+                    return false;
                 }
                 LOMSaveProbePlugin.WriteEvent(
-                    "action_start_auto_save_written",
+                    eventPrefix + "_written",
                     new
                     {
-                        slot = Slot,
+                        slot,
                         source,
-                        displayName = DisplayName,
-                        actionCost = -value,
-                        actionCount
+                        displayName = slot == Slot ? DisplayName : slot == BranchSlot ? BranchDisplayName : "养成自动存档",
+                        actionCost,
+                        actionCount,
+                        elapsedMs = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency
                     });
+                return true;
             }
             catch (Exception exception)
             {
                 LOMSaveProbePlugin.WriteError(
-                    "action_start_auto_save_failed",
+                    eventPrefix + "_failed",
                     exception,
                     new
                     {
-                        slot = Slot,
+                        slot,
                         source,
-                        actionCost = -value
+                        actionCost
                     });
+                return false;
             }
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(LoadGamePanel), "Awake")]
-        private static void AddLoadSlot(LoadGamePanel __instance)
+        private static void AddSpecialLoadSlots(LoadGamePanel __instance)
+        {
+            AddLoadSlot(__instance, Slot, GameObjectName, DisplayName);
+            AddLoadSlot(__instance, BranchSlot, "LOMSaveRecentBranchAutoSave", BranchDisplayName);
+        }
+
+        private static void AddLoadSlot(LoadGamePanel panel, string targetSlot, string objectName, string displayName)
         {
             GameObject clone = null;
             try
             {
-                var slotsField = Traverse.Create(__instance)
+                var slotsField = Traverse.Create(panel)
                     .Field("_autoSaveSlot");
                 var slots = slotsField.GetValue<AutoSaveSlotPanel[]>();
                 if (slots == null || slots.Length == 0)
                 {
                     LOMSaveProbePlugin.WriteEvent(
-                        "action_auto_save_slot_missing",
-                        new { reason = "auto_save_template_missing" });
+                        "special_auto_save_slot_missing",
+                        new { slot = targetSlot, reason = "auto_save_template_missing" });
                     return;
                 }
 
@@ -130,7 +173,7 @@ namespace LOMSave.Probe
                     if (slot != null
                         && string.Equals(
                             slot.Slot,
-                            Slot,
+                            targetSlot,
                             StringComparison.Ordinal))
                     {
                         return;
@@ -142,8 +185,8 @@ namespace LOMSave.Probe
                 if (templateRow == null || templateRow.parent == null)
                 {
                     LOMSaveProbePlugin.WriteEvent(
-                        "action_auto_save_slot_missing",
-                        new { reason = "auto_save_template_invalid" });
+                        "special_auto_save_slot_missing",
+                        new { slot = targetSlot, reason = "auto_save_template_invalid" });
                     return;
                 }
 
@@ -151,7 +194,7 @@ namespace LOMSave.Probe
                     templateRow.gameObject,
                     templateRow.parent,
                     false);
-                clone.name = GameObjectName;
+                clone.name = objectName;
                 clone.transform.SetSiblingIndex(
                     templateRow.GetSiblingIndex() + 1);
                 var actionSlot = clone.GetComponentInChildren<AutoSaveSlotPanel>(true);
@@ -163,7 +206,7 @@ namespace LOMSave.Probe
 
                 Traverse.Create(actionSlot)
                     .Field("_slot")
-                    .SetValue(Slot);
+                    .SetValue(targetSlot);
                 actionSlot.Setup();
 
                 var expandedSlots =
@@ -173,11 +216,11 @@ namespace LOMSave.Probe
                 slotsField.SetValue(expandedSlots);
                 FitAutoSaveSlots(expandedSlots, slots.Length);
                 LOMSaveProbePlugin.WriteEvent(
-                    "action_auto_save_slot_added",
+                    "special_auto_save_slot_added",
                     new
                     {
-                        slot = Slot,
-                        displayName = DisplayName,
+                        slot = targetSlot,
+                        displayName,
                         originalCount = slots.Length,
                         expandedCount = expandedSlots.Length,
                         positionY = clone.transform.localPosition.y
@@ -190,8 +233,8 @@ namespace LOMSave.Probe
                     UnityEngine.Object.Destroy(clone);
                 }
                 LOMSaveProbePlugin.WriteError(
-                    "action_auto_save_slot_add_failed",
-                    exception);
+                    "special_auto_save_slot_add_failed",
+                    exception, new { slot = targetSlot });
             }
         }
 
@@ -199,10 +242,8 @@ namespace LOMSave.Probe
         [HarmonyPatch(typeof(AutoSaveSlotPanel), "Setup")]
         private static void ApplyDisplayName(AutoSaveSlotPanel __instance)
         {
-            if (!string.Equals(
-                    __instance.Slot,
-                    Slot,
-                    StringComparison.Ordinal))
+            var isBranch = string.Equals(__instance.Slot, BranchSlot, StringComparison.Ordinal);
+            if (!isBranch && !string.Equals(__instance.Slot, Slot, StringComparison.Ordinal))
             {
                 return;
             }
@@ -216,11 +257,11 @@ namespace LOMSave.Probe
                 {
                     LOMSaveProbePlugin.WriteEvent(
                         "action_auto_save_label_missing",
-                        new { slot = Slot });
+                        new { slot = __instance.Slot });
                     return;
                 }
 
-                slotText.text = DisplayName;
+                slotText.text = isBranch ? BranchDisplayName : DisplayName;
                 var category = __instance.transform.Find("Header/Text");
                 if (category != null)
                 {
@@ -228,7 +269,7 @@ namespace LOMSave.Probe
                         if (behaviour.GetType().FullName == "Lean.Localization.LeanLocalizedText")
                             behaviour.enabled = false;
                     var categoryText = category.GetComponent<Text>();
-                    if (categoryText != null) categoryText.text = "行动前";
+                    if (categoryText != null) categoryText.text = isBranch ? "F8 返回" : "行动前";
                 }
             }
             catch (Exception exception)
@@ -236,7 +277,7 @@ namespace LOMSave.Probe
                 LOMSaveProbePlugin.WriteError(
                     "action_auto_save_label_failed",
                     exception,
-                    new { slot = Slot });
+                    new { slot = __instance.Slot });
             }
         }
 
