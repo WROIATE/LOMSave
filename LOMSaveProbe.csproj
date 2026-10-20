@@ -66,6 +66,7 @@
     <Compile Include="src/Calendar/CalendarPanel.cs" />
     <Compile Include="src/Debug/DebugMenuData.cs" />
     <Compile Include="src/Debug/DebugMenuEnhancements.cs" />
+    <Compile Include="src/Debug/DebugMenuShortcut.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <Reference Include="YamlDotNet">
       <HintPath>artifacts/LOMSaveProbe/YamlDotNet.dll</HintPath>

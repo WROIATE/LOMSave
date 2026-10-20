@@ -14,17 +14,17 @@
 - 四师兄弹珠跳过：可选 0／30／60／100 分，奖励由原生剧情发放。
 - 行动日历：F10 查看全年日期表、行动记录及手动备注；同一日期的备注跨周目常驻提醒。
 - 回想快捷操作：剧情中鼠标滚轮向上打开回想。
-- 调试面板增强：沿用 F9 加减按钮，补全变心及养成点数，旗标显示中文、悬停查看代码；需另有 ScriptTrainer 等插件提供 F9 入口。
+- 调试面板增强：剧情或养成界面按 F9 打开，保留加减按钮，补全变心及养成点数，旗标显示中文、悬停查看代码；F9 或 Esc 关闭，无需另装修改器。
 - 读档声音恢复：恢复背景音乐与环境音的音量、渐变，避免错误播放雨声等环境音。
 
 ## 安装方法
 
-当前实测游戏版本为 `release_1.0.6000.4`，运行环境为 Windows x64、Unity 2020.3.49f1、BepInEx 6 Unity.Mono。
+当前实测游戏版本为 `release_1.0.6000.5`，运行环境为 Windows x64、Unity 2020.3.49f1、BepInEx 6 Unity.Mono。
 
 1. 退出游戏并备份存档；安装可用的 **[BepInEx 6 Unity.Mono Windows x64](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_mono.html)**，安装包不包含该框架。
 2. 从 [Releases](https://github.com/WROIATE/LOMSave/releases) 下载安装 ZIP，将其中的 `BepInEx` 文件夹合并到游戏根目录（`Mortal.exe` 所在目录），保留包内许可证。
 3. 将旧的 `LOMSave.dll`、`LOMSave2.dll` 或重复的增强插件移到插件目录外，只启用一份存档插件。
-4. 启动游戏，通过原生存读档菜单及设置页使用功能。
+4. 启动游戏，通过原生存读档菜单及设置页使用功能；安装包已内置 F9 面板入口。已安装 ScriptTrainer 时沿用其快捷键，避免重复触发。
 
 也可从[插件文件目录](https://github.com/WROIATE/LOMSave/tree/enhanced/artifacts/LOMSaveProbe)手动安装：
 
@@ -44,4 +44,5 @@
 - [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave)：原作者及贡献者提供自由存档基础；本增强版基于旧版提交 [6d40806](https://github.com/NothingNullNull/LOMSave/commit/6d408069b87d95809fe085f16928760958dfe4e7)，与上游 2.x 分开维护。
 - [YaN9Yu96/MortalControlMyDestiny（知天命）](https://github.com/YaN9Yu96/MortalControlMyDestiny)：参考名称解析与原生浮动消息的使用方式。
 - [活侠传助手](https://mod.3dmgame.com/mod/256420)：参考建筑事件查看、分支检查点和事件指定思路。
+- [Jim97/UnityScriptTrainer](https://github.com/jim972329667/UnityScriptTrainer/tree/master/Mortal)：原先提供游戏测试面板入口。本包的 F9 开关为独立实现，不分发该插件。
 - [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json)、[YamlDotNet](https://github.com/aaubry/YamlDotNet)：第三方依赖，各自 MIT 许可证随插件保留。

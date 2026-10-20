@@ -1,0 +1,6 @@
+{"utc":"2026-10-20T08:38:10.6751917Z","frame":6649,"scene":"Free","eventName":"debug_shortcut_opened","payload":{"nativePanel":true}}
+{"utc":"2026-10-20T08:38:10.7232073Z","frame":6650,"scene":"Free","eventName":"debug_menu_ready","payload":{"nativeStyle":true,"stats":54,"addedStats":28,"originalFlags":51}}
+{"utc":"2026-10-20T08:38:40.0440687Z","frame":11626,"scene":"Free","eventName":"debug_shortcut_closed","payload":{}}
+{"utc":"2026-10-20T08:39:27.3133224Z","frame":19447,"scene":"Story","eventName":"debug_shortcut_opened","payload":{"nativePanel":true}}
+{"utc":"2026-10-20T08:39:27.3518368Z","frame":19448,"scene":"Story","eventName":"debug_menu_ready","payload":{"nativeStyle":true,"stats":54,"addedStats":28,"originalFlags":51}}
+{"utc":"2026-10-20T08:39:35.7283767Z","frame":20867,"scene":"Story","eventName":"debug_shortcut_closed","payload":{}}

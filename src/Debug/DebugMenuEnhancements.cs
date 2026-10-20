@@ -13,6 +13,7 @@ namespace LOMSave.Probe
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerStatusPanel), "Awake")]
         private static void Attach(GameObject ____testPanel)
         {
+            DebugMenuShortcut.Attach(____testPanel);
             if (____testPanel != null && ____testPanel.GetComponent<DebugMenuView>() == null)
                 ____testPanel.AddComponent<DebugMenuView>();
         }

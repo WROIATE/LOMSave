@@ -20,7 +20,7 @@ namespace LOMSave.Probe
         private static Action _onClose;
         private static Func<bool> _canClose;
         internal static bool IsOpen { get { return _root != null; } }
-        internal static bool BlocksInput { get { return IsOpen || Time.unscaledTime - _closedAt < 0.2f; } }
+        internal static bool BlocksInput { get { return IsOpen || DebugMenuShortcut.IsOpen || Time.unscaledTime - _closedAt < 0.2f; } }
 
         internal static GameObject Canvas(string name, int order = 32766)
         {
@@ -159,7 +159,8 @@ namespace LOMSave.Probe
         [HarmonyPrefix, HarmonyPatch(typeof(Button), "OnPointerClick")]
         [HarmonyPatch(typeof(Button), "OnSubmit")]
         private static bool GuardButton(Button __instance)
-        { return !BlocksInput || (_root != null && __instance.transform.IsChildOf(_root.transform)); }
+        { return !BlocksInput || (_root != null && __instance.transform.IsChildOf(_root.transform))
+            || (DebugMenuShortcut.IsOpen && DebugMenuShortcut.Contains(__instance.transform)); }
 
         [HarmonyPrefix, HarmonyPatch(typeof(DialogInput), "SetNextLineFlag")]
         [HarmonyPatch(typeof(PositionController), "OnPositionClick")]
@@ -178,13 +179,13 @@ namespace LOMSave.Probe
         private static bool GuardMenu()
         {
             if (!BlocksInput) return true;
-            Close();
+            if (DebugMenuShortcut.IsOpen) DebugMenuShortcut.Close(); else Close();
             return false;
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(StoryManager), "NormalTimeScale")]
         [HarmonyPatch(typeof(StoryManager), "SpeedTimeScale")]
-        private static bool GuardSpeed() { return !IsOpen; }
+        private static bool GuardSpeed() { return !BlocksInput; }
     }
 
     internal sealed class FeaturePanelLifetime : MonoBehaviour

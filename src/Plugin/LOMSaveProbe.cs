@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.1";
+        public const string PluginVersion = "0.25.2";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -143,6 +143,7 @@ namespace LOMSave.Probe
         private void Update()
         {
             TryShowRecoveryNotice();
+            DebugMenuShortcut.Update();
             PreviewInteraction.Update();
             CodeNameMapping.Update();
             FeaturePanel.Update();
@@ -173,6 +174,7 @@ namespace LOMSave.Probe
 
         private void OnDestroy()
         {
+            DebugMenuShortcut.Close();
             ReplayRuntime.Reset("plugin_destroyed");
             FeaturePanel.ForceClose();
         }
