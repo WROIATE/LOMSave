@@ -141,7 +141,7 @@ namespace LOMSave.Probe
             return input;
         }
 
-        internal static void ScrollText(Transform parent, string value, float x, float y, float width, float height)
+        internal static Text ScrollText(Transform parent, string value, float x, float y, float width, float height)
         {
             var image = OptionImpactPreview.CreateImage("Scroll", parent, new Color(0.12f, 0.11f, 0.09f));
             Place(image.rectTransform, x, y, width, height);
@@ -154,6 +154,7 @@ namespace LOMSave.Probe
             var text = Label(image.transform, value, 24, 16, 12, width - 32, height);
             text.rectTransform.sizeDelta = new Vector2(width - 32, Math.Max(height - 24, text.preferredHeight + 24));
             scroll.content = text.rectTransform;
+            return text;
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(Button), "OnPointerClick")]

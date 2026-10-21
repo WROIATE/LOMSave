@@ -18,17 +18,25 @@ namespace LOMSave.Probe
     {
         internal sealed class Entry
         {
-            internal string Title, Detail, Conditions, Group;
+            internal string Title, Detail, Conditions, Group, TabKey, TabTitle;
             internal PositionResultData Pool;
             internal PositionEventData Event;
             internal MissionCheckData Mission;
             internal bool CanSelect;
             internal bool? Eligible;
+
+            internal Entry InTab(string key, string title, string group)
+            {
+                var copy = (Entry)MemberwiseClone();
+                copy.TabKey = key; copy.TabTitle = title; copy.Group = group;
+                return copy;
+            }
         }
 
         private static Entry _pending;
         private static PositionResultConfig _positionConfig;
         private static bool _searchedResources;
+        internal static PositionResultConfig KnownPositionConfig { get { return _positionConfig; } }
 
         [HarmonyPostfix, HarmonyPatch(typeof(CheckPointManager), "Awake")]
         private static void RememberPositionConfig(PositionResultConfig ____position)
@@ -114,6 +122,19 @@ namespace LOMSave.Probe
             return data == null ? null : data.text;
         }
 
+        internal static string OptionName(string key)
+        {
+            var locale = LocalizationManager.Instance.LocaleResolver;
+            return Clean(EventPreviewNames.Option(key, locale.GetString, locale.GetStoryText), 32);
+        }
+
+        internal static string EventName(PositionEventData data)
+        {
+            var mapping = Read<OBB.Framework.Data.StoryMappingItem>(data, "_config");
+            var title = Clean(CodeNameMapping.Resolve("events", data.name, Read<string>(data, "_devNote"), mapping == null ? null : mapping.name));
+            return Clean(EventPreviewNames.Event(title, LocalizationManager.Instance.LocaleResolver.GetStoryText));
+        }
+
         [HarmonyPostfix, HarmonyPatch(typeof(PositionController), "Start")]
         private static void BindBuilding(PositionController __instance)
         {
@@ -161,13 +182,15 @@ namespace LOMSave.Probe
             var manager = MissionManagerData.Instance;
             if (manager == null) return result;
             if (manager.MainMissionStart && manager.MainCheckData != null && (!position.HasValue || manager.MainMissionPosition == position.Value))
-                result.Add(new Entry { Title = MissionName(manager.MainCheckData), Group = "主线", Detail = "主线优先触发", Mission = manager.MainCheckData, Eligible = true });
+                result.Add(new Entry { Title = MissionName(manager.MainCheckData), Group = "主线", TabKey = "missions", TabTitle = "待触发事件",
+                    Detail = "主线优先触发", Mission = manager.MainCheckData, Eligible = true });
             if (manager.ActiveSubMissions == null) return result;
             foreach (var data in manager.ActiveSubMissions.Values.Distinct())
             {
                 if (data == null || string.IsNullOrEmpty(data.StartScript) || (position.HasValue && data.Position != position.Value)) continue;
                 var conditions = Read<ConditionResultItem[]>(data, "_conditions") ?? new ConditionResultItem[0];
                 result.Add(new Entry { Title = MissionName(data), Mission = data, CanSelect = true, Eligible = true,
+                    TabKey = "missions", TabTitle = "待触发事件",
                     Group = "人物事件 · " + Clean(data.Position.ToString()),
                     Detail = "当前已就绪", Conditions = string.Join("\n", conditions.Select(EventConditions.Describe).ToArray()) });
             }
@@ -195,9 +218,8 @@ namespace LOMSave.Probe
                     var conditions = active;
                     foreach (var rule in rateRules.Where(x => x.Rate != 0))
                         conditions += "\n" + EventConditions.Describe(rule.Condition) + "：权重 " + (rule.Rate > 0 ? "+" : "") + rule.Rate;
-                    var mapping = Read<OBB.Framework.Data.StoryMappingItem>(data, "_config");
-                    var title = Clean(CodeNameMapping.Resolve("events", data.name, Read<string>(data, "_devNote"),
-                        mapping == null ? null : mapping.name));
+                    var title = EventName(data);
+                    conditions += "\n事件代码：" + data.name + "\n事件池：" + pool.name;
                     var effects = new List<string>();
                     var script = Read<string>(pool, "_scriptPrefix") + "_" + data.ResultType;
                     foreach (var action in LuaImpactScanner.ScanEntry(Load(script), Load))
@@ -221,38 +243,50 @@ namespace LOMSave.Probe
             if (string.IsNullOrEmpty(script)) return result;
             var lua = Load(script);
             if (string.IsNullOrEmpty(lua)) return result;
-            var sources = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-            Action<IEnumerable<LuaImpactScanner.Action>, string> collect = (actions, group) =>
+            var sources = new Dictionary<string, List<PoolSource>>(StringComparer.Ordinal);
+            Action<IEnumerable<LuaImpactScanner.Action>, string, string, string> collect = (actions, tabKey, tabTitle, group) =>
             {
                 foreach (var key in actions.Where(x => x.Method == "PositionPool").Select(x => x.Arguments[0]).Distinct())
                 {
-                    List<string> groups;
-                    if (!sources.TryGetValue(key, out groups)) sources.Add(key, groups = new List<string>());
-                    if (!groups.Contains(group)) groups.Add(group);
+                    List<PoolSource> groups;
+                    if (!sources.TryGetValue(key, out groups)) sources.Add(key, groups = new List<PoolSource>());
+                    var source = groups.FirstOrDefault(x => x.Key == tabKey);
+                    if (source == null) groups.Add(source = new PoolSource { Key = tabKey, Title = tabTitle });
+                    if (!source.Groups.Contains(group)) source.Groups.Add(group);
                 }
             };
-            collect(LuaImpactScanner.ScanEntry(lua, Load), "随机事件");
-            foreach (var pair in LuaImpactScanner.Scan(lua, Load))
+            collect(LuaImpactScanner.ScanEntry(lua, Load), "random", "随机事件", "随机事件");
+            foreach (var option in LuaImpactScanner.ScanOptions(lua, Load))
             {
-                var text = LocalizationManager.Instance.LocaleResolver.GetStoryText(pair.Key);
-                text = string.IsNullOrEmpty(text) ? pair.Key : text;
-                var label = text.Split('+').LastOrDefault(x => Regex.IsMatch(x, @"[\u3400-\u9fff]")) ?? text;
-                collect(pair.Value, "选项 · " + Clean(label, 32));
+                var label = OptionName(option.RootKey);
+                collect(option.Actions, "option:" + option.RootKey, label, "选项 · " + OptionName(option.Key));
             }
             foreach (var source in sources)
             {
-                const string prefix = "选项 · ";
-                var labels = source.Value.Where(x => x.StartsWith(prefix, StringComparison.Ordinal))
-                    .Select(x => x.Substring(prefix.Length)).Where(x => Regex.IsMatch(x, @"[\u3400-\u9fff]")).Distinct().ToArray();
-                var group = labels.Length > 0 ? prefix + string.Join(" / ", labels) : source.Value[0];
-                if (labels.Length > 0 && source.Value.Contains("随机事件")) group = "随机事件 / " + group;
-                // The outer action and its nested conversation can reach the
-                // same pool. Expand it once, retaining readable source labels.
-                // Different pools remain distinct even when they share events.
-                result.AddRange(PoolsFor(new[] { new LuaImpactScanner.Action {
-                    Method = "PositionPool", Arguments = new[] { source.Key } } }, group));
+                // Analyze each pool once. Only cheap presentation copies are
+                // shared across separate action tabs, keeping native identity.
+                var entries = PoolsFor(new[] { new LuaImpactScanner.Action {
+                    Method = "PositionPool", Arguments = new[] { source.Key } } }, null);
+                foreach (var tab in source.Value)
+                {
+                    var groups = tab.Groups.Where(x => x != "选项 · " + tab.Title).ToArray();
+                    var group = groups.Length == 0 ? "选项 · " + tab.Title : string.Join(" / ", groups);
+                    result.AddRange(entries.Select(x => x.InTab(tab.Key, tab.Title, group)));
+                }
+            }
+            foreach (var tab in result.GroupBy(x => x.TabKey))
+            {
+                var pools = tab.Select(x => x.Pool).Distinct().ToList();
+                if (pools.Count < 2) continue;
+                foreach (var entry in tab) entry.Group += " · 事件组 " + (pools.IndexOf(entry.Pool) + 1);
             }
             return result;
+        }
+
+        private sealed class PoolSource
+        {
+            internal string Key, Title;
+            internal readonly List<string> Groups = new List<string>();
         }
 
         internal static void OpenBuilding(PositionController controller)
@@ -260,6 +294,7 @@ namespace LOMSave.Probe
             if (!CanPreview(controller)) return;
             try
             {
+                var timer = System.Diagnostics.Stopwatch.StartNew();
                 var position = Read<PositionType>(controller, "_position");
                 var title = (position == PositionType.弟子房 ? "男弟子房" : Clean(position.ToString())) + " · 事件";
                 var entries = BuildingMissions(position);
@@ -267,7 +302,8 @@ namespace LOMSave.Probe
                 var script = Read<string>(data, "_defaultScript");
                 entries.AddRange(ScriptPools(script));
                 LOMSaveProbePlugin.WriteEvent("building_events_scanned", new { position = position.ToString(), script,
-                    checkpointManagerPresent = CheckPointManager.Instance != null, count = entries.Count });
+                    checkpointManagerPresent = CheckPointManager.Instance != null, count = entries.Count,
+                    milliseconds = timer.Elapsed.TotalMilliseconds });
                 EventInspectorPanel.Show(title, entries, PositionConfig() == null
                     ? "随机事件数据尚未加载。进入一次剧情后即可查看；也可进入行动后，中键点击行动选项查看关联事件。" : null);
             }

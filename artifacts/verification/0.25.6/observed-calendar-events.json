@@ -1,0 +1,50 @@
+{
+  "ReadKeys": [
+    "pool:5:Back_Work_001:Back_Work_E_02",
+    "pool:5:Back_Work_001:Back_Work_E_04",
+    "pool:1:Mall_Work_001:Mall_Work_Result_E_03",
+    "pool:6:Room_Work_001:Room_Work_E_01"
+  ],
+  "Records": [
+    {
+      "Date": "0003-10-3",
+      "Key": "pool:5:Back_Work_001:Back_Work_E_02",
+      "Title": "馬富貴 獵人",
+      "Kind": "特殊事件",
+      "Random": true,
+      "Triggers": [
+        "後山 · 挑柴"
+      ]
+    },
+    {
+      "Date": "0003-10-3",
+      "Key": "pool:5:Back_Work_001:Back_Work_E_04",
+      "Title": "馬富貴 挖礦人",
+      "Kind": "特殊事件",
+      "Random": true,
+      "Triggers": [
+        "後山 · 挑柴"
+      ]
+    },
+    {
+      "Date": "0003-10-3",
+      "Key": "pool:1:Mall_Work_001:Mall_Work_Result_E_03",
+      "Title": "小梅問安2",
+      "Kind": "特殊事件",
+      "Random": true,
+      "Triggers": [
+        "正心堂 · 焚香．掌灯"
+      ]
+    },
+    {
+      "Date": "0003-10-3",
+      "Key": "pool:6:Room_Work_001:Room_Work_E_01",
+      "Title": "福韫 講法1",
+      "Kind": "特殊事件",
+      "Random": true,
+      "Triggers": [
+        "男弟子房 · 休息"
+      ]
+    }
+  ]
+}

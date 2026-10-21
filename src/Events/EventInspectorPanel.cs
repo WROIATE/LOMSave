@@ -12,7 +12,16 @@ namespace LOMSave.Probe
         private static Font _font;
         private static Text _status;
         private static ScrollRect _scroll;
-        private static bool _showUnavailable;
+        private sealed class Tab
+        {
+            internal string Key, Title;
+            internal List<EventInspector.Entry> Entries;
+            internal float Scroll = 1f;
+            internal bool ShowUnavailable;
+        }
+        private static List<Tab> _tabs;
+        private static Tab _selected;
+        private static string _title;
         private static string _dataHint;
         private static readonly HashSet<EventInspector.Entry> Expanded = new HashSet<EventInspector.Entry>();
         private static float _closedAt = -1f;
@@ -23,19 +32,40 @@ namespace LOMSave.Probe
 
         internal static void Close()
         {
-            if (_root == null) return;
-            _root.SetActive(false);
-            UnityEngine.Object.Destroy(_root);
-            _root = null;
-            _closedAt = Time.unscaledTime;
+            var wasOpen = _root != null;
+            DestroyView();
+            _tabs = null; _selected = null; _dataHint = null;
+            Expanded.Clear();
+            if (wasOpen) _closedAt = Time.unscaledTime;
+        }
+        private static void DestroyView()
+        {
+            if (_root != null) { _root.SetActive(false); UnityEngine.Object.Destroy(_root); }
+            _root = null; _scroll = null; _status = null;
         }
         internal static void Show(string title, List<EventInspector.Entry> entries, string dataHint = null)
-        { _dataHint = dataHint; Show(title, entries, false); }
-        private static void Show(string title, List<EventInspector.Entry> entries, bool keepScroll)
         {
-            var scrollPosition = keepScroll && _scroll != null ? _scroll.verticalNormalizedPosition : 1f;
-            if (!keepScroll) { Expanded.Clear(); _showUnavailable = false; }
             Close();
+            _title = title; _dataHint = dataHint;
+            _tabs = entries.GroupBy(x => x.TabKey ?? "events").Select(x => new Tab {
+                Key = x.Key, Title = x.First().TabTitle ?? "相关事件", Entries = x.ToList() }).ToList();
+            if (_tabs.Count == 0) _tabs.Add(new Tab { Key = "events", Title = "相关事件", Entries = entries });
+            foreach (var duplicate in _tabs.GroupBy(x => x.Title).Where(x => x.Count() > 1))
+            {
+                var number = 0;
+                foreach (var tab in duplicate) tab.Title += "（" + (++number) + "）";
+            }
+            _selected = _tabs[0];
+            Render(false);
+        }
+        private static void RememberScroll()
+        { if (_selected != null && _scroll != null) _selected.Scroll = _scroll.verticalNormalizedPosition; }
+        private static void Render(bool rememberScroll = true)
+        {
+            if (rememberScroll) RememberScroll();
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            DestroyView();
+            var entries = _selected.Entries;
             _font = PreviewFont.Resolve();
             _root = new GameObject("LOMSaveEvents");
             var canvas = _root.AddComponent<Canvas>();
@@ -51,15 +81,27 @@ namespace LOMSave.Probe
             var panel = OptionImpactPreview.CreateImage("Panel", backdrop.transform, new Color(0.07f, 0.065f, 0.055f, 0.99f));
             panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             panel.rectTransform.sizeDelta = new Vector2(1240, 860);
-            Label(panel.transform, title, 30, Gold, 36, 20, 1168, 46);
+            Label(panel.transform, _title, 30, Gold, 36, 20, 1168, 46);
             Label(panel.transform, "主线、已就绪人物剧情优先；随机指定在对应事件池生效。固定选择跨读档保留。", 21, Color.white, 36, 76, 1168, 36);
             _status = Label(panel.transform, "下次事件：" + EventInspector.PendingName, 21, Gold, 36, 114, 820, 40);
             var hidden = entries.Count(x => x.Eligible == false);
-            Button(panel.transform, _showUnavailable ? "隐藏不可触发事件" : "查看不可触发（" + hidden + "）", 900, 110, 304, 42,
-                () => { _showUnavailable = !_showUnavailable; Show(title, entries, true); });
+            Button(panel.transform, _selected.ShowUnavailable ? "隐藏不可触发事件" : "查看不可触发（" + hidden + "）", 900, 110, 304, 42,
+                () => { _selected.ShowUnavailable = !_selected.ShowUnavailable; Render(); });
+
+            for (var index = 0; index < _tabs.Count; index++)
+            {
+                var tab = _tabs[index];
+                Button(panel.transform, EventInspector.Clean(tab.Title, 11),
+                    36 + index % 4 * 296, 164 + index / 4 * 54, 280, 44, () =>
+                    {
+                        if (_selected == tab) return;
+                        RememberScroll(); _selected = tab; Render(false);
+                    }, tab == _selected);
+            }
+            var listTop = 164 + ((_tabs.Count + 3) / 4) * 54;
 
             var viewport = OptionImpactPreview.CreateImage("Viewport", panel.transform, new Color(0.12f, 0.11f, 0.09f));
-            Place(viewport.rectTransform, 36, 164, 1168, 594);
+            Place(viewport.rectTransform, 36, listTop, 1168, 758 - listTop);
             viewport.gameObject.AddComponent<RectMask2D>();
             var scroll = viewport.gameObject.AddComponent<ScrollRect>();
             _scroll = scroll;
@@ -74,13 +116,13 @@ namespace LOMSave.Probe
             scroll.content = content;
             float y = 12;
             string group = null;
-            var visible = entries.Where(x => EventSelectionStore.Show(x.Eligible, _showUnavailable)).ToList();
+            var visible = entries.Where(x => EventSelectionStore.Show(x.Eligible, _selected.ShowUnavailable)).ToList();
             foreach (var entry in visible)
             {
                 if (entry.Group != group)
                 {
                     group = entry.Group;
-                    Label(content, group, 23, Gold, 18, y, 1100, 36);
+                    Label(content, group, 23, Gold, 24, y, 1100, 36);
                     y += 44;
                 }
                 var name = Label(content, entry.Title + (EventInspector.IsFixed(entry) ? " 〔已固定〕" : ""), 24, Color.white, 24, y, 840, 60);
@@ -98,11 +140,11 @@ namespace LOMSave.Probe
                     Button(content, Expanded.Contains(entry) ? "收起条件" : "查看条件", 890, y + 58, 240, 40, () =>
                     {
                         if (!Expanded.Add(selected)) Expanded.Remove(selected);
-                        Show(title, entries, true);
+                        Render();
                     });
                 var fixedButton = Button(content, EventInspector.IsFixed(entry) ? "取消固定" : "固定选择", 890, y + 106, 240, 40, () =>
                 {
-                    try { EventInspector.ToggleFixed(selected); Show(title, entries, true); }
+                    try { EventInspector.ToggleFixed(selected); Render(); }
                     catch (Exception e) { _status.text = "固定选择保存失败，请重试"; LOMSaveProbePlugin.WriteError("event_preferences_save_failed", e); }
                 });
                 fixedButton.interactable = entry.CanSelect || EventInspector.IsFixed(entry);
@@ -120,16 +162,18 @@ namespace LOMSave.Probe
             }
             content.sizeDelta = new Vector2(0, y + 24);
             Canvas.ForceUpdateCanvases();
-            scroll.verticalNormalizedPosition = scrollPosition;
+            scroll.verticalNormalizedPosition = _selected.Scroll;
             Button(panel.transform, "取消指定", 710, 790, 220, 48, () => { EventInspector.Select(null); _status.text = "下次事件：未指定"; });
             Button(panel.transform, "关闭", 954, 790, 250, 48, Close);
             Button(panel.transform, "清除全部固定", 466, 790, 220, 48, () =>
             {
-                try { EventInspector.ClearFixed(); Show(title, entries, true); }
+                try { EventInspector.ClearFixed(); Render(); }
                 catch (Exception e) { _status.text = "清除失败，请重试"; LOMSaveProbePlugin.WriteError("event_preferences_save_failed", e); }
             });
-            Label(panel.transform, "单次指定读档后清除。\n固定选择跨读档、重启保留。", 19, Color.white, 36, 782, 420, 62);
-            LOMSaveProbePlugin.WriteEvent("event_inspector_shown", new { title, count = entries.Count,
+            Label(panel.transform, "各事件组分别指定；单次读档清除。\n固定选择跨读档、重启保留。", 19, Color.white, 36, 782, 420, 62);
+            LOMSaveProbePlugin.WriteEvent("event_inspector_shown", new { title = _title, tab = _selected.Title,
+                tabs = _tabs.Select(x => x.Title).ToArray(), count = entries.Count, hidden,
+                milliseconds = timer.Elapsed.TotalMilliseconds,
                 entries = entries.Select(x => new { x.Title, x.Group, x.Detail, x.CanSelect }).ToArray() });
         }
 
@@ -139,14 +183,14 @@ namespace LOMSave.Probe
             Place(text.rectTransform, x, y, w, h);
             return text;
         }
-        private static Button Button(Transform parent, string text, float x, float y, float w, float h, UnityEngine.Events.UnityAction action)
+        private static Button Button(Transform parent, string text, float x, float y, float w, float h, UnityEngine.Events.UnityAction action, bool active = false)
         {
-            var image = OptionImpactPreview.CreateImage("Button", parent, new Color(0.32f, 0.27f, 0.18f));
+            var image = OptionImpactPreview.CreateImage("Button", parent, active ? new Color(0.48f, 0.37f, 0.19f) : new Color(0.25f, 0.22f, 0.16f));
             Place(image.rectTransform, x, y, w, h);
             var button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             button.onClick.AddListener(action);
-            var label = Label(image.transform, text, 22, Color.white, 0, 0, w, h);
+            var label = Label(image.transform, text, 22, active ? Gold : Color.white, 0, 0, w, h);
             label.alignment = TextAnchor.MiddleCenter;
             return button;
         }

@@ -1,0 +1,14 @@
+{
+  "restoredAt": "2026-10-21T11:42:29.8820884+08:00",
+  "baselineSavedAt": "2026-10-21T11:36:51.4678337+08:00",
+  "restoredSaves": 183,
+  "restoredConfigs": 5,
+  "verifiedHashes": 188,
+  "hashDifferences": 0,
+  "qaArchive": "C:\\Users\\WROIATE\\Desktop\\LOMSave\\artifacts\\backup\\before-calendar-unread-0.25.6-20261021-113651\\qa-results-20261021-114228",
+  "movedExtras": [
+    "config/LOMSaveProbe.CalendarEvents.json",
+    "config/LOMSaveProbe.CalendarEvents.json.bak"
+  ],
+  "installedSha256": "F2EB9306A9F33BBE46D7B6EC13EF826A2F6845642A04D5B3D029EDF16561DF3C"
+}

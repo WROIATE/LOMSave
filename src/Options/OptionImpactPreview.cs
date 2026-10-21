@@ -374,7 +374,8 @@ namespace LOMSave.Probe
                 }
                 binding.Bind(
                     key,
-                    ResolveStoryText(partIndex.HasValue && partIndex.Value < parts.Length ? parts[partIndex.Value] : key),
+                    component is PositionOptionButton ? EventInspector.OptionName(source.text)
+                        : ResolveStoryText(partIndex.HasValue && partIndex.Value < parts.Length ? parts[partIndex.Value] : key),
                     HoldSeconds,
                     source.font,
                     allowDisabled);

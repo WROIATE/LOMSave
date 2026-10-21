@@ -62,6 +62,29 @@ namespace LOMSave.Probe
             loaded.Version = 2; Check(!loaded.Matches(123, hash), "Reject future calendar formats");
             Check(new CalendarHistory().Actions.Count == 0, "Old saves start with no fabricated history");
 
+            var journal = new CalendarEventJournal();
+            var story = new CalendarStoryEvent { Key = "mission:story", Title = "一次剧情", Kind = "已就绪剧情", Trigger = "后山 · 进入即触发" };
+            Check(!journal.MarkRead(new CalendarStoryEvent[0]), "Empty/historical-only page never reads hidden events");
+            Check(journal.Observe(date, new[] { story }) && !journal.IsRead(story), "Automatic observation records availability without marking read");
+            Check(!journal.Observe(date, new[] { story }), "Repeated observation does not dirty persistent journal");
+            var record = journal.On(date).Single();
+            story.Trigger = "出门 · 进入即触发";
+            Check(journal.Observe(date, new[] { story }) && record.Triggers.Count == 2, "One date retains both observed trigger paths without duplicate event rows");
+            Check(journal.MarkRead(new[] { story }) && !journal.MarkRead(new[] { story }), "Reading same event is idempotent");
+            var renamed = new CalendarStoryEvent { Key = story.Key, Title = "本地化名称更新", Trigger = story.Trigger };
+            Check(journal.IsRead(renamed), "Translated titles do not reset read state");
+            Check(journal.Observe(CalendarNotes.DateKey(1128, 5, 2), new[] { renamed }) && journal.Unread(new[] { renamed }) == 0,
+                "Same event spanning stages records both stages but only notifies once");
+            Check(journal.Unread(new CalendarStoryEvent[0]) == 0 && journal.On(date).Count == 1, "Expired event remains historical but never contributes to unread count");
+            var journalFile = Path.Combine(directory, "calendar-events.json");
+            LocalJsonFile.Write(journalFile, journal);
+            journal = LocalJsonFile.Read<CalendarEventJournal>(journalFile);
+            Check(journal.IsRead(story) && journal.On(date).Single().Triggers.Count == 2 && journal.On(CalendarNotes.DateKey(1128, 5, 2)).Count == 1,
+                "Read receipts, dates and trigger paths survive serialization");
+            var beforeRecordCount = journal.Records.Count;
+            journal.Observe(date, new[] { story });
+            Check(journal.Records.Count == beforeRecordCount && journal.On("9999-01-1").Count == 0, "Deserialization rebuilds indexes without inventing future records");
+
             Check(PinballRewards.Scores.SequenceEqual(new[] { 0, 30, 60, 100 }), "Verified score reward thresholds");
             Check(!PinballRewards.IsSupported(-1) && !PinballRewards.IsSupported(99) && PinballRewards.IsSupported(100), "Only supported score choices can settle");
             var random = new Random(1234);

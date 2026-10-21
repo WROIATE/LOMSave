@@ -1,0 +1,19 @@
+{
+  "version": "0.25.6",
+  "date": "0003-10-3",
+  "eligibleCount": 4,
+  "readKeyCount": 4,
+  "currentUnread": 0,
+  "historicalCount": 4,
+  "historicalDates": [
+    "0003-10-3"
+  ],
+  "regressionSuites": 22,
+  "calendarEventAssertions": 50,
+  "dataAssertions": 40,
+  "nativeReferences": 459,
+  "harmonyTargets": 158,
+  "reflectionMembers": 49,
+  "registeredPatchClasses": 22,
+  "dllSha256": "F2EB9306A9F33BBE46D7B6EC13EF826A2F6845642A04D5B3D029EDF16561DF3C"
+}

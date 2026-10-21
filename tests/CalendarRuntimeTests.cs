@@ -114,7 +114,8 @@ namespace LOMSave.Probe
     internal static class OptionImpactPreview { internal static bool IsOpen; }
     internal static class EventInspectorPanel { internal static bool BlocksInput; }
     internal static class AutoDialogueSpeed { internal static bool SettingsVisible; }
-    internal static class CalendarPanel { internal static void ShowOverview(int year) { ActionCalendar.IsOpen = true; } }
+    internal static class CalendarPanel { internal static void ShowCurrent() { ActionCalendar.IsOpen = true; } }
+    internal sealed class CalendarDateMemo : UnityEngine.MonoBehaviour { }
     internal static class EventInspector
     {
         internal static string Clean(string value) { return value; }

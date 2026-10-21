@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.2";
+        public const string PluginVersion = "0.25.9";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -63,6 +63,8 @@ namespace LOMSave.Probe
                 CodeNameMapping.Initialize();
                 EventInspector.Initialize();
                 ActionCalendar.Initialize();
+                CalendarEventLog.Initialize();
+                TrainingPointLimits.Initialize();
                 var harmony = new Harmony(PluginGuid);
                 harmony.PatchAll(typeof(ActionAutoSave));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
@@ -83,6 +85,8 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(TeamBattleSkip));
                 harmony.PatchAll(typeof(FeaturePanel));
                 harmony.PatchAll(typeof(ActionCalendar));
+                harmony.PatchAll(typeof(CalendarStoryEvents));
+                harmony.PatchAll(typeof(TrainingPointLimits));
                 harmony.PatchAll(typeof(PinballSkip));
                 harmony.PatchAll(typeof(DebugMenuEnhancements));
                 InstallStoryViewPatch(harmony);
@@ -149,6 +153,9 @@ namespace LOMSave.Probe
             FeaturePanel.Update();
             RecallShortcut.Update();
             BranchAutoSave.Update();
+            CalendarStoryEvents.Update();
+            CalendarPanel.Update();
+            CalendarEventLog.Update();
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) CaptureCurrentState("manual_ctrl_f10");
@@ -174,6 +181,7 @@ namespace LOMSave.Probe
 
         private void OnDestroy()
         {
+            CalendarEventLog.Flush();
             DebugMenuShortcut.Close();
             ReplayRuntime.Reset("plugin_destroyed");
             FeaturePanel.ForceClose();

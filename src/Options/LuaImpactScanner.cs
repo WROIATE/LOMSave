@@ -16,6 +16,12 @@ namespace LOMSave.Probe
             internal int RouteDepth;
         }
 
+        internal sealed class Option
+        {
+            internal string Key, RootKey;
+            internal List<Action> Actions;
+        }
+
         private sealed class Block
         {
             internal readonly List<Node> Nodes = new List<Node>();
@@ -58,10 +64,26 @@ namespace LOMSave.Probe
 
         internal static Dictionary<string, List<Action>> Scan(string lua, Func<string, string> load)
         {
+            var result = new Dictionary<string, List<Action>>(StringComparer.Ordinal);
+            foreach (var option in ScanOptions(lua, load)) result[option.Key] = option.Actions;
+            return result;
+        }
+
+        // Preserve the enclosing player action for nested dialogue options.
+        // Display grouping must not merge independent actions sharing a pool.
+        internal static List<Option> ScanOptions(string lua, Func<string, string> load)
+        {
             var markers = new List<Marker>();
             var root = Parse(lua, markers);
             var parsedLoad = ParsedLoader(lua, root, load);
-            var result = new Dictionary<string, List<Action>>(StringComparer.Ordinal);
+            var result = new List<Option>();
+            var markersByBlock = new Dictionary<Block, List<Marker>>();
+            foreach (var marker in markers)
+            {
+                List<Marker> list;
+                if (!markersByBlock.TryGetValue(marker.Block, out list)) markersByBlock.Add(marker.Block, list = new List<Marker>());
+                list.Add(marker);
+            }
             foreach (var marker in markers)
             {
                 var actions = new List<Action>();
@@ -76,8 +98,25 @@ namespace LOMSave.Probe
                     block = block.Parent;
                     if (block != null) start = block.Nodes.IndexOf(owner) + 1;
                 }
-                // Full source is authoritative; a later fragment must not merge unrelated paths.
-                result[marker.Key] = actions;
+                var rootKey = marker.Key;
+                var child = marker.Block;
+                while (child.Parent != null)
+                {
+                    var ownerIndex = child.Parent.Nodes.IndexOf(child.Owner);
+                    List<Marker> candidates;
+                    if (markersByBlock.TryGetValue(child.Parent, out candidates))
+                    {
+                        var low = 0; var high = candidates.Count;
+                        while (low < high)
+                        {
+                            var mid = low + (high - low) / 2;
+                            if (candidates[mid].Index <= ownerIndex) low = mid + 1; else high = mid;
+                        }
+                        if (low > 0) rootKey = candidates[low - 1].Key;
+                    }
+                    child = child.Parent;
+                }
+                result.Add(new Option { Key = marker.Key, RootKey = rootKey, Actions = actions });
             }
             return result;
         }

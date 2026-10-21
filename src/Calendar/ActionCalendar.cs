@@ -162,32 +162,7 @@ namespace LOMSave.Probe
             if (scene == "Story" && StoryManager.Instance != null && (StoryManager.Instance.IsStoryPause || !StoryManager.Instance.EnableAction)) return;
             if (scene == "Free" && FreeManager.Instance != null && (FreeManager.Instance.IsProcessing || !FreeManager.Instance.EnableHotKey)) return;
             var time = CurrentTime;
-            if (!ReferenceEquals(time, null)) CalendarPanel.ShowOverview(time.Year);
-        }
-    }
-
-    internal sealed class CalendarDateMemo : MonoBehaviour
-    {
-        private Text _text;
-        private float _next;
-        private void Update()
-        {
-            if (Time.unscaledTime < _next) return;
-            _next = Time.unscaledTime + 0.25f;
-            if (_text == null)
-            {
-                var source = EventInspector.Read<Text>(GetComponent<GameDateTimeText>(), "_text");
-                if (source == null) return;
-                _text = FeaturePanel.Label(source.transform, "", 22, 0, 0, 600, 120);
-                _text.gameObject.name = "LOMSaveCalendarDateMemo";
-                _text.rectTransform.anchorMin = _text.rectTransform.anchorMax = new Vector2(0, 0);
-                _text.rectTransform.anchoredPosition = new Vector2(0, -8);
-                _text.color = new Color(1f, 0.85f, 0.5f);
-                _text.gameObject.AddComponent<Outline>().effectColor = new Color(0, 0, 0, 0.85f);
-            }
-            var note = ActionCalendar.Note(ActionCalendar.Today);
-            _text.text = note.Length == 0 ? "" : "日历备注 · " + note;
-            _text.rectTransform.sizeDelta = new Vector2(600, Math.Max(40, _text.preferredHeight));
+            if (!ReferenceEquals(time, null)) CalendarPanel.ShowCurrent();
         }
     }
 }

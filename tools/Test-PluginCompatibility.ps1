@@ -52,12 +52,13 @@ try {
             }
             foreach ($attribute in $method.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'HarmonyLib.HarmonyPatch' }) {
                 $patchCount++
-                $targetType = $null; $targetName = $null; $argumentTypes = $null
+                $targetType = $null; $targetName = $null; $argumentTypes = $null; $methodType = 0
                 foreach ($argument in $attribute.ConstructorArguments) {
                     switch ($argument.Type.FullName) {
                         'System.Type' { $targetType = $argument.Value }
                         'System.String' { $targetName = [string]$argument.Value }
                         'System.Type[]' { $argumentTypes = @($argument.Value | ForEach-Object { $_.Value.FullName }) }
+                        'HarmonyLib.MethodType' { $methodType = [int]$argument.Value }
                     }
                 }
                 if (!$targetType -or !$targetName) { $problems.Add("Incomplete patch: $method"); continue }
@@ -69,7 +70,18 @@ try {
                     if (!$targetMethods.Count) { $definition = if ($definition.BaseType) { $definition.BaseType.Resolve() } else { $null } }
                 }
                 if ($targetMethods.Count -ne 1) { $problems.Add("Missing/ambiguous target: $method -> $targetType/$targetName"); continue }
+                if ($methodType -eq 5) {
+                    # Harmony's Enumerator patches the generated MoveNext,
+                    # not the public method that constructs the iterator.
+                    $iterator = @($targetMethods[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq 'Newobj' } |
+                        ForEach-Object { $_.Operand.DeclaringType.Resolve() } |
+                        Where-Object { $_.DeclaringType.FullName -eq $definition.FullName })
+                    $targetMethods = @($iterator.Methods | Where-Object Name -eq 'MoveNext')
+                    if ($targetMethods.Count -ne 1) { $problems.Add("Missing/ambiguous iterator target: $method"); continue }
+                }
                 foreach ($parameter in $method.Parameters) {
+                    if (@($method.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'HarmonyLib.HarmonyTranspiler' }).Count -gt 0 -and
+                        $parameter.ParameterType.FullName -eq 'System.Collections.Generic.IEnumerable`1<HarmonyLib.CodeInstruction>') { continue }
                     if ($parameter.Name -match '^__(\d+)$') {
                         $index = [int]$Matches[1]
                         if ($index -ge $targetMethods[0].Parameters.Count) { $problems.Add("Argument index missing: $method/$parameter") }
@@ -90,6 +102,8 @@ try {
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.PlayerStatManagerData'; Fields = @('_startStoryScript') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.TestGameStatPanel'; Fields = @('_stat','_nameText') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.TestFlagStatPanel'; Fields = @('_stat','_nameText','_valueText','_textTip','_tip') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.MartialPanel'; Fields = @('_maxDataConvert') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.UpgradePanel'; Fields = @('_maxDataConvert','_pointData') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.CheckPointManager'; Fields = @('_position') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.StoryManager'; Fields = @('_logButton','_logOpen','_panelOpen'); Properties = @('IsStoryPause') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.CharacterPlaceholder'; Fields = @('_characters') },

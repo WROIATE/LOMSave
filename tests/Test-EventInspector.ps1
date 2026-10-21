@@ -4,6 +4,7 @@ $root = Split-Path $PSScriptRoot -Parent
 # sequence as PositionController.OnPositionClick, without Unity's native runtime.
 Add-Type -Path @(
     (Join-Path $root 'src/Events/EventInspector.cs'),
+    (Join-Path $root 'src/Events/EventPreviewNames.cs'),
     (Join-Path $root 'src/Events/EventSelectionStore.cs'),
     (Join-Path $root 'src/Options/LuaImpactScanner.cs'),
     (Join-Path $PSScriptRoot 'EventInspectorTests.cs')

@@ -25,6 +25,7 @@
     <Compile Include="src/Options/OptionImpactText.cs" />
     <Compile Include="src/Events/EventConditions.cs" />
     <Compile Include="src/Events/EventInspector.cs" />
+    <Compile Include="src/Events/EventPreviewNames.cs" />
     <Compile Include="src/Events/BuildingEventLongPress.cs" />
     <Compile Include="src/UI/PreviewInteraction.cs" />
     <Compile Include="src/Events/EventInspectorPanel.cs" />
@@ -62,9 +63,16 @@
     <Compile Include="src/Minigames/PinballSkip.cs" />
     <Compile Include="src/Minigames/PinballRewards.cs" />
     <Compile Include="src/Calendar/CalendarStore.cs" />
+    <Compile Include="src/Calendar/CalendarEventJournal.cs" />
+    <Compile Include="src/Calendar/CalendarEventLog.cs" />
     <Compile Include="src/Calendar/ActionCalendar.cs" />
+    <Compile Include="src/Calendar/CalendarDateMemo.cs" />
+    <Compile Include="src/Calendar/StoryEventRoutes.cs" />
+    <Compile Include="src/Calendar/CalendarStoryEvents.cs" />
     <Compile Include="src/Calendar/CalendarPanel.cs" />
     <Compile Include="src/Debug/DebugMenuData.cs" />
+    <Compile Include="src/Debug/TrainingLimitSettings.cs" />
+    <Compile Include="src/Debug/TrainingPointLimits.cs" />
     <Compile Include="src/Debug/DebugMenuEnhancements.cs" />
     <Compile Include="src/Debug/DebugMenuShortcut.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
