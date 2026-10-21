@@ -6,6 +6,8 @@ Add-Type -Path @(
     (Join-Path $root 'src/Saves/StorySaveFiles.cs'),
     (Join-Path $root 'src/Saves/ActionAutoSavePolicy.cs'),
     (Join-Path $root 'src/Calendar/CalendarStore.cs'),
+    (Join-Path $root 'src/Calendar/CalendarEventJournal.cs'),
+    (Join-Path $root 'src/Calendar/CalendarEventLog.cs'),
     (Join-Path $root 'src/Calendar/ActionCalendar.cs'),
     (Join-Path $PSScriptRoot 'CalendarRuntimeTests.cs')
 ) -ReferencedAssemblies $references -CompilerOptions '/nowarn:1701,0649'

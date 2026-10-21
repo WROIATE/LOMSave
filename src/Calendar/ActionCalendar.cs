@@ -45,7 +45,7 @@ namespace LOMSave.Probe
         {
             if (!CanRecord) return;
             try { LocalJsonFile.Write(file + ".lomsavecalendar.json", new CalendarHistory
-                { SaveTimeTick = save.TimeTick, SaveFileHash = hash, Actions = _actions }); }
+                { SaveTimeTick = save.TimeTick, SaveFileHash = hash, Actions = _actions, Events = CalendarEventLog.Capture() }); }
             catch (Exception e) { LOMSaveProbePlugin.WriteError("calendar_history_save_failed", e); }
         }
         private static bool CanRecord
@@ -120,15 +120,19 @@ namespace LOMSave.Probe
                 var slot = SaveSlotContext.Resolve(__instance.CurrentSlot);
                 var file = Traverse.Create(__instance).Method("GetSaveDataFile", new[] { typeof(string) }).GetValue<string>(slot);
                 var history = LocalJsonFile.Read<CalendarHistory>(file + ".lomsavecalendar.json");
-                _actions = history.Matches(__0.TimeTick, StorySaveFiles.Hash(file)) && history.Actions != null
+                var matches = history.Matches(__0.TimeTick, StorySaveFiles.Hash(file));
+                _actions = matches && history.Actions != null
                     ? history.Actions.Where(x => x != null).ToList() : new List<CalendarAction>();
+                CalendarEventLog.Restore(matches ? history.Events : null);
+                LOMSaveProbePlugin.WriteEvent("calendar_events_restored", new { slot, matches,
+                    legacy = matches && history.Events == null, readCount = matches ? history.Events?.ReadKeys?.Count ?? 0 : 0 });
             }
-            catch (Exception e) { _actions.Clear(); LOMSaveProbePlugin.WriteError("calendar_history_load_failed", e); }
+            catch (Exception e) { _actions.Clear(); CalendarEventLog.Restore(null); LOMSaveProbePlugin.WriteError("calendar_history_load_failed", e); }
             return __exception;
         }
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerStatManagerData), "ResetData")]
         private static void NewGame()
-        { if (_loading == 0 && !ReplayStateValidator.IsRestoring) { _actions.Clear(); _label = null; FeaturePanel.ForceClose(); } }
+        { if (_loading == 0 && !ReplayStateValidator.IsRestoring) { _actions.Clear(); CalendarEventLog.Restore(null); _label = null; FeaturePanel.ForceClose(); } }
 
         [HarmonyPostfix, HarmonyPatch(typeof(SaveSystem), "DeleteSaveData", typeof(string))]
         private static void DeleteHistory(SaveSystem __instance, string __0)

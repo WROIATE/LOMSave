@@ -27,8 +27,10 @@ namespace UnityEngine
     public static class Resources
     {
         public static Dictionary<string, TextAsset> Scripts = new Dictionary<string, TextAsset>();
-        public static T[] FindObjectsOfTypeAll<T>() { return new T[0]; }
-        public static T[] LoadAll<T>(string path) { return new T[0]; }
+        public static List<Object> LoadedObjects = new List<Object>();
+        public static int RegistryQueries, AssetLoads;
+        public static T[] FindObjectsOfTypeAll<T>() { RegistryQueries++; return LoadedObjects.OfType<T>().ToArray(); }
+        public static T[] LoadAll<T>(string path) { AssetLoads++; throw new Exception("Preview must not load all assets"); }
         public static T Load<T>(string path) where T : class
         { TextAsset value; return Scripts.TryGetValue(path, out value) ? value as T : null; }
     }
@@ -102,10 +104,10 @@ namespace Mortal.Story
 {
     public class CheckPointManager { public static CheckPointManager Instance; public PositionResultConfig _position;
         public ConditionResultConfig _condition = new ConditionResultConfig(); public SwitchResultConfig[] _switchList = new SwitchResultConfig[0]; }
-    public class ConditionResultConfig { public List<ConditionResultData> List = new List<ConditionResultData>(); }
-    public class SwitchResultConfig { public List<SwitchResultData> List = new List<SwitchResultData>(); }
+    public class ConditionResultConfig : UnityEngine.Object { public List<ConditionResultData> List = new List<ConditionResultData>(); }
+    public class SwitchResultConfig : UnityEngine.Object { public List<SwitchResultData> List = new List<SwitchResultData>(); }
     public class SwitchResultData : UnityEngine.Object { public bool _useCount; public List<ConditionResultItem> _items = new List<ConditionResultItem>(); }
-    public class PositionResultConfig { public List<PositionResultData> List = new List<PositionResultData>(); }
+    public class PositionResultConfig : UnityEngine.Object { public List<PositionResultData> List = new List<PositionResultData>(); }
     public class PositionResultData : UnityEngine.Object
     {
         public string _scriptPrefix;

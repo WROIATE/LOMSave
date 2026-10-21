@@ -59,7 +59,8 @@ namespace LOMSave.Probe
             Check(loaded.Actions[0].Date == date && loaded.Actions[0].After == 2, "Action date and remaining turns survive serialization");
             Check(!loaded.Matches(124, hash), "Reject overwritten slot timestamp");
             Check(!loaded.Matches(123, new string('b', 64)), "Reject another save with same timestamp");
-            loaded.Version = 2; Check(!loaded.Matches(123, hash), "Reject future calendar formats");
+            loaded.Version = 1; Check(loaded.Matches(123, hash), "Legacy action-only calendar format remains readable");
+            loaded.Version = 3; Check(!loaded.Matches(123, hash), "Reject future calendar formats");
             Check(new CalendarHistory().Actions.Count == 0, "Old saves start with no fabricated history");
 
             var journal = new CalendarEventJournal();

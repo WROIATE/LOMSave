@@ -12,8 +12,8 @@ $previousTmp = $env:TMP
 try {
     $env:TEMP = $taskTemp
     $env:TMP = $taskTemp
-    $scripts = @('ActionAutoSave','ActionAutoSaveRuntime','BranchAutoSave','StorySaveFiles','ReplayRuntime','DialogueAndImpact','BuildingLongPress',
-        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','EventInspector','StoryReplay','StoryContinuation','ReplayCharacter','ReplayStateValidation','CalendarRuntime','CalendarStoryEvents','RecallShortcut','DebugMenu','DebugMenuShortcut','TrainingLimits')
+    $scripts = @('ActionAutoSave','ActionAutoSaveRuntime','BranchAutoSave','StorySaveFiles','SaveOrigin','ReplayRuntime','DialogueAndImpact','BuildingLongPress',
+        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','EventInspector','StoryEventIndex','StoryReplay','StoryContinuation','ReplayCharacter','ReplayStateValidation','CalendarRuntime','CalendarStoryEvents','RecallShortcut','DebugMenu','DebugMenuShortcut','TrainingLimits')
     foreach ($name in $scripts) {
         $arguments = @('-NoProfile', '-File', (Join-Path $PSScriptRoot "Test-$name.ps1"))
         if ($name -in @('DialogueAndImpact','ReplayCharacter','CalendarStoryEvents')) { $arguments += @('-StoryDirectory', $StoryDirectory) }

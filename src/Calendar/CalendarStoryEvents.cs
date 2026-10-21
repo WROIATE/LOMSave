@@ -25,14 +25,15 @@ namespace LOMSave.Probe
         private static bool _dirty = true;
         private static float _after;
         private static string _date;
-        private static CheckPointManager _checkpoints;
+        private static int _configRevision = -1;
+        private static int _indexRevision = -1;
         private static PositionResultConfig _poolConfig;
         private static MissionCheckData _main;
         private static object _subs;
         private static readonly CalendarStoryEvent[] Empty = new CalendarStoryEvent[0];
         internal static int Revision { get; private set; }
         internal static bool Scanning { get { return _dirty || _queue != null; } }
-        internal static bool HasPoolData { get { return _poolConfig != null; } }
+        internal static bool HasPoolData { get { return _poolConfig != null || StoryEventIndex.Data != null; } }
         internal static IReadOnlyList<CalendarStoryEvent> Current
         { get { return !_dirty && _date == ActionCalendar.Today && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Free" ? (IReadOnlyList<CalendarStoryEvent>)_items : Empty; } }
         internal static int UnreadCount { get { return CalendarEventLog.Unread(Current); } }
@@ -52,7 +53,7 @@ namespace LOMSave.Probe
         [HarmonyPatch(typeof(RelationshipStat), "SetValue")]
         private static void StateChanged() { Invalidate(); }
         [HarmonyPostfix, HarmonyPatch(typeof(CheckPointManager), "Awake")]
-        private static void BindCheckpoints() { _checkpoints = null; Invalidate(); }
+        private static void BindCheckpoints() { _configRevision = -1; Invalidate(); }
         [HarmonyPrefix, HarmonyPatch(typeof(SaveSystem), "ExecuteLoadGameData", typeof(GameSave))]
         [HarmonyPatch(typeof(PlayerStatManagerData), "ResetData")]
         private static void Reset()
@@ -65,6 +66,8 @@ namespace LOMSave.Probe
                 || ReplayStateValidator.IsRestoring || PlayerStatManagerData.Instance == null) return;
             var manager = MissionManagerData.Instance;
             if (manager == null) return;
+            if (_poolConfig == null && StoryEventConfigs.Position == null) StoryEventIndex.Update();
+            if ((_configRevision != StoryEventConfigs.Revision || _indexRevision != StoryEventIndex.Revision) && !_dirty) Invalidate();
             if (_date != ActionCalendar.Today || _main != manager.MainCheckData || !ReferenceEquals(_subs, manager.ActiveSubMissions)
                 || _mappingRevision != CodeNameMapping.Revision)
             {
@@ -142,28 +145,27 @@ namespace LOMSave.Probe
 
         private static void IndexCheckpoints()
         {
-            var manager = CheckPointManager.Instance;
-            if (_checkpoints != manager && manager != null)
+            _indexRevision = StoryEventIndex.Revision;
+            if (_configRevision != StoryEventConfigs.Revision)
             {
-                _checkpoints = manager; Conditions.Clear(); Switches.Clear();
-                var conditions = EventInspector.Read<ConditionResultConfig>(manager, "_condition");
+                _configRevision = StoryEventConfigs.Revision; Conditions.Clear(); Switches.Clear();
+                var conditions = StoryEventConfigs.Condition;
                 if (conditions != null) foreach (var item in conditions.List) if (item != null) Conditions[item.name] = item;
-                foreach (var config in EventInspector.Read<SwitchResultConfig[]>(manager, "_switchList") ?? new SwitchResultConfig[0])
+                foreach (var config in StoryEventConfigs.Switches)
                     if (config != null) foreach (var item in config.List) if (item != null) Switches[item.name] = item;
             }
-            // Retain asset references when Story is unloaded. Never LoadAll
-            // resources merely to draw a date indicator.
-            var pools = manager != null ? EventInspector.Read<PositionResultConfig>(manager, "_position") : EventInspector.KnownPositionConfig;
+            var pools = StoryEventConfigs.Position;
             if (pools != null && _poolConfig != pools)
             { _poolConfig = pools; Pools.Clear(); foreach (var pool in pools.List) if (pool != null) Pools[pool.name] = pool; }
         }
 
         private static bool? Condition(string key)
-        { ConditionResultData data; return Conditions.TryGetValue(key, out data) ? EventConditions.CheckData(data) : null; }
+        { ConditionResultData data; return Conditions.TryGetValue(key, out data) ? EventConditions.CheckData(data) : StoryEventIndex.Data?.Condition(key); }
         private static int? Selector(string key)
         {
             SwitchResultData data;
-            if (!Switches.TryGetValue(key, out data) || EventInspector.Read<bool>(data, "_useCount")) return null;
+            if (!Switches.TryGetValue(key, out data)) return StoryEventIndex.Data?.Selector(key);
+            if (EventInspector.Read<bool>(data, "_useCount")) return null;
             var items = EventInspector.Read<List<ConditionResultItem>>(data, "_items");
             if (items == null) return null;
             for (var i = 0; i < items.Count; i++)
@@ -175,7 +177,7 @@ namespace LOMSave.Probe
 
         private static void Scan(PositionController building, MissionManagerData manager, List<CalendarStoryEvent> result)
         {
-            if (!HasActions(building) || Pools.Count == 0) return;
+            if (!HasActions(building) || !HasPoolData) return;
             var position = EventInspector.Read<PositionType>(building, "_position");
             if (manager.ActiveSubMissions != null && manager.ActiveSubMissions.Values.Any(x => x != null && x.Position == position && !string.IsNullOrEmpty(x.StartScript))) return;
             var data = EventInspector.Read<FreePositionData>(building, "_positionData");
@@ -187,9 +189,22 @@ namespace LOMSave.Probe
                 { var parts = option.Split('+'); int cost; if (parts.Length == 4 && int.TryParse(parts[2], out cost)) actionCost += Math.Max(0, cost); }
                 if (actionCost > PlayerStatManagerData.Instance.CurrentActionCount) continue;
                 PositionResultData pool;
-                if (!Pools.TryGetValue(route.Pool, out pool)) continue;
                 var trigger = Location(position);
                 if (route.Options.Length > 0) trigger += " · " + string.Join(" → ", route.Options.Select(EventInspector.OptionName).Distinct().ToArray());
+                if (!Pools.TryGetValue(route.Pool, out pool))
+                {
+                    StoryIndexEvent[] events;
+                    var index = StoryEventIndex.Data;
+                    if (index == null || !index.Pools.TryGetValue(route.Pool, out events)) continue;
+                    foreach (var item in events)
+                    {
+                        if (!IsSpecial(item.Code, item.Note, item.NativeTitle) || index.Rate(item).GetValueOrDefault() <= 0) continue;
+                        result.Add(new CalendarStoryEvent { Key = "pool:" + (int)position + ":" + route.Pool + ":" + item.Code,
+                            Title = EventInspector.Clean(CodeNameMapping.Resolve("events", item.Code, item.Note, item.NativeTitle)),
+                            Kind = "特殊事件", Trigger = trigger, Random = true });
+                    }
+                    continue;
+                }
                 foreach (var item in pool.List)
                 {
                     if (item == null || !IsSpecial(item.name, EventInspector.Read<string>(item, "_devNote"),

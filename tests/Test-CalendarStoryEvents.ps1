@@ -8,6 +8,8 @@ Add-Type -Path @(
     (Join-Path $root 'src/Calendar/CalendarEventJournal.cs'),
     (Join-Path $root 'src/Calendar/CalendarEventLog.cs'),
     (Join-Path $root 'src/Events/EventInspector.cs'),
+    (Join-Path $root 'src/Events/StoryEventConfigs.cs'),
+    (Join-Path $root 'src/Events/StoryEventIndexData.cs'),
     (Join-Path $root 'src/Events/EventPreviewNames.cs'),
     (Join-Path $root 'src/Events/EventSelectionStore.cs'),
     (Join-Path $root 'src/Options/LuaImpactScanner.cs'),

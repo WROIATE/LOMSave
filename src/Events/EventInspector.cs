@@ -34,26 +34,16 @@ namespace LOMSave.Probe
         }
 
         private static Entry _pending;
-        private static PositionResultConfig _positionConfig;
-        private static bool _searchedResources;
-        internal static PositionResultConfig KnownPositionConfig { get { return _positionConfig; } }
+        internal static PositionResultConfig KnownPositionConfig { get { return StoryEventConfigs.Position; } }
 
         [HarmonyPostfix, HarmonyPatch(typeof(CheckPointManager), "Awake")]
-        private static void RememberPositionConfig(PositionResultConfig ____position)
-        { if (____position != null) _positionConfig = ____position; }
+        private static void RememberPositionConfig(CheckPointManager __instance)
+        { StoryEventConfigs.Bind(__instance); }
 
         private static PositionResultConfig PositionConfig()
         {
-            var manager = CheckPointManager.Instance;
-            var config = manager != null ? Read<PositionResultConfig>(manager, "_position") : null;
-            if (config != null) _positionConfig = config;
-            if (_positionConfig == null && !_searchedResources)
-            {
-                _searchedResources = true;
-                _positionConfig = Resources.FindObjectsOfTypeAll<PositionResultConfig>().FirstOrDefault()
-                    ?? Resources.LoadAll<PositionResultConfig>("").FirstOrDefault();
-            }
-            return _positionConfig;
+            if (CheckPointManager.Instance != null) StoryEventConfigs.Bind(CheckPointManager.Instance);
+            return StoryEventConfigs.Position;
         }
         private static EventSelectionStore _fixed = new EventSelectionStore();
         private static string SettingsFile { get { return Path.Combine(BepInEx.Paths.ConfigPath, "LOMSaveProbe.Events.json"); } }

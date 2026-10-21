@@ -1,0 +1,555 @@
+[
+  {
+    "utc": "2026-10-21T15:57:23.0221768Z",
+    "frame": 4256,
+    "scene": "Title",
+    "eventName": "load_argument",
+    "payload": {
+      "reason": "before_execute_load",
+      "hash": "e4bfcab8fce7bf18aee4d59c5ff01837c2207e36c4250ff6e2fc7332a8db0a87",
+      "jsonLength": 52439,
+      "summary": {
+        "TimeTick": 639282197341189772,
+        "CurrentStoryScript": null,
+        "StartStoryScript": "S8500_01_06",
+        "CurrentScene": "Free",
+        "CurrentSceneKey": "T0002_03",
+        "CurrentNextScene": "Story",
+        "CurrentTravelScript": "ch6_4_3_break_01",
+        "CurrentYear": 1,
+        "CurrentMonth": 6,
+        "CurrentStage": 1
+      }
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:23.1064995Z",
+    "frame": 4256,
+    "scene": "Title",
+    "eventName": "state_snapshot",
+    "payload": {
+      "reason": "after_execute_load",
+      "hash": "052fb998de0b94e3b2b6757d933420b545ddc01e7b96768a1941a5c279831956",
+      "jsonLength": 52432,
+      "summary": {
+        "TimeTick": 639282238431005181,
+        "CurrentStoryScript": null,
+        "StartStoryScript": "ch1_1",
+        "CurrentScene": "Free",
+        "CurrentSceneKey": "T0002_03",
+        "CurrentNextScene": "Story",
+        "CurrentTravelScript": "ch6_4_3_break_01",
+        "CurrentYear": 1,
+        "CurrentMonth": 6,
+        "CurrentStage": 1
+      }
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:23.1119964Z",
+    "frame": 4256,
+    "scene": "Title",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "004",
+      "matches": true,
+      "legacy": true,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5351202Z",
+    "frame": 4537,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "校場",
+      "count": 0,
+      "milliseconds": 0.7852
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5381108Z",
+    "frame": 4538,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "女弟子房",
+      "count": 0,
+      "milliseconds": 0.0115
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5436273Z",
+    "frame": 4539,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "伙房",
+      "count": 0,
+      "milliseconds": 0.018600000000000002
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5501079Z",
+    "frame": 4540,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "後山",
+      "count": 0,
+      "milliseconds": 0.0184
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5565068Z",
+    "frame": 4541,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "講經堂",
+      "count": 0,
+      "milliseconds": 0.0204
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5610063Z",
+    "frame": 4542,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "鍛冶場",
+      "count": 0,
+      "milliseconds": 0.024300000000000002
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5670091Z",
+    "frame": 4543,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "正心堂",
+      "count": 0,
+      "milliseconds": 0.0155
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5731775Z",
+    "frame": 4544,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "弟子房",
+      "count": 0,
+      "milliseconds": 0.0198
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5796657Z",
+    "frame": 4545,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "大門",
+      "count": 0,
+      "milliseconds": 0.018000000000000002
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5856564Z",
+    "frame": 4546,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "煉丹房",
+      "count": 0,
+      "milliseconds": 0.0196
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.5911441Z",
+    "frame": 4547,
+    "scene": "Free",
+    "eventName": "calendar_events_refreshed",
+    "payload": {
+      "date": "0001-06-1",
+      "count": 0,
+      "poolData": false,
+      "entries": []
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:26.8974614Z",
+    "frame": 4599,
+    "scene": "Free",
+    "eventName": "event_index_ready",
+    "payload": {
+      "GameVersion": "release_1.0.6000.5",
+      "pools": 73,
+      "conditions": 533,
+      "switches": 3453,
+      "milliseconds": 607.085
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1598544Z",
+    "frame": 4642,
+    "scene": "Free",
+    "eventName": "event_index_values_bound",
+    "payload": {
+      "type": "FlagData",
+      "count": 1068,
+      "milliseconds": 2.5126
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1638995Z",
+    "frame": 4642,
+    "scene": "Free",
+    "eventName": "event_index_values_bound",
+    "payload": {
+      "type": "GameTimeData",
+      "count": 27,
+      "milliseconds": 2.1337
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.164896Z",
+    "frame": 4642,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "校場",
+      "count": 0,
+      "milliseconds": 14.4442
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1678864Z",
+    "frame": 4643,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "女弟子房",
+      "count": 0,
+      "milliseconds": 1.6986
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1698797Z",
+    "frame": 4644,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "伙房",
+      "count": 0,
+      "milliseconds": 1.0227
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1743697Z",
+    "frame": 4645,
+    "scene": "Free",
+    "eventName": "event_index_values_bound",
+    "payload": {
+      "type": "Book",
+      "count": 102,
+      "milliseconds": 1.603
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1743697Z",
+    "frame": 4645,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "後山",
+      "count": 1,
+      "milliseconds": 2.779
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.1888478Z",
+    "frame": 4646,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "講經堂",
+      "count": 0,
+      "milliseconds": 10.9077
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.203822Z",
+    "frame": 4647,
+    "scene": "Free",
+    "eventName": "event_index_values_bound",
+    "payload": {
+      "type": "PlayerTalentData",
+      "count": 150,
+      "milliseconds": 1.4593
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.203822Z",
+    "frame": 4647,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "鍛冶場",
+      "count": 0,
+      "milliseconds": 13.446800000000001
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.2088055Z",
+    "frame": 4648,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "正心堂",
+      "count": 0,
+      "milliseconds": 3.7796000000000003
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.2330202Z",
+    "frame": 4649,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "弟子房",
+      "count": 0,
+      "milliseconds": 22.7131
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.2444873Z",
+    "frame": 4650,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "大門",
+      "count": 0,
+      "milliseconds": 10.0161
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.2474778Z",
+    "frame": 4651,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "煉丹房",
+      "count": 0,
+      "milliseconds": 1.2853
+    }
+  },
+  {
+    "utc": "2026-10-21T15:57:27.2529836Z",
+    "frame": 4652,
+    "scene": "Free",
+    "eventName": "calendar_events_refreshed",
+    "payload": {
+      "date": "0001-06-1",
+      "count": 1,
+      "poolData": true,
+      "entries": [
+        {
+          "Key": "pool:5:Back_03:Back_03_E_01",
+          "Title": "烤魚",
+          "Kind": "特殊事件",
+          "Trigger": "後山 · 修练"
+        }
+      ]
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:32.7549786Z",
+    "frame": 15748,
+    "scene": "Free",
+    "eventName": "load_argument",
+    "payload": {
+      "reason": "before_execute_load",
+      "hash": "e4bfcab8fce7bf18aee4d59c5ff01837c2207e36c4250ff6e2fc7332a8db0a87",
+      "jsonLength": 52439,
+      "summary": {
+        "TimeTick": 639282197341189772,
+        "CurrentStoryScript": null,
+        "StartStoryScript": "S8500_01_06",
+        "CurrentScene": "Free",
+        "CurrentSceneKey": "T0002_03",
+        "CurrentNextScene": "Story",
+        "CurrentTravelScript": "ch6_4_3_break_01",
+        "CurrentYear": 1,
+        "CurrentMonth": 6,
+        "CurrentStage": 1
+      }
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:32.85567Z",
+    "frame": 15748,
+    "scene": "Free",
+    "eventName": "state_snapshot",
+    "payload": {
+      "reason": "after_execute_load",
+      "hash": "60a0d41ec45c7e2bcb7d748800dc007a14c13af5c1224b3b395aeff6de8e5746",
+      "jsonLength": 52436,
+      "summary": {
+        "TimeTick": 639282239128172178,
+        "CurrentStoryScript": null,
+        "StartStoryScript": "S8500_01_06",
+        "CurrentScene": "Free",
+        "CurrentSceneKey": "T0002_03",
+        "CurrentNextScene": "Story",
+        "CurrentTravelScript": "ch6_4_3_break_01",
+        "CurrentYear": 1,
+        "CurrentMonth": 6,
+        "CurrentStage": 1
+      }
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:32.8566666Z",
+    "frame": 15748,
+    "scene": "Free",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "004",
+      "matches": true,
+      "legacy": true,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.6839048Z",
+    "frame": 15985,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "校場",
+      "count": 0,
+      "milliseconds": 0.18910000000000002
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.6898855Z",
+    "frame": 15986,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "女弟子房",
+      "count": 0,
+      "milliseconds": 0.0907
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.6953737Z",
+    "frame": 15987,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "伙房",
+      "count": 0,
+      "milliseconds": 0.1895
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.702863Z",
+    "frame": 15988,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "後山",
+      "count": 1,
+      "milliseconds": 0.1632
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7078464Z",
+    "frame": 15989,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "講經堂",
+      "count": 0,
+      "milliseconds": 0.1293
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7133322Z",
+    "frame": 15990,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "鍛冶場",
+      "count": 0,
+      "milliseconds": 0.16190000000000002
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7198184Z",
+    "frame": 15991,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "正心堂",
+      "count": 0,
+      "milliseconds": 0.2069
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7248214Z",
+    "frame": 15992,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "弟子房",
+      "count": 0,
+      "milliseconds": 0.2275
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7313027Z",
+    "frame": 15993,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "大門",
+      "count": 0,
+      "milliseconds": 0.09580000000000001
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7372844Z",
+    "frame": 15994,
+    "scene": "Free",
+    "eventName": "calendar_events_building_scanned",
+    "payload": {
+      "position": "煉丹房",
+      "count": 0,
+      "milliseconds": 0.20090000000000002
+    }
+  },
+  {
+    "utc": "2026-10-21T15:58:35.7427804Z",
+    "frame": 15995,
+    "scene": "Free",
+    "eventName": "calendar_events_refreshed",
+    "payload": {
+      "date": "0001-06-1",
+      "count": 1,
+      "poolData": true,
+      "entries": [
+        {
+          "Key": "pool:5:Back_03:Back_03_E_01",
+          "Title": "烤魚",
+          "Kind": "特殊事件",
+          "Trigger": "後山 · 修练"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,172 @@
+[
+  {
+    "utc": "2026-10-21T14:50:56.7526034Z",
+    "frame": 7428,
+    "scene": "Title",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "004",
+      "matches": true,
+      "legacy": true,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T14:52:47.079513Z",
+    "frame": 25644,
+    "scene": "Story",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "004",
+      "matches": true,
+      "legacy": true,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T14:54:08.3054225Z",
+    "frame": 39160,
+    "scene": "Free",
+    "eventName": "manual_save_origin",
+    "payload": {
+      "slot": "005",
+      "mode": "native",
+      "scene": "Free"
+    }
+  },
+  {
+    "utc": "2026-10-21T14:56:55.1449068Z",
+    "frame": 67463,
+    "scene": "Free",
+    "eventName": "manual_save_origin",
+    "payload": {
+      "slot": "006",
+      "mode": "native",
+      "scene": "Free"
+    }
+  },
+  {
+    "utc": "2026-10-21T14:58:03.1109857Z",
+    "frame": 78940,
+    "scene": "Free",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "005",
+      "matches": true,
+      "legacy": false,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T14:59:46.7964918Z",
+    "frame": 96246,
+    "scene": "Free",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "006",
+      "matches": true,
+      "legacy": false,
+      "readCount": 1
+    }
+  },
+  {
+    "utc": "2026-10-21T15:02:12.139372Z",
+    "frame": 120630,
+    "scene": "Free",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "041",
+      "matches": false,
+      "legacy": false,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T15:02:59.9181338Z",
+    "frame": 128463,
+    "scene": "Story",
+    "eventName": "manual_save_origin",
+    "payload": {
+      "slot": "007",
+      "mode": "native",
+      "scene": "Story"
+    }
+  },
+  {
+    "utc": "2026-10-21T15:03:47.6293928Z",
+    "frame": 136471,
+    "scene": "Story",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "007",
+      "matches": true,
+      "legacy": false,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T15:05:18.2338058Z",
+    "frame": 151667,
+    "scene": "Story",
+    "eventName": "manual_save_origin",
+    "payload": {
+      "slot": "008",
+      "mode": "free",
+      "scene": "Story"
+    }
+  },
+  {
+    "utc": "2026-10-21T15:06:20.8852474Z",
+    "frame": 162220,
+    "scene": "Story",
+    "eventName": "continuation_load_prepared",
+    "payload": {
+      "Script": "ch6_9_2_break_start_01",
+      "Point": 563,
+      "Kind": "say"
+    }
+  },
+  {
+    "utc": "2026-10-21T15:06:20.9516253Z",
+    "frame": 162220,
+    "scene": "Story",
+    "eventName": "calendar_events_restored",
+    "payload": {
+      "slot": "008",
+      "matches": true,
+      "legacy": false,
+      "readCount": 0
+    }
+  },
+  {
+    "utc": "2026-10-21T15:06:22.075939Z",
+    "frame": 162302,
+    "scene": "Story",
+    "eventName": "continuation_state_validated",
+    "payload": {
+      "checkpoint": {
+        "Visit": 1,
+        "Token": 5,
+        "Script": "ch6_9_2_break_start_01",
+        "Sequence": 1,
+        "Kind": "say",
+        "PayloadHash": "a5f203e95afd199886842aded93dc31f7e8fce3bca2f6293533ec4885913ea17",
+        "PayloadPreview": "小二，拿些酒菜来。菜随意，酒要好酒。"
+      },
+      "differenceCount": 0,
+      "differences": []
+    }
+  },
+  {
+    "utc": "2026-10-21T15:06:22.0769351Z",
+    "frame": 162302,
+    "scene": "Story",
+    "eventName": "continuation_target_reached",
+    "payload": {
+      "Script": "ch6_9_2_break_start_01",
+      "Point": 563,
+      "Kind": "say",
+      "historicalStatementsExecuted": 0
+    }
+  }
+]

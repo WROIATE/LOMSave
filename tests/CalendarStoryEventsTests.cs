@@ -17,6 +17,12 @@ namespace LOMSave.Probe
 {
     internal static class ActionCalendar { internal static string Today = "0003-10-2"; }
     internal static class ReplayStateValidator { internal static bool IsRestoring; }
+    internal static class StoryEventIndex
+    {
+        internal static StoryEventIndexData Data;
+        internal static int Revision;
+        internal static void Update() { }
+    }
 
     public static class CalendarStoryEventsTests
     {
@@ -109,8 +115,16 @@ end";
             work.List.Add(new PositionEventData { name = "Work_E_02", _devNote = "尚未就绪", Rate = 0 });
             work.List.Add(new PositionEventData { name = "Work_N_01", _devNote = "正常", Rate = 100 });
             var config = new PositionResultConfig(); config.List.Add(work);
-            var checkpoints = new CheckPointManager { _position = config }; CheckPointManager.Instance = checkpoints;
+            var checkpoints = new CheckPointManager { _position = config };
             checkpoints._condition.List.Add(new ConditionResultData { name = "Talk", Pass = false });
+            CheckPointManager.Instance = null;
+            StoryEventIndex.Data = new StoryEventIndexData {
+                Conditions = new Dictionary<string, StoryIndexCondition[]> { ["Talk"] = new StoryIndexCondition[0] },
+                Pools = new Dictionary<string, StoryIndexEvent[]> { ["Work"] = new[] {
+                    new StoryIndexEvent { Code = "Work_E_01", Note = "一次偶遇", Rate = 10 },
+                    new StoryIndexEvent { Code = "Work_E_02", Note = "尚未就绪", Rate = 0 },
+                    new StoryIndexEvent { Code = "Work_N_01", Note = "正常", Rate = 100 } } }
+            };
             var building = new PositionController { _position = PositionType.後山, _positionData = new FreePositionData { _defaultScript = "root" } };
             foreach (var script in scripts) UnityEngine.Resources.Scripts["story/chinesetraditional/" + script.Key] = new UnityEngine.TextAsset { text = script.Value };
             FreeManager.Instance = new FreeManager();
@@ -120,16 +134,30 @@ end";
             Check(CalendarStoryEvents.Current.Count == 1 && CalendarStoryEvents.Current[0].Random, "Only currently eligible special work story is listed; got "
                 + CalendarStoryEvents.Current.Count + "; scanning=" + CalendarStoryEvents.Scanning + "; pools=" + CalendarStoryEvents.HasPoolData);
             Check(CalendarStoryEvents.Current[0].Trigger.Contains("挑柴"), "Summary retains location and action");
+            Check(CheckPointManager.Instance == null && UnityEngine.Resources.RegistryQueries == 0 && CalendarStoryEvents.HasPoolData,
+                "Cold map advertises eligible events without entering Story or enumerating assets");
+            StoryEventConfigs.Bind(checkpoints);
+            StoryEventIndex.Data = null; StoryEventIndex.Revision++; Refresh();
+            Check(CalendarStoryEvents.Current.Count == 1, "Native configuration replaces index data without changing eligibility");
             Check(CalendarStoryEvents.UnreadCount == 1, "New eligible encounter starts unread");
             Check(CalendarEventLog.On(ActionCalendar.Today).Single().Title == CalendarStoryEvents.Current[0].Title, "Completed scan records eligibility without opening calendar");
             var journalFile = Path.Combine(BepInEx.Paths.ConfigPath, "LOMSaveProbe.CalendarEvents.json");
-            Check(!File.Exists(journalFile), "Observations defer disk writes instead of writing in the scanning frame");
+            var unreadSave = CalendarEventLog.Capture();
+            Check(!File.Exists(journalFile), "Observations stay in memory until the game actually saves");
             CalendarEventLog.MarkRead(CalendarStoryEvents.Current);
-            Check(CalendarStoryEvents.UnreadCount == 0 && File.Exists(journalFile), "Viewing current summary acknowledges events and persists immediately");
+            Check(CalendarStoryEvents.UnreadCount == 0 && !File.Exists(journalFile), "Viewing current summary acknowledges only the current run without global disk writes");
+            var readSave = CalendarEventLog.Capture();
+            CalendarEventLog.Restore(unreadSave);
+            Check(CalendarStoryEvents.UnreadCount == 1, "Loading pre-read snapshot restores its unread reminder");
+            CalendarEventLog.Restore(readSave);
+            Check(CalendarStoryEvents.UnreadCount == 0 && CalendarEventLog.On(ActionCalendar.Today).Count == 1, "Loading read snapshot restores its receipt and historical record");
             Refresh();
             Check(CalendarStoryEvents.UnreadCount == 0 && CalendarEventLog.On(ActionCalendar.Today).Count == 1, "Rescan does not recreate notifications or duplicate historical rows");
+            LocalJsonFile.Write(journalFile, readSave);
             CalendarEventLog.Initialize();
-            Check(CalendarStoryEvents.UnreadCount == 0, "Reading receipts survive restart/reload");
+            Check(CalendarStoryEvents.UnreadCount == 1 && CalendarEventLog.On(ActionCalendar.Today).Count == 0, "New run ignores legacy global receipts and observations");
+            CalendarEventLog.Restore(LocalJsonFile.Read<CalendarEventJournal>(journalFile));
+            Check(CalendarStoryEvents.UnreadCount == 0, "Receipts survive saved snapshot serialization and restoration");
             work.List[1].Rate = 10; Refresh();
             Check(CalendarStoryEvents.UnreadCount == 1 && CalendarStoryEvents.Current.Count == 2, "New event after an earlier read remains unread");
             work.List[1].Rate = 0; Refresh();
@@ -138,12 +166,13 @@ end";
             Check(CalendarStoryEvents.UnreadCount == 1, "An unviewed event becoming available again still notifies");
             CalendarEventLog.MarkRead(CalendarStoryEvents.Current); work.List[1].Rate = 0; Refresh();
             var count = EventConditions.RateCalls;
-            CalendarEventLog.Flush();
+            var registryQueries = UnityEngine.Resources.RegistryQueries;
             var journalBytes = File.ReadAllText(journalFile);
             var journalRevision = CalendarEventLog.Revision;
             for (var i = 0; i < 100; i++) { UnityEngine.Time.unscaledTime += 1; CalendarStoryEvents.Update(); }
             Check(EventConditions.RateCalls == count, "Idle frames do not recheck event rates");
-            CalendarEventLog.Update();
+            Check(UnityEngine.Resources.RegistryQueries == registryQueries && UnityEngine.Resources.AssetLoads == 0,
+                "Idle and repeated map refreshes neither enumerate loaded assets again nor load resources");
             Check(journalRevision == CalendarEventLog.Revision && File.ReadAllText(journalFile) == journalBytes, "Idle frames do not rebuild or rewrite journal");
             var mission = new MissionCheckData { name = "ready", Position = PositionType.後山, StartScript = "ready_story" };
             manager.ActiveSubMissions["ready"] = mission; Refresh();
@@ -178,6 +207,10 @@ end";
             Check(CalendarStoryEvents.Current.Count == 0, "Loading/replay cannot refresh from partially restored state");
             ReplayRuntime.IsRestoring = false; Refresh();
             Check(CalendarStoryEvents.Current.Count == 1, "Post-load stable map repopulates current save's events");
+            CheckPointManager.Instance = checkpoints;
+            StoryEventConfigs.Bind(checkpoints); Refresh();
+            Check(CalendarStoryEvents.Current.Count == 1 && StoryEventConfigs.Position == config,
+                "Native manager takes over the same cached assets after entering Story");
             Check(PlayerStatManagerData.Instance.Story == null, "Preview never selects or executes a story script");
             return _checks + " calendar story event assertions passed";
         }

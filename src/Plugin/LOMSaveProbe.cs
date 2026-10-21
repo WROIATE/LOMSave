@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.11";
+        public const string PluginVersion = "0.25.13";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -156,7 +156,6 @@ namespace LOMSave.Probe
             BranchAutoSave.Update();
             CalendarStoryEvents.Update();
             CalendarPanel.Update();
-            CalendarEventLog.Update();
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) CaptureCurrentState("manual_ctrl_f10");
@@ -182,7 +181,6 @@ namespace LOMSave.Probe
 
         private void OnDestroy()
         {
-            CalendarEventLog.Flush();
             DebugMenuShortcut.Close();
             ReplayRuntime.Reset("plugin_destroyed");
             FeaturePanel.ForceClose();
@@ -1149,35 +1147,42 @@ namespace LOMSave.Probe
             }
         }
 
-        [HarmonyPrefix]
+        [HarmonyPrefix, HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(MenuPanel), "ToggleSaveButton", typeof(bool))]
-        private static void UnlockMenuSaveButton(ref bool active)
+        private static void UnlockMenuSaveButton(MenuPanel __instance, ref bool active)
         {
+            SaveOriginPolicy.Observe(__instance, active);
             LogSaveUnlock("MenuPanel", active);
             active = true;
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(StoryManager), "ToggleSaveButton", typeof(bool))]
-        private static void UnlockStorySaveButton(ref bool active)
-        {
-            LogSaveUnlock("StoryManager", active);
-            active = true;
-        }
-
-        [HarmonyPrefix]
         [HarmonyPatch(typeof(SaveSystem), "SaveGameData", typeof(string))]
-        private static bool BeforeSaveGameData(SaveSystem __instance, string slot)
+        private static bool BeforeSaveGameData(SaveSystem __instance, string slot, out bool __state)
         {
-            if (!StoryContinuation.CanManualSave())
+            __state = false;
+            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            var menu = StoryManager.Instance == null ? null
+                : Traverse.Create(StoryManager.Instance).Field("_menuPanelController").GetValue<MenuPanel>();
+            var native = SaveOriginPolicy.UseNative(scene, menu);
+            if (ReplayRuntime.IsRestoring || StoryCommandTrace.IsReplayPending) return false;
+            if (!native && !StoryContinuation.CanManualSave())
             {
-                StoryMainUI.Instance?.DisplayMessageText("请等文字完整显示、演出结束后再保存。");
+                StoryMainUI.Instance?.DisplayMessageText(StoryCommandTrace.Current?.Kind == "say"
+                    ? "请等文字完整显示、演出结束后再保存。"
+                    : "当前不在原生存档点，请在稳定对白处保存自由存档。");
                 LOMSaveProbePlugin.WriteEvent("manual_save_deferred", new { reason = "stable_dialogue_required" });
                 return false;
             }
+            if (native) { SaveOriginPolicy.BeginNative(); __state = true; }
+            LOMSaveProbePlugin.WriteEvent("manual_save_origin", new { slot, mode = native ? "native" : "free", scene });
             LOMSaveProbePlugin.CaptureCurrentState("before_manual_save:" + slot);
             return true;
         }
+
+        [HarmonyFinalizer, HarmonyPatch(typeof(SaveSystem), "SaveGameData", typeof(string))]
+        private static Exception AfterManualSave(Exception __exception, bool __state)
+        { if (__state) SaveOriginPolicy.EndNative(); return __exception; }
 
         [HarmonyPrefix, HarmonyPatch(typeof(SaveSystem), "ExecuteSaveData", typeof(string), typeof(object))]
         private static bool BeforeSaveFile(string __0, object __1, out string __state)
@@ -1245,15 +1250,15 @@ namespace LOMSave.Probe
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(SaveSystem), "AutoSaveStoryData")]
-        private static void BeforeAutoSaveStoryData()
+        private static void BeforeAutoSaveStoryData(out bool __state)
         {
-            StoryContinuation.NativeSaving = true;
+            SaveOriginPolicy.BeginNative(); __state = true;
             LOMSaveProbePlugin.CaptureCurrentState("before_story_auto_save");
         }
 
         [HarmonyFinalizer, HarmonyPatch(typeof(SaveSystem), "AutoSaveStoryData")]
-        private static Exception AfterNativeStorySave(Exception __exception)
-        { StoryContinuation.NativeSaving = false; return __exception; }
+        private static Exception AfterNativeStorySave(Exception __exception, bool __state)
+        { if (__state) SaveOriginPolicy.EndNative(); return __exception; }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(SaveSystem), "ExecuteLoadGameData", typeof(GameSave))]

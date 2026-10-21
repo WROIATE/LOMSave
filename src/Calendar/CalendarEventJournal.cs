@@ -17,14 +17,24 @@ namespace LOMSave.Probe
         public List<string> Triggers = new List<string>();
     }
 
-    // Personal reading receipts and observed availability survive reloads,
-    // like calendar notes. These are observations, never a future schedule.
+    // Reading receipts and observed availability belong to one saved run.
+    // Personal calendar notes are stored separately and remain cross-run.
     internal sealed class CalendarEventJournal
     {
         public HashSet<string> ReadKeys = new HashSet<string>(StringComparer.Ordinal);
         public List<CalendarEventRecord> Records = new List<CalendarEventRecord>();
         private Dictionary<string, List<CalendarEventRecord>> _dates;
         private Dictionary<string, CalendarEventRecord> _entries;
+
+        internal CalendarEventJournal Snapshot()
+        {
+            Index();
+            return new CalendarEventJournal {
+                ReadKeys = new HashSet<string>(ReadKeys, StringComparer.Ordinal),
+                Records = Records.Select(x => new CalendarEventRecord { Date = x.Date, Key = x.Key,
+                    Title = x.Title, Kind = x.Kind, Random = x.Random, Triggers = new List<string>(x.Triggers) }).ToList()
+            };
+        }
 
         private void Index()
         {

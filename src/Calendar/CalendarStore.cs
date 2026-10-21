@@ -12,12 +12,13 @@ namespace LOMSave.Probe
     }
     internal sealed class CalendarHistory
     {
-        public int Version = 1;
+        public int Version = 2;
         public long SaveTimeTick;
         public string SaveFileHash;
         public List<CalendarAction> Actions = new List<CalendarAction>();
+        public CalendarEventJournal Events;
         internal bool Matches(long tick, string hash)
-        { return Version == 1 && tick > 0 && SaveTimeTick == tick && hash != null && hash.Length == 64 && hash == SaveFileHash; }
+        { return (Version == 1 || Version == 2) && tick > 0 && SaveTimeTick == tick && hash != null && hash.Length == 64 && hash == SaveFileHash; }
     }
     internal sealed class CalendarNotes
     {

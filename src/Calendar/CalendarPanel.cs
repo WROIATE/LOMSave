@@ -27,7 +27,7 @@ namespace LOMSave.Probe
             FeaturePanel.Button(panel, "今日行动 / 备注", 524, 90, 272, 48, () => Show(time.Year, time.Month, (int)time.Stage));
             _eventHeading = FeaturePanel.Label(panel, "", 25, 36, 160, 1168, 42);
             _events = FeaturePanel.ScrollText(panel, "", 36, 216, 1168, 544);
-            FeaturePanel.Label(panel, "查看本页即标为已读；◇ 仅提示当前可做且未读的事件。随机剧情仍可能受后续选择影响。\n全年总览可追溯各旬曾可触发的事件；已读和观察记录跨读档、周目保留，不预测未经历的日期。", 20, 36, 782, 1168, 66);
+            FeaturePanel.Label(panel, "查看本页即标为已读；◇ 仅提示当前可做且未读的事件。随机剧情仍可能受后续选择影响。\n已读和剧情记录随存档恢复，新周目重新记录；手动备注跨周目保留，不预测未经历的日期。", 20, 36, 782, 1168, 66);
             _eventRevision = -1; Update();
         }
 
@@ -46,7 +46,8 @@ namespace LOMSave.Probe
             if (items.Count == 0) text = CalendarStoryEvents.Scanning ? "正在检查当前可触发剧情…"
                 : "当前没有已就绪的剧情或满足条件的特殊事件。";
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Free") text = "回到养成地图后，将在此汇总当前可触发剧情。";
-            else if (!CalendarStoryEvents.HasPoolData) text += "\n\n特殊事件数据尚未加载；进入一次剧情后自动补全。";
+            else if (!CalendarStoryEvents.HasPoolData) text += StoryEventIndex.Pending ? "\n\n正在准备特殊事件提示…"
+                : "\n\n特殊事件索引暂不可用，请检查安装文件是否与游戏版本匹配。";
             _events.text = text;
             _events.rectTransform.sizeDelta = new Vector2(1136, Math.Max(520, _events.preferredHeight + 24));
             CalendarEventLog.MarkRead(items);
@@ -179,7 +180,7 @@ namespace LOMSave.Probe
             text = (records.Count == 0 ? "剧情记录：尚未记录该旬的可触发事件。启用后在养成地图自动记录，不能补回旧档历史。"
                 : "该旬曾可触发的剧情（实际观察记录）：\n" + string.Join("\n\n", records.Select(x => "· 〔" + x.Kind + "〕" + x.Title + "\n  "
                     + string.Join(" / ", x.Triggers.ToArray()) + (x.Random ? " · 随机遇到" : "")).ToArray())
-                    + "\n记录跨读档、周目保留；只说明曾满足条件，并非整旬随时可做。") + "\n\n" + text;
+                    + "\n记录随存档保存和恢复；只说明曾满足条件，并非整旬随时可做。") + "\n\n" + text;
             if (_date == ActionCalendar.Today)
             {
                 var current = CalendarStoryEvents.Current;

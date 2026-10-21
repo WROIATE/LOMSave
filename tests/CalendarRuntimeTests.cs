@@ -136,6 +136,7 @@ namespace LOMSave.Probe
         {
             Directory.CreateDirectory(directory); BepInEx.Paths.ConfigPath = directory;
             ActionCalendar.Initialize();
+            CalendarEventLog.Initialize();
             var player = PlayerStatManagerData.Instance;
             var stat = player.Stats.Action;
             var day = ActionCalendar.Today;
@@ -171,16 +172,35 @@ namespace LOMSave.Probe
             Check(ActionCalendar.Actions(day).Count() == 2 && !ActionCalendar.Actions(ActionCalendar.Today).Any(), "Final action belongs to its original date even if the game advances time synchronously");
             var file = Path.Combine(directory, "save.dat"); File.WriteAllText(file, "game-save");
             var save = new GameSave { TimeTick = 123 }; var system = new SaveSystem { CurrentSlot = "1", FilePath = file };
+            var story = new CalendarStoryEvent { Key = "main:A", Title = "当前剧情", Trigger = "出门", Kind = "主线" };
+            CalendarEventLog.Observe(day, new[] { story });
             ActionCalendar.SaveHistory(file, save, StorySaveFiles.Hash(file));
+            CalendarEventLog.MarkRead(new[] { story });
             ActionCalendar.SaveNote(day, "下周目记得练武");
             Deduct(stat, 1);
             Check(ActionCalendar.Actions(ActionCalendar.Today).Count() == 1, "New date receives new actions");
             Call("BeginLoad"); Deduct(stat, 0); Call("EndLoad", system, save, null);
             Check(!ActionCalendar.Actions(ActionCalendar.Today).Any() && ActionCalendar.Actions(day).Count() == 2, "Load restores saved history and suppresses stat assignments during loading");
+            Check(CalendarEventLog.Unread(new[] { story }) == 1 && CalendarEventLog.On(day).Count == 1, "Actual load hooks restore unread status and event history from pre-read save");
+            CalendarEventLog.MarkRead(new[] { story });
+            ActionCalendar.SaveHistory(file, save, StorySaveFiles.Hash(file));
+            CalendarEventLog.Restore(null);
+            Call("BeginLoad"); Call("EndLoad", system, save, null);
+            Check(CalendarEventLog.IsRead(story), "Actual load hooks restore read status from post-read save");
             File.WriteAllText(file, "different-save"); Call("BeginLoad"); Call("EndLoad", system, save, null);
-            Check(!ActionCalendar.Actions(day).Any(), "A stale sidecar cannot attach another run's actions");
+            Check(!ActionCalendar.Actions(day).Any() && CalendarEventLog.Unread(new[] { story }) == 1 && CalendarEventLog.On(day).Count == 0,
+                "A stale sidecar cannot attach another run's actions, receipts or observations");
+            LocalJsonFile.Write(file + ".lomsavecalendar.json", new CalendarHistory { Version = 1, SaveTimeTick = save.TimeTick,
+                SaveFileHash = StorySaveFiles.Hash(file), Actions = new System.Collections.Generic.List<CalendarAction> { new CalendarAction { Date = day, Label = "旧行动" } } });
+            CalendarEventLog.MarkRead(new[] { story });
+            Call("BeginLoad"); Call("EndLoad", system, save, null);
+            Check(ActionCalendar.Actions(day).Single().Label == "旧行动" && !CalendarEventLog.IsRead(story), "Legacy history retains actions but starts events unread");
+            var snap = CalendarEventLog.Capture();
+            CalendarEventLog.Observe(day, new[] { story }); CalendarEventLog.MarkRead(new[] { story });
+            Check(snap.Records.Count == 0 && snap.ReadKeys.Count == 0, "Saved event snapshot is isolated from subsequent play");
             stat.Value = 3; Deduct(stat, 2); Call("NewGame");
-            Check(!ActionCalendar.Actions(ActionCalendar.Today).Any() && ActionCalendar.Note(day) == "下周目记得练武", "New game clears action history and retains recurring notes");
+            Check(!ActionCalendar.Actions(ActionCalendar.Today).Any() && ActionCalendar.Note(day) == "下周目记得练武"
+                && !CalendarEventLog.IsRead(story) && CalendarEventLog.On(day).Count == 0, "New game clears actions and event state while retaining recurring manual notes");
             Check(LOMSaveProbePlugin.Errors == 0, "Runtime hook simulation produced no errors");
             return _checks + " calendar action/load/reset hook assertions passed";
         }

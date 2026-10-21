@@ -17,6 +17,7 @@ $taskChecksum = Join-Path $taskOutput 'SHA256SUMS.txt'
 if (Test-Path -LiteralPath $taskZip) { throw "Package already exists: $taskZip" }
 $taskEntries = [ordered]@{
     'BepInEx/plugins/LOMSaveProbe.dll' = 'LOMSaveProbe.dll'
+    'BepInEx/plugins/LOMSaveProbe.StoryEvents.json' = 'LOMSaveProbe.StoryEvents.json'
     'BepInEx/plugins/Newtonsoft.Json.dll' = 'Newtonsoft.Json.dll'
     'BepInEx/plugins/YamlDotNet.dll' = 'YamlDotNet.dll'
     'BepInEx/config/LOMSaveProbe.CodeNames.yaml' = 'LOMSaveProbe.CodeNames.yaml'

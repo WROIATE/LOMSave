@@ -49,7 +49,7 @@ namespace LOMSave.Probe
         private static readonly Dictionary<string, string> InheritedPortraits = new Dictionary<string, string>();
         private static readonly JObject Pictures = new JObject();
         internal static bool IsPending { get { return _pending != null; } }
-        internal static bool NativeSaving;
+        internal static bool NativeSaving { get { return SaveOriginPolicy.NativeSaving; } }
 
         internal static void Reset()
         { _active = null; _current = _pending = null; _target = null; _nativeStart = null; _owner = null; _environment = null; _failed = _presentationReady = false; _effectUntil = 0; PendingActors.Clear(); InheritedPortraits.Clear(); Pictures.RemoveAll(); }

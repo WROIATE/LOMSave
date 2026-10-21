@@ -26,6 +26,9 @@
     <Compile Include="src/Options/OptionImpactText.cs" />
     <Compile Include="src/Events/EventConditions.cs" />
     <Compile Include="src/Events/EventInspector.cs" />
+    <Compile Include="src/Events/StoryEventConfigs.cs" />
+    <Compile Include="src/Events/StoryEventIndexData.cs" />
+    <Compile Include="src/Events/StoryEventIndex.cs" />
     <Compile Include="src/Events/EventPreviewNames.cs" />
     <Compile Include="src/Events/BuildingEventLongPress.cs" />
     <Compile Include="src/UI/PreviewInteraction.cs" />
@@ -54,6 +57,7 @@
     <Compile Include="src/Replay/StoryContinuationCompiler.cs" />
     <Compile Include="src/Replay/StoryContinuation.cs" />
     <Compile Include="src/Saves/StorySaveFiles.cs" />
+    <Compile Include="src/Saves/SaveOriginPolicy.cs" />
     <Compile Include="src/Battle/TeamBattleSkip.cs" />
     <Compile Include="src/Battle/BattleRewardPolicy.cs" />
     <Compile Include="src/Saves/LocalJsonFile.cs" />
