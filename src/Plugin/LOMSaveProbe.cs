@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.9";
+        public const string PluginVersion = "0.25.11";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -67,6 +67,7 @@ namespace LOMSave.Probe
                 TrainingPointLimits.Initialize();
                 var harmony = new Harmony(PluginGuid);
                 harmony.PatchAll(typeof(ActionAutoSave));
+                harmony.PatchAll(typeof(DeathLoadMenu));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
                 harmony.PatchAll(typeof(SaveNotes));
                 harmony.PatchAll(typeof(ReplayAudio));

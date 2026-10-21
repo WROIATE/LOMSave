@@ -15,6 +15,7 @@
     <Compile Include="src/Saves/ActionAutoSave.cs" />
     <Compile Include="src/Saves/ActionAutoSavePolicy.cs" />
     <Compile Include="src/Saves/BranchAutoSave.cs" />
+    <Compile Include="src/Saves/DeathLoadMenu.cs" />
     <Compile Include="src/Dialogue/AutoDialogueSpeed.cs" />
     <Compile Include="src/Dialogue/DialoguePacer.cs" />
     <Compile Include="src/Dialogue/DialogueTiming.cs" />

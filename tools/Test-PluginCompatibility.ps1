@@ -95,6 +95,9 @@ try {
     $contracts = @(
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SaveSystem'; Methods = @('AutoSaveData','GetSaveDataFile') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.LoadGamePanel'; Fields = @('_autoSaveSlot') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.GameOverController'; Fields = @('_titleButton','_titleButtonCanvas') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.CommonPanel'; Fields = @('_hideWhenStart','_openEvent','_closeEvent','_openResponse','_closeResponse') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.GamepadIconController'; Fields = @('_displayObject') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.AutoSaveSlotPanel'; Fields = @('_slot','_slotText') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SoundManager'; Fields = @('_currentMusic','_currentEnvSound','_rtpcBackgroundMusic','_rtpcEnvSound','_rtpcMusicLowpass') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.GameDateTimeText'; Fields = @('_text') },
