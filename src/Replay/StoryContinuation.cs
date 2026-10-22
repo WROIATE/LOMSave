@@ -175,7 +175,7 @@ namespace LOMSave.Probe
             {
             var copy = JObject.FromObject(_current).ToObject<StoryContinuationState>();
             copy.Pictures = (JObject)Pictures.DeepClone();
-            if (command.Kind == "dice") copy.Dice = CaptureDice();
+            if (command.Kind == "dice" || command.Kind == "choosetimer") copy.Dice = CaptureDice();
             copy.Actors = new List<ContinuationActor>();
             var actors = Traverse.Create(CharacterPlaceholder.Instance).Field("_characters").GetValue<Dictionary<string, Character>>();
             if (actors != null) foreach (var item in actors)
@@ -249,26 +249,57 @@ namespace LOMSave.Probe
             catch (Exception e) { Fail(e); return false; }
         }
 
-        internal static bool CanManualSave()
+        internal static ManualSaveBlock ManualSaveStatus()
         {
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Story") return true;
             var command = StoryCommandTrace.Current;
-            if (IsPending || _failed || ReplayRuntime.IsRestoring || command?.Kind != "say" || Capture(command) == null) return false;
-            var dialog = SayDialog.ActiveSayDialog;
-            var writer = dialog == null ? null : dialog.GetComponent<Writer>();
-            if (writer == null || !writer.IsWaitingForInput || writer.HasWordsRemaining || Time.time < _effectUntil) return false;
-            // Only inspect active story visuals when the player actually saves;
-            // never scan the scene or allocate tween lists each frame.
+            if (IsPending || _failed || ReplayRuntime.IsRestoring) return ManualSaveBlock.Loading;
+            // Availability checks must not deep-copy a snapshot, enumerate all
+            // scene objects or serialize gameplay state on every UI refresh.
+            if (_current == null || command == null || command.Script != _current.Script || command.Kind != _current.Kind
+                || PlayerStatManagerData.Instance == null || command.Script != PlayerStatManagerData.Instance.CurrentStoryScript)
+                return ManualSaveBlock.CheckpointMissing;
+            if (command.Kind == "dice" || command.Kind == "choosetimer")
+            {
+                var dialog = _environment?.Interpreter.Globals.Get("dicemenudialog").UserData?.Object as DiceMenuDialog;
+                var start = EventInspector.Read<MenuToggleButton>(dialog, "_startButton");
+                var restart = EventInspector.Read<MenuToggleButton>(dialog, "_restartButton");
+                var result = EventInspector.Read<GameObject>(dialog, "_continue");
+                var panel = EventInspector.Read<GameObject>(dialog, "_continuePanel");
+                if (!ManualSavePolicy.DiceReady(dialog != null && dialog.gameObject.activeInHierarchy,
+                    start != null && start.gameObject.activeInHierarchy, start != null && start.Active,
+                    EventInspector.Read<bool>(dialog, "_pressStartButton"), EventInspector.Read<bool>(dialog, "_pressRestartButton"),
+                    result != null && result.activeInHierarchy || panel != null && panel.activeInHierarchy
+                        || restart != null && restart.gameObject.activeInHierarchy)) return ManualSaveBlock.Dice;
+            }
+            else if (command.Kind == "say")
+            {
+                var dialog = SayDialog.ActiveSayDialog;
+                var writer = dialog == null ? null : dialog.GetComponent<Writer>();
+                // Fungus keeps IsWriting true while waiting on a completed
+                // line too. Its input/remaining-word flags identify readiness.
+                if (writer == null || ManualSavePolicy.Story(command.Kind, true, writer.IsWaitingForInput,
+                    writer.HasWordsRemaining, false, false) != ManualSaveBlock.None)
+                    return ManualSaveBlock.TextWriting;
+            }
+            else if (command.Kind == "choose")
+            {
+                var dialog = MenuDialog.ActiveMenuDialog;
+                if (ManualSavePolicy.Story(command.Kind, true, false, true,
+                    dialog != null && dialog.IsActive() && dialog.DisplayedOptionsCount > 0, false) != ManualSaveBlock.None)
+                    return ManualSaveBlock.ChoiceNotReady;
+            }
+            else return ManualSaveBlock.CheckpointMissing;
+            if (Time.time < _effectUntil) return ManualSaveBlock.Presentation;
             var stage = Stage.GetActiveStage();
             if (stage != null) foreach (var actor in stage.CharactersOnStage)
             {
                 var state = actor == null ? null : actor.State;
                 if (state == null) continue;
-                if (Animating(state.holder)) return false;
+                if (Animating(state.holder)) return ManualSaveBlock.Presentation;
                 if (state.allPortraits != null) foreach (var portrait in state.allPortraits)
-                    if (portrait != null && Animating(portrait.rectTransform)) return false;
+                    if (portrait != null && Animating(portrait.rectTransform)) return ManualSaveBlock.Presentation;
             }
-            return true;
+            return ManualSaveBlock.None;
         }
 
         private static bool Animating(RectTransform target)

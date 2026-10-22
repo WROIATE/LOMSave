@@ -94,6 +94,9 @@ try {
     }
     $contracts = @(
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SaveSystem'; Methods = @('AutoSaveData','GetSaveDataFile') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.MenuPanel'; Fields = @('_saveButton','_confirmSaveButton','_saveMenuToggleButton') },
+        @{ Assembly = 'Mortal.Free'; Type = 'Mortal.Free.FreeManager'; Fields = @('_saveButton') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SaveGamePanel'; Fields = @('_saveSlots') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.LoadGamePanel'; Fields = @('_autoSaveSlot') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.GameOverController'; Fields = @('_titleButton','_titleButtonCanvas') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.StoryManager'; Fields = @('_menuPanelController') },
@@ -113,7 +116,7 @@ try {
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.StoryManager'; Fields = @('_logButton','_logOpen','_panelOpen'); Properties = @('IsStoryPause') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.CharacterPlaceholder'; Fields = @('_characters') },
         @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.StoryCharacterController'; Fields = @('_dicPortrait') },
-        @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.DiceMenuDialog'; Fields = @('_defaultDiceMax','_currentRandomValue','_resultCount','_resultSelection','_header','_additions') },
+        @{ Assembly = 'Mortal.Story'; Type = 'Mortal.Story.DiceMenuDialog'; Fields = @('_defaultDiceMax','_currentRandomValue','_resultCount','_resultSelection','_header','_additions','_startButton','_restartButton','_continue','_continuePanel','_pressStartButton','_pressRestartButton') },
         @{ Assembly = 'Mortal.Pinball'; Type = 'Mortal.Pinball.PinballManager'; Fields = @('_isBroken','_spring','_currentScore','_totalScore'); Methods = @('DisableMarblePhysicsBehaviour','SetScoreTriggerActive','ExitScene') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.GameLevelManager'; Fields = @('_progressLevelData_01','_progressLevelData_02','_pausePanel') },
         @{ Assembly = 'Mortal.Battle'; Type = 'Mortal.Battle.ReadyPanel'; Fields = @('_startButton') },

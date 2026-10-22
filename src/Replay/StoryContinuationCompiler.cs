@@ -69,7 +69,7 @@ namespace LOMSave.Probe
                     .Append(" = ").Append(localValue(variable)).AppendLine();
             output.AppendLine(visualSetup);
             output.AppendLine(point.Presentation);
-            if (point.Kind == "dice") output.AppendLine("luamanager.GetStoryText('__LOM_CONT_DICE__')");
+            if (point.Kind == "dice" || point.Kind == "choosetimer") output.AppendLine("luamanager.GetStoryText('__LOM_CONT_DICE__')");
             EmitTail(_root, id, output, true);
             return output.ToString();
         }

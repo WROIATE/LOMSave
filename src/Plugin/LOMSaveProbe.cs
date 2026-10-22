@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.13";
+        public const string PluginVersion = "0.25.15";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -68,6 +68,7 @@ namespace LOMSave.Probe
                 var harmony = new Harmony(PluginGuid);
                 harmony.PatchAll(typeof(ActionAutoSave));
                 harmony.PatchAll(typeof(DeathLoadMenu));
+                harmony.PatchAll(typeof(SaveButtonAvailability));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
                 harmony.PatchAll(typeof(SaveNotes));
                 harmony.PatchAll(typeof(ReplayAudio));
@@ -177,6 +178,7 @@ namespace LOMSave.Probe
         private void LateUpdate()
         {
             RecallShortcut.LateUpdate();
+            SaveButtonAvailability.Refresh();
         }
 
         private void OnDestroy()
@@ -1153,7 +1155,7 @@ namespace LOMSave.Probe
         {
             SaveOriginPolicy.Observe(__instance, active);
             LogSaveUnlock("MenuPanel", active);
-            active = true;
+            active = ManualSaveAvailability.Check() == ManualSaveBlock.None;
         }
 
         [HarmonyPrefix]
@@ -1162,16 +1164,12 @@ namespace LOMSave.Probe
         {
             __state = false;
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            var menu = StoryManager.Instance == null ? null
-                : Traverse.Create(StoryManager.Instance).Field("_menuPanelController").GetValue<MenuPanel>();
-            var native = SaveOriginPolicy.UseNative(scene, menu);
-            if (ReplayRuntime.IsRestoring || StoryCommandTrace.IsReplayPending) return false;
-            if (!native && !StoryContinuation.CanManualSave())
+            var native = ManualSaveAvailability.Native;
+            var block = ManualSaveAvailability.Check();
+            if (block != ManualSaveBlock.None)
             {
-                StoryMainUI.Instance?.DisplayMessageText(StoryCommandTrace.Current?.Kind == "say"
-                    ? "请等文字完整显示、演出结束后再保存。"
-                    : "当前不在原生存档点，请在稳定对白处保存自由存档。");
-                LOMSaveProbePlugin.WriteEvent("manual_save_deferred", new { reason = "stable_dialogue_required" });
+                SaveButtonAvailability.Refresh(true);
+                LOMSaveProbePlugin.WriteEvent("manual_save_deferred", new { reason = block.ToString() });
                 return false;
             }
             if (native) { SaveOriginPolicy.BeginNative(); __state = true; }

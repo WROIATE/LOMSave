@@ -11,7 +11,8 @@ namespace LOMSave.Probe
         {
             var first = new object(); var second = new object();
             Check(SaveOriginPolicy.UseNative("Free", null), "Native cultivation saves do not require dialogue");
-            Check(SaveOriginPolicy.UseNative("Battle", null), "Non-story saves retain their native path");
+            foreach (var scene in new[] { "Battle", "Combat", "Pinball", "Loading1", "GameOver", "End", "Title", "CoreScenes" })
+                Check(!SaveOriginPolicy.UseNative(scene, null), "Non-story scene is not proof of native manual permission: " + scene);
             Check(!SaveOriginPolicy.UseNative("Story", null), "Unknown story permission does not bypass checkpoint safety");
             SaveOriginPolicy.Observe(first, true);
             Check(SaveOriginPolicy.UseNative("Story", first), "Original allowed story menu uses native saving regardless of text/choice state");

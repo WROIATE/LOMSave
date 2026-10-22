@@ -58,6 +58,9 @@
     <Compile Include="src/Replay/StoryContinuation.cs" />
     <Compile Include="src/Saves/StorySaveFiles.cs" />
     <Compile Include="src/Saves/SaveOriginPolicy.cs" />
+    <Compile Include="src/Saves/ManualSavePolicy.cs" />
+    <Compile Include="src/Saves/ManualSaveAvailability.cs" />
+    <Compile Include="src/Saves/SaveButtonAvailability.cs" />
     <Compile Include="src/Battle/TeamBattleSkip.cs" />
     <Compile Include="src/Battle/BattleRewardPolicy.cs" />
     <Compile Include="src/Saves/LocalJsonFile.cs" />

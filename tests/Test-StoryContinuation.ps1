@@ -76,6 +76,64 @@ $branch = [Activator]::CreateInstance($vmType)
 [void]$branch.DoString("assert(coroutine.resume(co)); assert(shown=='finished' and attributes==64 and money==80, 'outer scope, global or join lost')", $null, 'join')
 [void]$fresh.DoString("assert(coroutine.resume(co)); assert(shown=='stay' and money==71 and attributes==10); assert(coroutine.resume(co)); assert(shown=='finished' and attributes==24 and money==71)", $null, 'original-choice')
 'Continuation tests passed: excluded prior effects, preserved shadowed locals, original branch despite changed flags, choice snapshot, alternate choice and parent continuation.'
+$diceSetup = @'
+dice = {}; fate = 5; randomCalls = 0; restores = 0
+spendfate = function(n) fate=fate-n end
+math.random = function(...) randomCalls = randomCalls + 1; return 22 end
+setmenudialog = function(...) end
+menudialogs = {Dice={}}
+runwait = function(value) return value end
+dicemenudialog = {
+ SetRandom = function(max,random) dice.max=max; dice.random=random end,
+ Setup = function(count,selection,header) dice.count=count; dice.selection=selection; dice.header=header end,
+ ExecuteRoll = function(options,duration,check)
+  assert(dice.header=='fixture' and dice.random==22 and dice.count==25, 'modern dice setup lost')
+  coroutine.yield('dice'); dicemenudialog.ResultSelection=chosen
+ end
+}
+choosetimer = function(options,duration,default)
+ assert(dice.header=='fixture' and dice.random==22 and dice.count==25, 'legacy dice setup lost')
+ coroutine.yield('dice'); return chosen
+end
+local baseGetStoryText = luamanager.GetStoryText
+luamanager.GetStoryText = function(key)
+ if key=='__LOM_CONT_DICE__' then
+  restores=restores+1
+  dicemenudialog.SetRandom(99,22); dicemenudialog.Setup(25,2,'fixture')
+ end
+ return baseGetStoryText(key)
+end
+'@
+foreach($kind in @('legacy','modern')) {
+ $call = if($kind -eq 'legacy') { 'local result = choosetimer(options, 2, 2)' } else {
+  "runwait(dicemenudialog.ExecuteRoll(options, 2, 'fixture'))`nlocal result = dicemenudialog.ResultSelection"
+ }
+ $diceFixture = @"
+take(20)
+award(3)
+local random = math.random(99)
+setmenudialog(menudialogs.Dice)
+local options = {'one','two','three'}
+dicemenudialog.SetRandom(99, random)
+dicemenudialog.Setup(25, 2, 'fixture')
+$call
+if result == 3 then
+ spendfate(1)
+ take(9)
+ award(4)
+end
+say('dice-finished')
+"@
+ $diceVm = [Activator]::CreateInstance($vmType)
+ $diceCode = [LOMSave.Probe.StoryContinuationTests]::Compile($diceFixture)
+ [void]$diceVm.DoString($setup + "`n" + $diceSetup + "`nco=coroutine.create(function()`n" + $diceCode + "`nend)`nassert(coroutine.resume(co)); assert(money==80 and attributes==3 and randomCalls==1)", $null, ($kind+'-dice-before-save'))
+ $dicePoint = [int]$diceVm.DoString('return point', $null, 'point').Number
+ $diceLocals = $diceVm.DoString('return literal(captured)', $null, 'snapshot').String
+ $diceResume = [LOMSave.Probe.StoryContinuationTests]::Resume($diceFixture, $dicePoint)
+ $diceRestoreVm = [Activator]::CreateInstance($vmType)
+ [void]$diceRestoreVm.DoString($setup + "`n" + $diceSetup + "`nmoney=80; attributes=3; __saved=$diceLocals`nco=coroutine.create(function()`n" + $diceResume + "`nend)`nassert(coroutine.resume(co)); assert(money==80 and attributes==3 and fate==5 and randomCalls==0 and restores==1, 'dice restore replayed prior effects or RNG'); chosen=3; assert(coroutine.resume(co)); assert(shown=='dice-finished' and money==71 and attributes==7 and fate==4 and randomCalls==0, 'dice continuation applied effects or fate cost twice')", $null, ($kind+'-dice-restore'))
+}
+'Dice continuation tests passed: modern and legacy pre-roll saves restore setup, preserve locals/RNG and apply rewards, money and fate costs once.'
 $actorSetup = @'
 actors = {}; actorLoads = {}; hidden = {}; shown = ''; selected = 1
 json = {serialize = function(values) captured = values; return '{}' end}
