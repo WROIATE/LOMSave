@@ -84,7 +84,9 @@ namespace LOMSave.Probe
             var forge = new Mortal.Core.UpgradePanel { _maxDataConvert = shared, _pointData = new Mortal.Core.GameStat { StatType = Mortal.Core.GameStatType.鍛造, Value = 200 } };
             UnityEngine.Resources.Objects = new object[] { martial, alchemy, forge };
             TrainingPointLimits.Initialize(); TrainingPointLimits.Discover();
-            Check(TrainingPointLimits.Display(TrainingLimitKind.Martial) == "20" && TrainingPointLimits.Display(TrainingLimitKind.Alchemy) == "25", "F9 displays real native limits before first entry");
+            Check(TrainingPointLimits.Display(TrainingLimitKind.Martial) == "自动"
+                && TrainingPointLimits.Display(TrainingLimitKind.Alchemy) == "自动"
+                && TrainingPointLimits.Display(TrainingLimitKind.Forge) == "自动", "All native modes display automatic even after native limits are discovered");
             Check(TrainingPointLimits.Change(TrainingLimitKind.Martial, 5) && TrainingPointLimits.MartialSummary(martial) == 25, "F9 plus overrides next martial entry");
             Check(TrainingPointLimits.Change(TrainingLimitKind.Alchemy, 5) && TrainingPointLimits.UpgradeSummary(alchemy) == 30, "Alchemy changes independently");
             Check(TrainingPointLimits.Change(TrainingLimitKind.Forge, -5) && TrainingPointLimits.UpgradeSummary(forge) == 20, "Forge minus is independent despite shared native asset");

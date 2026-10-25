@@ -32,9 +32,7 @@ namespace LOMSave.Probe
         internal static string Display(TrainingLimitKind kind)
         {
             var setting = _settings.Get(kind);
-            if (setting.HasValue) return setting.Value.ToString();
-            int native;
-            return TryNative(kind, out native) ? native.ToString() : "自动";
+            return setting.HasValue ? setting.Value.ToString() : "自动";
         }
         internal static bool IsDefault(TrainingLimitKind kind) { return !_settings.Get(kind).HasValue; }
         internal static bool Change(TrainingLimitKind kind, int delta)
