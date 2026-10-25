@@ -21,6 +21,7 @@ namespace LOMSave.Probe
     {
         internal static StoryEventIndexData Data;
         internal static int Revision;
+        internal static bool Pending;
         internal static void Update() { }
     }
 

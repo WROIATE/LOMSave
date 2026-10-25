@@ -10,6 +10,10 @@ namespace UnityEngine
 
 namespace HarmonyLib
 {
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    public sealed class HarmonyPatch : Attribute { public HarmonyPatch(Type type, string method) { } }
+    public sealed class HarmonyPrefix : Attribute { }
+    public sealed class HarmonyFinalizer : Attribute { }
     public sealed class Traverse
     {
         private object target; private string method;
@@ -29,6 +33,30 @@ namespace Mortal.Core
         public string StartStoryScript = "origin", CurrentStoryScript = "target", RestoreData = "backup";
         public long TimeTick = 1;
         public int FreeRandomState, Money = 10, Flag = 2;
+        public ShopSave Shop = new ShopSave();
+    }
+    public sealed class ShopSave
+    {
+        public List<ShopTime> Times = new List<ShopTime>();
+        public List<ShopItem> Specials = new List<ShopItem>();
+    }
+    public sealed class ShopTime { public string Name; public bool IsTrigger; }
+    public sealed class ShopItem { public string Id; public int Count; }
+    public sealed class ShopDatabase
+    {
+        public static ShopDatabase Instance = new ShopDatabase();
+        public void UpdateItemFromMission()
+        {
+            var shop = SaveSystem.Instance.Live.Shop;
+            if (shop.Times.Exists(time => time.Name == "1-12" && time.IsTrigger)) return;
+            shop.Times.Add(new ShopTime { Name = "1-12", IsTrigger = true });
+            shop.Specials.Add(new ShopItem { Id = "3112", Count = 1 });
+        }
+        public void NewShop()
+        {
+            SaveSystem.Instance.Live.Shop = new ShopSave();
+            UpdateItemFromMission();
+        }
     }
     public sealed class SaveSystem
     {
@@ -57,8 +85,10 @@ namespace Mortal.Core
         public void LoadStory() { Loads++; }
     }
 }
+namespace Mortal.Story { public sealed class ShopPanel { } }
 namespace LOMSave.Probe
 {
+    internal static class StoryContinuation { internal static bool IsPending; }
     internal sealed class StoryCommandCheckpoint { public string Script = "target"; }
     internal static class ReplayCharacterContext
     {
@@ -76,6 +106,28 @@ namespace LOMSave.Probe
     {
         private static int checks;
         private static void Check(bool value, string message) { checks++; if (!value) throw new Exception(message); }
+        private static void InitializeShop(bool direct)
+        {
+            StoryContinuation.IsPending = direct;
+            ContinuationShopGuard.Begin(out var state);
+            try
+            { if (ContinuationShopGuard.BeforeRefresh()) Mortal.Core.ShopDatabase.Instance.UpdateItemFromMission(); }
+            finally
+            { ContinuationShopGuard.End(null, state); StoryContinuation.IsPending = false; }
+        }
+        private static void LoadShop(Mortal.Core.GameSave save, bool direct)
+        {
+            StoryContinuation.IsPending = direct;
+            ContinuationShopGuard.BeginLoad(out var state);
+            try
+            {
+                Mortal.Core.SaveSystem.Instance.ExecuteLoadGameData(save);
+                // ScriptTrainer's Load postfix replaces all saved stock.
+                if (ContinuationShopGuard.BeforeRestock()) Mortal.Core.ShopDatabase.Instance.NewShop();
+            }
+            finally
+            { ContinuationShopGuard.EndLoad(null, state); StoryContinuation.IsPending = false; }
+        }
         public static int TempleEntryFlag()
         {
             string source;
@@ -169,6 +221,70 @@ namespace LOMSave.Probe
             ReplayStateValidator.Prepare(new Mortal.Core.GameSave()); system.Live.Money--;
             Check(!ReplayStateValidator.ValidateDirect(checkpoint) && system.Loads == beforeLoads && system.Live.Money == 9,
                 "Direct continuation detects duplicate deductions and does not hide them with an overwrite");
+
+            // Reproduce the reported December dice save: scene UI creation
+            // inserts Shop.Times[1-12] and Shop.Specials[3112] after loading.
+            target = new Mortal.Core.GameSave();
+            system.Live = JObject.FromObject(target).ToObject<Mortal.Core.GameSave>();
+            ReplayStateValidator.Prepare(target);
+            Mortal.Core.ShopDatabase.Instance.UpdateItemFromMission();
+            Check(!ReplayStateValidator.ValidateDirect(checkpoint) && system.Live.Shop.Specials.Count == 1,
+                "Unpatched hidden shop initialization reproduces the reported direct-load mismatch");
+            system.Live = JObject.FromObject(target).ToObject<Mortal.Core.GameSave>();
+            ReplayStateValidator.Prepare(target); beforeLoads = system.Loads;
+            InitializeShop(true);
+            Check(ReplayStateValidator.ValidateDirect(checkpoint) && system.Loads == beforeLoads,
+                "Direct UI reconstruction keeps strict validation and avoids another native data load");
+            Check(JToken.DeepEquals(JObject.FromObject(target.Shop), JObject.FromObject(system.Live.Shop))
+                && system.Live.Money == target.Money && system.Live.Flag == target.Flag,
+                "Saved stock, time triggers, money and flags are retained exactly without an overwrite");
+            Check(LOMSaveProbePlugin.Events.Contains("continuation_shop_ui_refresh_skipped"),
+                "Suppressed UI initialization is recorded for diagnosis");
+            InitializeShop(false);
+            Check(system.Live.Shop.Times.Count == 1 && system.Live.Shop.Specials[0].Id == "3112",
+                "Native loads and ordinary scene creation keep their normal monthly stock refresh");
+            target = JObject.FromObject(system.Live).ToObject<Mortal.Core.GameSave>();
+            target.Shop.Specials[0].Count = 0;
+            system.Live = JObject.FromObject(target).ToObject<Mortal.Core.GameSave>();
+            ReplayStateValidator.Prepare(target); InitializeShop(true);
+            Check(ReplayStateValidator.ValidateDirect(checkpoint) && system.Live.Shop.Specials[0].Count == 0,
+                "A sold-out monthly item stays sold out after direct load");
+            ReplayStateValidator.Prepare(target); system.Live.Shop.Specials[0].Count++;
+            Check(!ReplayStateValidator.ValidateDirect(checkpoint), "Real stock changes still fail strict validation");
+            system.Live = JObject.FromObject(target).ToObject<Mortal.Core.GameSave>();
+            ReplayStateValidator.Prepare(target); InitializeShop(true); system.Live.Money--;
+            Check(!ReplayStateValidator.ValidateDirect(checkpoint), "Shop UI isolation cannot hide repeated deductions");
+            StoryContinuation.IsPending = true;
+            Check(ContinuationShopGuard.BeforeRefresh(), "Real mission/time updates outside UI initialization are not blocked");
+            ContinuationShopGuard.Begin(out var outer); ContinuationShopGuard.Begin(out var inner);
+            Check(!ContinuationShopGuard.BeforeRefresh(), "Nested direct UI initialization is isolated");
+            var failure = new InvalidOperationException("native UI failure");
+            Check(ReferenceEquals(ContinuationShopGuard.End(failure, inner), failure) && !ContinuationShopGuard.BeforeRefresh(),
+                "A failing nested UI retains its original exception and enclosing isolation");
+            ContinuationShopGuard.End(failure, outer);
+            Check(ContinuationShopGuard.BeforeRefresh(), "UI exceptions cannot leave future stock refreshes disabled");
+            StoryContinuation.IsPending = false;
+
+            target.Shop.Times[0].Name = "1-11"; target.Shop.Specials[0].Id = "3111";
+            ReplayStateValidator.Prepare(target); LoadShop(target, false);
+            Check(!ReplayStateValidator.ValidateDirect(checkpoint) && system.Live.Shop.Specials[0].Id == "3112",
+                "Trainer restock after Load reproduces replacement of the previous month's sold-out item");
+            ReplayStateValidator.Prepare(target); beforeLoads = system.Loads;
+            LoadShop(target, true); InitializeShop(true);
+            Check(ReplayStateValidator.ValidateDirect(checkpoint) && system.Loads == beforeLoads + 1
+                && system.Live.Shop.Times[0].Name == "1-11" && system.Live.Shop.Specials[0].Id == "3111"
+                && system.Live.Shop.Specials[0].Count == 0,
+                "Direct load preserves saved monthly triggers and sold-out stock across trainer postfix and UI creation");
+            ReplayStateValidator.Prepare(target); LoadShop(target, true); system.Live.Flag++;
+            Check(!ReplayStateValidator.ValidateDirect(checkpoint), "Load-time shop isolation cannot hide changed plot flags");
+            Check(ContinuationShopGuard.BeforeRestock() && ContinuationShopGuard.BeforeRefresh(),
+                "Normal restock and mission refresh are restored after loading");
+            StoryContinuation.IsPending = true;
+            ContinuationShopGuard.BeginLoad(out var loadState);
+            Check(!ContinuationShopGuard.BeforeRestock(), "Loading scope includes trainer postfix restock");
+            Check(ReferenceEquals(ContinuationShopGuard.EndLoad(failure, loadState), failure)
+                && ContinuationShopGuard.BeforeRestock(), "Native loading exceptions release restock isolation and propagate unchanged");
+            StoryContinuation.IsPending = false;
             return checks + " replay state validation assertions passed";
         }
     }

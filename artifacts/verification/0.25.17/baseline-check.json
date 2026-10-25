@@ -1,0 +1,17 @@
+[
+  {
+    "set": "saves",
+    "count": 111,
+    "changed": [
+      "Save_universe.dat",
+      "Save_universe.json"
+    ],
+    "extra": []
+  },
+  {
+    "set": "config",
+    "count": 8,
+    "changed": [],
+    "extra": []
+  }
+]

@@ -29,6 +29,7 @@
     <Compile Include="src/Events/StoryEventConfigs.cs" />
     <Compile Include="src/Events/StoryEventIndexData.cs" />
     <Compile Include="src/Events/StoryEventIndex.cs" />
+    <Compile Include="src/Events/IndexedEventPreview.cs" />
     <Compile Include="src/Events/EventPreviewNames.cs" />
     <Compile Include="src/Events/BuildingEventLongPress.cs" />
     <Compile Include="src/UI/PreviewInteraction.cs" />
@@ -41,6 +42,7 @@
     <Compile Include="src/UI/PreviewFont.cs" />
     <Compile Include="src/Checkpoints/CheckpointNotificationBuffer.cs" />
     <Compile Include="src/Replay/DiceRollTrace.cs" />
+    <Compile Include="src/Options/DiceOutcomeSelection.cs" />
     <Compile Include="src/Plugin/LOMSaveProbe.cs" />
     <Compile Include="src/Options/OptionImpactLocalization.cs" />
     <Compile Include="src/Options/OptionImpactPreview.cs" />
@@ -56,12 +58,14 @@
     <Compile Include="src/Replay/StoryCommandTrace.cs" />
     <Compile Include="src/Replay/StoryContinuationCompiler.cs" />
     <Compile Include="src/Replay/StoryContinuation.cs" />
+    <Compile Include="src/Replay/ContinuationShopGuard.cs" />
     <Compile Include="src/Saves/StorySaveFiles.cs" />
     <Compile Include="src/Saves/SaveOriginPolicy.cs" />
     <Compile Include="src/Saves/ManualSavePolicy.cs" />
     <Compile Include="src/Saves/ManualSaveAvailability.cs" />
     <Compile Include="src/Saves/SaveButtonAvailability.cs" />
     <Compile Include="src/Battle/TeamBattleSkip.cs" />
+    <Compile Include="src/Battle/DuelDirectVictory.cs" />
     <Compile Include="src/Battle/BattleRewardPolicy.cs" />
     <Compile Include="src/Saves/LocalJsonFile.cs" />
     <Compile Include="src/Events/EventSelectionStore.cs" />
@@ -122,6 +126,10 @@
     </Reference>
     <Reference Include="Mortal.Battle">
       <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Battle.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mortal.Combat">
+      <HintPath>$(GameDir)/Mortal_Data/Managed/Mortal.Combat.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Mortal.Pinball">

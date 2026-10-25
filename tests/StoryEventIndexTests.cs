@@ -130,6 +130,10 @@ namespace LOMSave.Probe
             Check(shipped.Pools.Count > 50 && shipped.Conditions.Count > 500 && shipped.Hashes.Count >= 3, "Shipped index contains native game data and source fingerprints");
             Check(shipped.Groups.Keys.Select(x => x.Split(':')[0]).All(shipped.Hashes.ContainsKey),
                 "Source fingerprint covers every file contributing exported expressions");
+            Check(shipped.Pools.Values.SelectMany(x => x).All(x => !string.IsNullOrEmpty(x.Script)),
+                "Every shipped encounter carries its exact mapped script for cold effect previews");
+            Check(shipped.Pools["Door_02"].Single(x => x.Code == "Door_02_E_03").Script == "door_02_503",
+                "Dragon reflection uses mapping Value 503, never the event code suffix 03");
             foreach (var c in shipped.Conditions.Values.Concat(shipped.Switches.Values.Select(x => x.Items)))
                 foreach (var compare in c.SelectMany(x => x.Comparisons))
                     Check(shipped.Groups.ContainsKey(compare.Left) && shipped.Groups.ContainsKey(compare.Right), "Every exported checkpoint comparison resolves its expressions");

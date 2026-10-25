@@ -851,6 +851,11 @@ namespace LOMSave.Probe
         private float _holdSeconds;
         private string _key;
         private Font _font;
+        private DiceMenuDialog _diceDialog;
+        private int _diceSelection;
+
+        internal void BindDice(DiceMenuDialog dialog, int selection)
+        { _diceDialog = dialog; _diceSelection = selection; }
 
         internal string OptionText { get; private set; }
 
@@ -902,6 +907,8 @@ namespace LOMSave.Probe
         {
             if (_bound && !FeaturePanel.BlocksInput && eventData.button == PointerEventData.InputButton.Middle)
                 OptionImpactPreview.Show(_key, OptionText, _font);
+            else if (eventData.button == PointerEventData.InputButton.Left && !_previewTriggered)
+                DiceOutcomeSelection.TrySelect(_diceDialog, _diceSelection);
         }
 
         public void OnPointerUp(PointerEventData eventData)

@@ -52,7 +52,18 @@ def condition_item(rd):
         comparisons.append({'Op': rd.integer(), 'Left': ident(rd.pointer()), 'Right': ident(rd.pointer())})
     return {'Logic': logic, 'Comparisons': comparisons}
 
-groups, conditions, switches, events, pools = {}, {}, {}, {}, {}
+groups, conditions, switches, events, pools, prefixes = {}, {}, {}, {}, {}, {}
+mapping_sources = set()
+
+def mapping_value(pointer):
+    if pointer not in objects:
+        raise ValueError('Missing story mapping')
+    mapping_sources.add(pointer[0])
+    rd = Reader(objects[pointer])
+    rd.string()  # StoryMappingItem.Key
+    value = rd.string()  # Native PositionEventData.ResultType reads Value.
+    finish(rd)
+    return value
 field_map = {1: ('_stat', 0), 2: ('_relationship', 1), 3: ('_flag', 2),
              4: ('_book', 3), 5: ('_misc', 4), 6: ('_specialItem', 5),
              9: ('_gameTime', 8), 10: ('_talentData', 6), 11: ('_book', 3),
@@ -103,10 +114,12 @@ for pointer, cls in classes.items():
             item = condition_item(rd)
             rates.append({'Condition': item, 'Rate': rd.integer()})
         events[ident(pointer)] = {'Code': rd.name, 'Note': note, 'NativeTitle': name(mapping),
-                                 'Conditional': enabled, 'Active': active, 'Rate': rate, 'Rates': rates}
+                                 'Conditional': enabled, 'Active': active, 'Rate': rate, 'Rates': rates,
+                                 'ResultType': mapping_value(mapping)}
     else:
         entries = [ident(rd.pointer()) for _ in range(rd.integer())]
-        rd.string(); rd.string()  # note, script prefix; no story execution needed
+        rd.string()  # note
+        prefixes[rd.name] = rd.string()
         pools[rd.name] = entries
     finish(rd)
 
@@ -144,7 +157,7 @@ for obj in env.objects:
         break
 if not settings or not settings.get('bundleVersion'):
     raise ValueError('Game version is unavailable')
-files = sorted({key.split(':', 1)[0] for key in used_groups}
+files = sorted({key.split(':', 1)[0] for key in used_groups} | mapping_sources
                | {pointer[0] for pointer, cls in classes.items() if cls in (
                    'ConditionResultData', 'SwitchResultData', 'PositionEventData', 'PositionResultData')}
                | {'Managed/Mortal.Core.dll', 'Managed/Mortal.Story.dll'})
@@ -152,7 +165,9 @@ index = {'Version': 1, 'GameVersion': settings['bundleVersion'],
          'Hashes': {path: hashlib.sha256((root / path).read_bytes()).hexdigest() for path in files},
          'Groups': {key: groups[key] for key in sorted(used_groups)},
          'Conditions': conditions, 'Switches': switches,
-         'Pools': {key: [events[event] for event in values] for key, values in pools.items()}}
+         'Pools': {key: [{k: v for k, v in events[event].items() if k != 'ResultType'}
+                        | {'Script': prefixes[key] + '_' + events[event]['ResultType']}
+                        for event in values] for key, values in pools.items()}}
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(index, ensure_ascii=False, separators=(',', ':')), encoding='utf8')
 print(json.dumps({'version': index['GameVersion'], 'groups': len(used_groups), 'conditions': len(conditions),

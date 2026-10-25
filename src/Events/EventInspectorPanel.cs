@@ -23,6 +23,15 @@ namespace LOMSave.Probe
         private static Tab _selected;
         private static string _title;
         private static string _dataHint;
+        private static Action _refresh;
+        private static int _indexRevision;
+
+        internal static void Update()
+        {
+            if (!IsOpen || _refresh == null) return;
+            if (StoryEventIndex.Pending) StoryEventIndex.Update();
+            if (_indexRevision != StoryEventIndex.Revision) _refresh();
+        }
         private static readonly HashSet<EventInspector.Entry> Expanded = new HashSet<EventInspector.Entry>();
         private static float _closedAt = -1f;
         internal static bool IsOpen { get { return _root != null; } }
@@ -35,6 +44,7 @@ namespace LOMSave.Probe
             var wasOpen = _root != null;
             DestroyView();
             _tabs = null; _selected = null; _dataHint = null;
+            _refresh = null;
             Expanded.Clear();
             if (wasOpen) _closedAt = Time.unscaledTime;
         }
@@ -43,10 +53,11 @@ namespace LOMSave.Probe
             if (_root != null) { _root.SetActive(false); UnityEngine.Object.Destroy(_root); }
             _root = null; _scroll = null; _status = null;
         }
-        internal static void Show(string title, List<EventInspector.Entry> entries, string dataHint = null)
+        internal static void Show(string title, List<EventInspector.Entry> entries, string dataHint = null, Action refresh = null)
         {
             Close();
             _title = title; _dataHint = dataHint;
+            _refresh = refresh; _indexRevision = StoryEventIndex.Revision;
             _tabs = entries.GroupBy(x => x.TabKey ?? "events").Select(x => new Tab {
                 Key = x.Key, Title = x.First().TabTitle ?? "相关事件", Entries = x.ToList() }).ToList();
             if (_tabs.Count == 0) _tabs.Add(new Tab { Key = "events", Title = "相关事件", Entries = entries });

@@ -154,7 +154,9 @@ namespace LOMSave.Probe
         internal static bool BlocksInput;
         internal static bool Owns(object value) { return false; }
         internal static void Close() { }
-        internal static void Show(string title, List<EventInspector.Entry> entries, string hint = null) { }
+        internal static List<EventInspector.Entry> Entries;
+        internal static string Hint;
+        internal static void Show(string title, List<EventInspector.Entry> entries, string hint = null, Action refresh = null) { Entries = entries; Hint = hint; }
     }
     internal class BuildingEventLongPress
     {
@@ -162,6 +164,12 @@ namespace LOMSave.Probe
         internal void Bind(PositionController controller) { }
     }
 #if !CALENDAR_JOURNAL
+    internal static class StoryEventIndex
+    {
+        internal static StoryEventIndexData Data;
+        internal static bool Pending;
+        internal static void Update() { }
+    }
     internal static class LocalJsonFile
     {
         internal static T Read<T>(string path) where T : new() { return new T(); }
@@ -369,6 +377,43 @@ end");
             Check(EventInspector.OptionName("unknown+work+unknown") == "行动"
                 && EventPreviewNames.Event("Unknown_Internal_001", locale.GetStoryText) == "Unknown_Internal_001",
                 "Unknown event identities are preserved rather than inventing indistinguishable story names");
+            // Fresh process: no Story scene and no retained native config.
+            typeof(StoryEventConfigs).GetField("<Position>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, null);
+            CheckPointManager.Instance = null;
+            EventInspector.ClearFixed(); EventInspector.Select(null);
+            var missing = new StoryIndexCondition { Comparisons = new[] { new StoryIndexComparison { Left = "missing", Right = "missing" } } };
+            StoryEventIndex.Data = new StoryEventIndexData {
+                Groups = new Dictionary<string, StoryIndexGroup>(),
+                Pools = new Dictionary<string, StoryIndexEvent[]> { ["Door_02"] = new[] {
+                    new StoryIndexEvent { Code = "Door_02_E_03", Note = "龙之反省", Rate = 30, Script = "door_02_503" },
+                    new StoryIndexEvent { Code = "unavailable", Rate = 0 },
+                    new StoryIndexEvent { Code = "unknown", Rate = 30, Conditional = true, Active = missing }
+                } } };
+            entries = Scan("checkpointmanager.Position(\"Door_02\")");
+            Check(entries.Count == 3 && entries[0].Title == "龙之反省", "Cold building preview uses verified index without visiting Story");
+            Check(entries[0].Pool == null && entries[0].Event == null && entries[0].PoolCode == "Door_02", "Cold preview stores identities without creating native game objects");
+            Check(entries[0].CanSelect && entries[1].Eligible == false && entries[2].Eligible == null && !entries[2].CanSelect,
+                "Cold preview preserves available/hidden/unknown states");
+            Check(entries[0].Conditions.Contains("Door_02_E_03") && entries[0].Detail.Contains("30"), "Cold condition panel retains event code and weights");
+            EventInspector.Select(entries[0]);
+            Check(Pool(unrelatedPool) == "native-random" && EventInspector.PendingName == "龙之反省", "Cold one-shot is not consumed by an unrelated pool");
+            Check(Pool(pool) == "door_02_503" && EventInspector.PendingName == "未指定", "Cold one-shot resolves exact native ResultType instead of guessing from code suffix");
+            EventInspector.ToggleFixed(entries[0]);
+            Check(EventInspector.IsFixed(new EventInspector.Entry { Pool = pool, Event = selected }), "Cold fixed selection shares native pool/event identity");
+            Check(Pool(pool) == "door_02_503" && Pool(pool) == "door_02_503", "Cold fixed selection works repeatedly once native config loads");
+            selected.Rate = 0;
+            Check(Pool(pool) == "native-random", "Native eligibility recheck rejects a fixed cold event that has expired"); selected.Rate = 30;
+            typeof(EventInspector).GetMethod("ResetOnLoad", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
+            Check(Pool(pool) == "door_02_503", "Read/load reset preserves cold fixed preference");
+            EventInspector.ToggleFixed(entries[0]); Check(!EventInspector.IsFixed(entries[0]), "Cold fixed preference can be cancelled");
+            FreeManager.Instance = new FreeManager(); controller._positionData = new FreePositionData { _defaultScript = "preview_test" };
+            EventInspector.OpenBuilding(controller);
+            Check(EventInspectorPanel.Entries.Count == 3 && EventInspectorPanel.Hint == null, "Cold building UI has data and no stale enter-Story warning");
+            StoryEventIndex.Data = null;
+            StoryEventIndex.Pending = true; EventInspector.OpenBuilding(controller);
+            Check(EventInspectorPanel.Hint.Contains("自动显示") && !EventInspectorPanel.Hint.Contains("进入一次剧情"), "Pending index tells user it will refresh automatically");
+            StoryEventIndex.Pending = false; EventInspector.OpenBuilding(controller);
+            Check(EventInspectorPanel.Hint.Contains("索引不可用"), "Unavailable index is distinguished from no eligible events");
             return _checks + " event selection routing assertions passed";
         }
     }

@@ -1,0 +1,127 @@
+[
+  {
+    "utc": "2026-10-25T14:27:44.735713Z",
+    "frame": 0,
+    "scene": null,
+    "eventName": "probe_started",
+    "payload": {
+      "pluginVersion": "0.25.16",
+      "gameVersion": "release_1.0.6000.5",
+      "unityVersion": "2020.3.49f1",
+      "logFile": "C:\\Game\\Steam\\steamapps\\common\\LegendOfMortal\\BepInEx\\LOMSaveProbe\\LOMSaveProbe-20261025-142744.jsonl"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:28:14.3269861Z",
+    "frame": 3433,
+    "scene": "Title",
+    "eventName": "continuation_shop_load_restock_skipped",
+    "payload": {
+      "source": "ShopDatabase.Load"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:28:14.6755862Z",
+    "frame": 3467,
+    "scene": "CoreScenes",
+    "eventName": "continuation_shop_ui_refresh_skipped",
+    "payload": {
+      "source": "ShopPanel.Awake"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:28:16.2562823Z",
+    "frame": 3568,
+    "scene": "Story",
+    "eventName": "continuation_state_validated",
+    "payload": {
+      "checkpoint": {
+        "Visit": 1,
+        "Token": 1,
+        "Script": "ch2_2_5_4",
+        "Sequence": 1,
+        "Kind": "dice",
+        "PayloadHash": "1daa8b7d5771840e58f0ddfb6d349abc929021d4cde00960e1a1ec31b2e7ed8c",
+        "PayloadPreview": "{\"options\":[\"O_2_2_5_4_001|<=33\",\"O_2_2_5_4_002|<=66\",\"O_2_2_5_4_003|>66\"],\"destinyPoint\":1,\"checkName\":\"Ch_2_2_5_4_001\"}"
+      },
+      "differenceCount": 0,
+      "differences": []
+    }
+  },
+  {
+    "utc": "2026-10-25T14:28:16.2572788Z",
+    "frame": 3568,
+    "scene": "Story",
+    "eventName": "continuation_target_reached",
+    "payload": {
+      "Script": "ch2_2_5_4",
+      "Point": 46,
+      "Kind": "dice",
+      "historicalStatementsExecuted": 0
+    }
+  },
+  {
+    "utc": "2026-10-25T14:28:16.2592721Z",
+    "frame": 3568,
+    "scene": "Story",
+    "eventName": "story_replay_mask_hidden",
+    "payload": {
+      "reason": "presentation_restored",
+      "visibleSeconds": 1.9974098999999974,
+      "generation": 2,
+      "phase": "ready"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:29:36.824708Z",
+    "frame": 17201,
+    "scene": "CoreScenes",
+    "eventName": "continuation_shop_ui_refresh_skipped",
+    "payload": {
+      "source": "ShopPanel.Awake"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:29:37.8349082Z",
+    "frame": 17301,
+    "scene": "Story",
+    "eventName": "continuation_state_validated",
+    "payload": {
+      "checkpoint": {
+        "Visit": 1,
+        "Token": 3,
+        "Script": "ch2_2_5_4",
+        "Sequence": 1,
+        "Kind": "dice",
+        "PayloadHash": "1daa8b7d5771840e58f0ddfb6d349abc929021d4cde00960e1a1ec31b2e7ed8c",
+        "PayloadPreview": "{\"options\":[\"O_2_2_5_4_001|<=33\",\"O_2_2_5_4_002|<=66\",\"O_2_2_5_4_003|>66\"],\"destinyPoint\":1,\"checkName\":\"Ch_2_2_5_4_001\"}"
+      },
+      "differenceCount": 0,
+      "differences": []
+    }
+  },
+  {
+    "utc": "2026-10-25T14:29:37.8349082Z",
+    "frame": 17301,
+    "scene": "Story",
+    "eventName": "continuation_target_reached",
+    "payload": {
+      "Script": "ch2_2_5_4",
+      "Point": 46,
+      "Kind": "dice",
+      "historicalStatementsExecuted": 0
+    }
+  },
+  {
+    "utc": "2026-10-25T14:29:37.8349082Z",
+    "frame": 17301,
+    "scene": "Story",
+    "eventName": "story_replay_mask_hidden",
+    "payload": {
+      "reason": "presentation_restored",
+      "visibleSeconds": 1.361552599999996,
+      "generation": 4,
+      "phase": "ready"
+    }
+  }
+]

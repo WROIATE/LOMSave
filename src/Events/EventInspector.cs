@@ -21,6 +21,9 @@ namespace LOMSave.Probe
             internal string Title, Detail, Conditions, Group, TabKey, TabTitle;
             internal PositionResultData Pool;
             internal PositionEventData Event;
+            internal string IndexedPool, IndexedEvent;
+            internal string PoolCode { get { return Pool != null ? Pool.name : IndexedPool; } }
+            internal string EventCode { get { return Event != null ? Event.name : IndexedEvent; } }
             internal MissionCheckData Mission;
             internal bool CanSelect;
             internal bool? Eligible;
@@ -53,9 +56,9 @@ namespace LOMSave.Probe
             catch (Exception e) { LOMSaveProbePlugin.WriteError("event_preferences_load_failed", e); }
         }
         private static string Scope(Entry entry)
-        { return entry == null ? null : entry.Pool != null ? "pool:" + entry.Pool.name : entry.Mission != null ? "mission:" + (int)entry.Mission.Position : null; }
+        { return entry == null ? null : entry.PoolCode != null ? "pool:" + entry.PoolCode : entry.Mission != null ? "mission:" + (int)entry.Mission.Position : null; }
         private static string Key(Entry entry)
-        { return entry == null ? null : entry.Event != null ? entry.Event.name : entry.Mission != null ? entry.Mission.name : null; }
+        { return entry == null ? null : entry.EventCode ?? (entry.Mission != null ? entry.Mission.name : null); }
         internal static bool IsFixed(Entry entry) { return Key(entry) != null && _fixed.Get(Scope(entry)) == Key(entry); }
         internal static void ToggleFixed(Entry entry)
         {
@@ -193,11 +196,16 @@ namespace LOMSave.Probe
             // The checkpoint manager belongs to Story; a save can open directly
             // into Free before that scene has ever been loaded.
             var config = PositionConfig();
-            if (config == null || actions == null) return result;
+            if (actions == null) return result;
+            if (config == null) StoryEventIndex.Update();
             foreach (var key in actions.Where(x => x.Method == "PositionPool").Select(x => x.Arguments[0]).Distinct())
             {
-                var pool = config.List.FirstOrDefault(x => x.name == key);
-                if (pool == null) continue;
+                var pool = config == null ? null : config.List.FirstOrDefault(x => x.name == key);
+                if (pool == null)
+                {
+                    if (config == null) result.AddRange(IndexedEventPreview.Pool(key, group));
+                    continue;
+                }
                 foreach (var data in pool.List)
                 {
                     if (data == null) continue;
@@ -266,9 +274,9 @@ namespace LOMSave.Probe
             }
             foreach (var tab in result.GroupBy(x => x.TabKey))
             {
-                var pools = tab.Select(x => x.Pool).Distinct().ToList();
+                var pools = tab.Select(x => x.PoolCode).Distinct().ToList();
                 if (pools.Count < 2) continue;
-                foreach (var entry in tab) entry.Group += " · 事件组 " + (pools.IndexOf(entry.Pool) + 1);
+                foreach (var entry in tab) entry.Group += " · 事件组 " + (pools.IndexOf(entry.PoolCode) + 1);
             }
             return result;
         }
@@ -282,6 +290,11 @@ namespace LOMSave.Probe
         internal static void OpenBuilding(PositionController controller)
         {
             if (!CanPreview(controller)) return;
+            ShowBuilding(controller);
+        }
+
+        private static void ShowBuilding(PositionController controller)
+        {
             try
             {
                 var timer = System.Diagnostics.Stopwatch.StartNew();
@@ -294,8 +307,10 @@ namespace LOMSave.Probe
                 LOMSaveProbePlugin.WriteEvent("building_events_scanned", new { position = position.ToString(), script,
                     checkpointManagerPresent = CheckPointManager.Instance != null, count = entries.Count,
                     milliseconds = timer.Elapsed.TotalMilliseconds });
-                EventInspectorPanel.Show(title, entries, PositionConfig() == null
-                    ? "随机事件数据尚未加载。进入一次剧情后即可查看；也可进入行动后，中键点击行动选项查看关联事件。" : null);
+                EventInspectorPanel.Show(title, entries, PositionConfig() == null && StoryEventIndex.Data == null
+                    ? StoryEventIndex.Pending ? "正在准备事件数据，完成后自动显示…"
+                        : "事件索引不可用，请检查索引文件是否随插件安装、是否匹配当前游戏版本。" : null,
+                    () => ShowBuilding(controller));
             }
             catch (Exception e) { LOMSaveProbePlugin.WriteError("event_inspector_open_failed", e); }
         }
@@ -310,9 +325,10 @@ namespace LOMSave.Probe
         private static bool UseSelectedEvent(PositionResultData __instance, ref string __result)
         {
             if (ReplayRuntime.IsRestoring || StoryCommandTrace.IsReplayPending) return true;
-            var selected = _pending != null && _pending.Pool == __instance ? _pending.Event
-                : __instance.List.FirstOrDefault(x => x != null && x.name == _fixed.Get("pool:" + __instance.name));
-            if (_pending != null && _pending.Pool == __instance) _pending = null;
+            var pending = _pending != null && _pending.PoolCode == __instance.name;
+            var code = pending ? _pending.EventCode : _fixed.Get("pool:" + __instance.name);
+            var selected = __instance.List.FirstOrDefault(x => x != null && x.name == code);
+            if (pending) _pending = null;
             if (selected == null) return true;
             try
             {

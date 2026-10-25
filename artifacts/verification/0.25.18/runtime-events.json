@@ -1,0 +1,248 @@
+[
+  {
+    "utc": "2026-10-25T14:59:59.7429155Z",
+    "frame": 0,
+    "scene": null,
+    "eventName": "probe_started",
+    "payload": {
+      "pluginVersion": "0.25.18",
+      "gameVersion": "release_1.0.6000.5",
+      "unityVersion": "2020.3.49f1",
+      "logFile": "C:\\Game\\Steam\\steamapps\\common\\LegendOfMortal\\BepInEx\\LOMSaveProbe\\LOMSaveProbe-20261025-145959.jsonl"
+    }
+  },
+  {
+    "utc": "2026-10-25T15:00:52.1494676Z",
+    "frame": 7081,
+    "scene": "Free",
+    "eventName": "event_index_ready",
+    "payload": {
+      "GameVersion": "release_1.0.6000.5",
+      "pools": 73,
+      "conditions": 533,
+      "switches": 3453,
+      "milliseconds": 627.1054
+    }
+  },
+  {
+    "utc": "2026-10-25T15:01:32.4953643Z",
+    "frame": 13906,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "大門",
+      "script": "door_001",
+      "checkpointManagerPresent": false,
+      "count": 8,
+      "milliseconds": 130.1847
+    }
+  },
+  {
+    "utc": "2026-10-25T15:01:32.5078269Z",
+    "frame": 13906,
+    "scene": "Free",
+    "eventName": "event_inspector_shown",
+    "payload": {
+      "title": "大门 · 事件",
+      "tab": "随机事件",
+      "tabs": [
+        "随机事件"
+      ],
+      "count": 8,
+      "hidden": 3,
+      "milliseconds": 8.809700000000001,
+      "entries": [
+        {
+          "Title": "小梅亂入",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 35\n第一次触发小梅跑步 = 1",
+          "CanSelect": false
+        },
+        {
+          "Title": "我有帶秘笈",
+          "Group": "随机事件",
+          "Detail": "当前权重 待判定  ·  基础权重 35\n触发假赵活我有帶秘笈的次数 +1",
+          "CanSelect": false
+        },
+        {
+          "Title": "龙之反省",
+          "Group": "随机事件",
+          "Detail": "当前权重 待判定  ·  基础权重 30\n剧情事件",
+          "CanSelect": false
+        },
+        {
+          "Title": "排隊的龙湘",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 20\n剧情事件",
+          "CanSelect": false
+        },
+        {
+          "Title": "馬富貴 大宋閒漢",
+          "Group": "随机事件",
+          "Detail": "当前权重 30  ·  基础权重 30\n剧情事件",
+          "CanSelect": true
+        },
+        {
+          "Title": "馬富貴 买飲料",
+          "Group": "随机事件",
+          "Detail": "当前权重 20  ·  基础权重 20\n剧情事件",
+          "CanSelect": true
+        },
+        {
+          "Title": "福韫 揍你",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 40\n道德 +1；学问 +1；福韫好感度 +1；揍福韫 = 0",
+          "CanSelect": false
+        },
+        {
+          "Title": "正常",
+          "Group": "随机事件",
+          "Detail": "当前权重 50  ·  基础权重 50\n剧情事件",
+          "CanSelect": true
+        }
+      ]
+    }
+  },
+  {
+    "utc": "2026-10-25T15:04:13.5741179Z",
+    "frame": 41262,
+    "scene": "Free",
+    "eventName": "event_inspector_shown",
+    "payload": {
+      "title": "大门 · 事件",
+      "tab": "随机事件",
+      "tabs": [
+        "随机事件"
+      ],
+      "count": 8,
+      "hidden": 3,
+      "milliseconds": 4.476,
+      "entries": [
+        {
+          "Title": "小梅亂入",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 35\n第一次触发小梅跑步 = 1",
+          "CanSelect": false
+        },
+        {
+          "Title": "我有帶秘笈",
+          "Group": "随机事件",
+          "Detail": "当前权重 待判定  ·  基础权重 35\n触发假赵活我有帶秘笈的次数 +1",
+          "CanSelect": false
+        },
+        {
+          "Title": "龙之反省",
+          "Group": "随机事件",
+          "Detail": "当前权重 待判定  ·  基础权重 30\n剧情事件",
+          "CanSelect": false
+        },
+        {
+          "Title": "排隊的龙湘",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 20\n剧情事件",
+          "CanSelect": false
+        },
+        {
+          "Title": "馬富貴 大宋閒漢",
+          "Group": "随机事件",
+          "Detail": "当前权重 30  ·  基础权重 30\n剧情事件",
+          "CanSelect": true
+        },
+        {
+          "Title": "馬富貴 买飲料",
+          "Group": "随机事件",
+          "Detail": "当前权重 20  ·  基础权重 20\n剧情事件",
+          "CanSelect": true
+        },
+        {
+          "Title": "福韫 揍你",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 40\n道德 +1；学问 +1；福韫好感度 +1；揍福韫 = 0",
+          "CanSelect": false
+        },
+        {
+          "Title": "正常",
+          "Group": "随机事件",
+          "Detail": "当前权重 50  ·  基础权重 50\n剧情事件",
+          "CanSelect": true
+        }
+      ]
+    }
+  },
+  {
+    "utc": "2026-10-25T15:04:17.7863576Z",
+    "frame": 41978,
+    "scene": "Free",
+    "eventName": "event_inspector_shown",
+    "payload": {
+      "title": "大门 · 事件",
+      "tab": "随机事件",
+      "tabs": [
+        "随机事件"
+      ],
+      "count": 8,
+      "hidden": 3,
+      "milliseconds": 4.3790000000000004,
+      "entries": [
+        {
+          "Title": "小梅亂入",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 35\n第一次触发小梅跑步 = 1",
+          "CanSelect": false
+        },
+        {
+          "Title": "我有帶秘笈",
+          "Group": "随机事件",
+          "Detail": "当前权重 待判定  ·  基础权重 35\n触发假赵活我有帶秘笈的次数 +1",
+          "CanSelect": false
+        },
+        {
+          "Title": "龙之反省",
+          "Group": "随机事件",
+          "Detail": "当前权重 待判定  ·  基础权重 30\n剧情事件",
+          "CanSelect": false
+        },
+        {
+          "Title": "排隊的龙湘",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 20\n剧情事件",
+          "CanSelect": false
+        },
+        {
+          "Title": "馬富貴 大宋閒漢",
+          "Group": "随机事件",
+          "Detail": "当前权重 30  ·  基础权重 30\n剧情事件",
+          "CanSelect": true
+        },
+        {
+          "Title": "馬富貴 买飲料",
+          "Group": "随机事件",
+          "Detail": "当前权重 20  ·  基础权重 20\n剧情事件",
+          "CanSelect": true
+        },
+        {
+          "Title": "福韫 揍你",
+          "Group": "随机事件",
+          "Detail": "当前权重 0  ·  基础权重 40\n道德 +1；学问 +1；福韫好感度 +1；揍福韫 = 0",
+          "CanSelect": false
+        },
+        {
+          "Title": "正常",
+          "Group": "随机事件",
+          "Detail": "当前权重 50  ·  基础权重 50\n剧情事件",
+          "CanSelect": true
+        }
+      ]
+    }
+  },
+  {
+    "utc": "2026-10-25T15:04:29.8934515Z",
+    "frame": 43900,
+    "scene": "Story",
+    "eventName": "next_event_applied",
+    "payload": {
+      "name": "Door_02_E_06",
+      "script": "door_02_506"
+    }
+  }
+]

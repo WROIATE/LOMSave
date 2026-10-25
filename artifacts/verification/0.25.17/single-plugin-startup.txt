@@ -1,0 +1,17 @@
+[Message: Preloader] BepInEx 6.0.0-be.692 - Mortal
+[Message: Preloader] Built from commit 851521cc126e4f9d841d2d9bfe857558f0395939
+[Info   :   BepInEx] System platform: Windows 10 64-bit
+[Info   :   BepInEx] Process bitness: 64-bit (x64)
+[Info   : Preloader] Running under Unity 2020.3.49f1
+[Info   : Preloader] CLR runtime version: 4.0.30319.17020
+[Info   : Preloader] Supports SRE: False
+[Message: Preloader] Preloader started
+[Info   :AssemblyPatcher] Loaded 1 patcher type from [BepInEx.Unity.Mono.Preloader 6.0.0.0]
+[Info   : Preloader] 1 patcher plugin loaded
+[Info   : Preloader] 143 assemblies discovered
+[Message:AssemblyPatcher] Executing 1 patch(es)
+[Message: Preloader] Preloader finished
+[Message:   BepInEx] Chainloader initialized
+[Info   :   BepInEx] 1 plugin to load
+[Info   :   BepInEx] Loading [LOMSave Probe 0.25.17]
+[Message:   BepInEx] Chainloader startup complete

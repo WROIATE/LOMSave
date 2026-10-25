@@ -3,6 +3,7 @@ $root = Split-Path $PSScriptRoot -Parent
 Add-Type -Path (Join-Path $root 'artifacts/LOMSaveProbe/Newtonsoft.Json.dll')
 Add-Type -Path @(
     (Join-Path $root 'src/Replay/ReplayStateValidator.cs'),
+    (Join-Path $root 'src/Replay/ContinuationShopGuard.cs'),
     (Join-Path $root 'src/Replay/ReplayOriginPolicy.cs'),
     (Join-Path $PSScriptRoot 'ReplayStateValidationTests.cs')
 ) -ReferencedAssemblies @(

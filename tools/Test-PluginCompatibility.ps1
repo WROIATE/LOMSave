@@ -95,6 +95,8 @@ try {
     $contracts = @(
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SaveSystem'; Methods = @('AutoSaveData','GetSaveDataFile') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.MenuPanel'; Fields = @('_saveButton','_confirmSaveButton','_saveMenuToggleButton') },
+        @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.MenuPanel'; Fields = @('_giveupButton','_titleButton') },
+        @{ Assembly = 'Mortal.Combat'; Type = 'Mortal.Combat.CombatUIManager'; Fields = @('_menuPanel') },
         @{ Assembly = 'Mortal.Free'; Type = 'Mortal.Free.FreeManager'; Fields = @('_saveButton') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.SaveGamePanel'; Fields = @('_saveSlots') },
         @{ Assembly = 'Mortal.Core'; Type = 'Mortal.Core.LoadGamePanel'; Fields = @('_autoSaveSlot') },

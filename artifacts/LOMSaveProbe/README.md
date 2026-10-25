@@ -11,6 +11,8 @@
 - 选项与事件预览：长按或中键查看条件、属性、好感及奖励影响，支持展开后续影响。
 - 事件指定：按行动页签查看，待触发剧情单列；支持单次指定和固定选择，默认隐藏不能触发的事件，固定偏好跨读档和重启保留。
 - 对话与判定：支持 0.5～5 倍自动播放、按文本长度调整等待，以及剧情判定提示和回想记录。
+- 骰子指定结果：等待点击“启动”时，短按目标结果直接选择；长按或中键仍可查看影响，不消耗命运点。
+- 单挑直接胜利：单挑系统菜单内点击“直接胜利”，沿用原生胜利结算和剧情续接。
 - 混战直接胜利：准备页和暂停页均可操作，按原生规则结算金钱、属性与点数奖励。
 - 四师兄弹珠跳过：可选 0／30／60／100 分，奖励由原生剧情发放。
 - 剧情日历：日期旁仅提示当前可做且未读的事件，查看后不再提醒；已读状态、行动与事件观察记录跟随存档，读回查看前的存档会恢复提示，新周目重新记录；F10 汇总当前剧情，全年日期表支持历史追溯和跨周目手动备注。
@@ -25,7 +27,7 @@
 1. 退出游戏并备份存档；安装可用的 **[BepInEx 6 Unity.Mono Windows x64](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_mono.html)**，安装包不包含该框架。
 2. 从 [Releases](https://github.com/WROIATE/LOMSave/releases) 下载安装 ZIP，将其中的 `BepInEx` 文件夹合并到游戏根目录（`Mortal.exe` 所在目录），保留包内许可证。
 3. 将旧的 `LOMSave.dll`、`LOMSave2.dll` 或重复的增强插件移到插件目录外，只启用一份存档插件。
-4. 保留插件旁的 `LOMSaveProbe.StoryEvents.json`，用于冷启动时显示特殊事件提示。启动游戏，通过原生存读档菜单及设置页使用功能；安装包已内置 F9 面板入口。已安装 ScriptTrainer 时沿用其快捷键，避免重复触发。
+4. 保留插件旁的 `LOMSaveProbe.StoryEvents.json`，用于冷启动时显示事件提示及事件预览。F9、骰子指定结果和单挑直接胜利已内置，无需另装 ScriptTrainer；已有该插件时可备份后移除 `ScriptTrainer.dll`，避免其额外修改。
 
 也可从[插件文件目录](https://github.com/WROIATE/LOMSave/tree/enhanced/artifacts/LOMSaveProbe)手动安装：
 
@@ -45,5 +47,5 @@
 - [NothingNullNull/LOMSave](https://github.com/NothingNullNull/LOMSave)：原作者及贡献者提供自由存档基础；本增强版基于旧版提交 [6d40806](https://github.com/NothingNullNull/LOMSave/commit/6d408069b87d95809fe085f16928760958dfe4e7)，与上游 2.x 分开维护。
 - [YaN9Yu96/MortalControlMyDestiny（知天命）](https://github.com/YaN9Yu96/MortalControlMyDestiny)：参考名称解析与原生浮动消息的使用方式。
 - [活侠传助手](https://mod.3dmgame.com/mod/256420)：参考建筑事件查看、分支检查点和事件指定思路。
-- [Jim97/UnityScriptTrainer](https://github.com/jim972329667/UnityScriptTrainer/tree/master/Mortal)：原先提供游戏测试面板入口。本包的 F9 开关为独立实现，不分发该插件。
+- [Jim97/UnityScriptTrainer](https://github.com/jim972329667/UnityScriptTrainer/tree/master/Mortal)：原先提供游戏测试面板、骰子指定及单挑跳过。本包对应功能为独立实现，不分发该插件。
 - [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json)、[YamlDotNet](https://github.com/aaubry/YamlDotNet)：第三方依赖，各自 MIT 许可证随插件保留。

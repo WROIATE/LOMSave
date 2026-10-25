@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.15";
+        public const string PluginVersion = "0.25.18";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -69,6 +69,7 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(ActionAutoSave));
                 harmony.PatchAll(typeof(DeathLoadMenu));
                 harmony.PatchAll(typeof(SaveButtonAvailability));
+                harmony.PatchAll(typeof(ContinuationShopGuard));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
                 harmony.PatchAll(typeof(SaveNotes));
                 harmony.PatchAll(typeof(ReplayAudio));
@@ -80,11 +81,13 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(StoryContinuation));
                 harmony.PatchAll(typeof(ProbePatches));
                 harmony.PatchAll(typeof(DiceRollTrace));
+                harmony.PatchAll(typeof(DiceOutcomeSelection));
                 harmony.PatchAll(typeof(OptionImpactPreview));
                 harmony.PatchAll(typeof(PreviewInteraction));
                 harmony.PatchAll(typeof(EventInspector));
                 harmony.PatchAll(typeof(CheckpointRecall));
                 harmony.PatchAll(typeof(TeamBattleSkip));
+                harmony.PatchAll(typeof(DuelDirectVictory));
                 harmony.PatchAll(typeof(FeaturePanel));
                 harmony.PatchAll(typeof(ActionCalendar));
                 harmony.PatchAll(typeof(CalendarStoryEvents));
@@ -157,6 +160,7 @@ namespace LOMSave.Probe
             BranchAutoSave.Update();
             CalendarStoryEvents.Update();
             CalendarPanel.Update();
+            EventInspectorPanel.Update();
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) CaptureCurrentState("manual_ctrl_f10");

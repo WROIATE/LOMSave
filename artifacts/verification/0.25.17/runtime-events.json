@@ -1,0 +1,231 @@
+[
+  {
+    "utc": "2026-10-25T14:42:37.9976716Z",
+    "frame": 0,
+    "scene": null,
+    "eventName": "probe_started",
+    "payload": {
+      "pluginVersion": "0.25.17",
+      "gameVersion": "release_1.0.6000.5",
+      "unityVersion": "2020.3.49f1",
+      "logFile": "C:\\Game\\Steam\\steamapps\\common\\LegendOfMortal\\BepInEx\\LOMSaveProbe\\LOMSaveProbe-20261025-144237.jsonl"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:43:20.1372327Z",
+    "frame": 5445,
+    "scene": "Combat",
+    "eventName": "duel_win_button_ready",
+    "payload": {
+      "interactable": true
+    }
+  },
+  {
+    "utc": "2026-10-25T14:43:28.1562262Z",
+    "frame": 6804,
+    "scene": "Combat",
+    "eventName": "duel_direct_victory_requested",
+    "payload": {
+      "nativeSettlement": true
+    }
+  },
+  {
+    "utc": "2026-10-25T14:43:52.0248367Z",
+    "frame": 10713,
+    "scene": "Story",
+    "eventName": "debug_shortcut_opened",
+    "payload": {
+      "nativePanel": true
+    }
+  },
+  {
+    "utc": "2026-10-25T14:44:16.6239811Z",
+    "frame": 14878,
+    "scene": "Story",
+    "eventName": "debug_shortcut_closed",
+    "payload": {}
+  },
+  {
+    "utc": "2026-10-25T14:44:28.9260942Z",
+    "frame": 16945,
+    "scene": "Story",
+    "eventName": "branch_quick_load_requested",
+    "payload": {
+      "slot": "auto_branch"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:44:30.3149506Z",
+    "frame": 17060,
+    "scene": "Story",
+    "eventName": "continuation_state_validated",
+    "payload": {
+      "checkpoint": {
+        "Visit": 1,
+        "Token": 2,
+        "Script": "ch2_2_5_4",
+        "Sequence": 1,
+        "Kind": "dice",
+        "PayloadHash": "1daa8b7d5771840e58f0ddfb6d349abc929021d4cde00960e1a1ec31b2e7ed8c",
+        "PayloadPreview": "{\"options\":[\"O_2_2_5_4_001|<=33\",\"O_2_2_5_4_002|<=66\",\"O_2_2_5_4_003|>66\"],\"destinyPoint\":1,\"checkName\":\"Ch_2_2_5_4_001\"}"
+      },
+      "differenceCount": 0,
+      "differences": []
+    }
+  },
+  {
+    "utc": "2026-10-25T14:44:30.3169437Z",
+    "frame": 17060,
+    "scene": "Story",
+    "eventName": "continuation_target_reached",
+    "payload": {
+      "Script": "ch2_2_5_4",
+      "Point": 46,
+      "Kind": "dice",
+      "historicalStatementsExecuted": 0
+    }
+  },
+  {
+    "utc": "2026-10-25T14:44:30.3184449Z",
+    "frame": 17060,
+    "scene": "Story",
+    "eventName": "story_replay_mask_hidden",
+    "payload": {
+      "reason": "presentation_restored",
+      "visibleSeconds": 1.458198600000003,
+      "generation": 3,
+      "phase": "ready"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:44:49.1005127Z",
+    "frame": 20245,
+    "scene": "Story",
+    "eventName": "dice_outcome_requested",
+    "payload": {
+      "selection": 3
+    }
+  },
+  {
+    "utc": "2026-10-25T14:44:49.1045Z",
+    "frame": 20246,
+    "scene": "Story",
+    "eventName": "dice_outcome_selected",
+    "payload": {
+      "selection": 3
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:42.0383088Z",
+    "frame": 28958,
+    "scene": "Story",
+    "eventName": "continuation_state_validated",
+    "payload": {
+      "checkpoint": {
+        "Visit": 1,
+        "Token": 4,
+        "Script": "ch2_2_5_4",
+        "Sequence": 1,
+        "Kind": "say",
+        "PayloadHash": "dc4aa2a2eb5877be46fcb6f67f6d7828630a0477db04b8148f5e37017e54004e",
+        "PayloadPreview": "可惜～这寿宴人虽多，却没见到几个漂亮小娘子。\r\n纵有雌的，也是粗手大脚的女汉子，没一个标致货色。"
+      },
+      "differenceCount": 0,
+      "differences": []
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:42.0383088Z",
+    "frame": 28958,
+    "scene": "Story",
+    "eventName": "continuation_target_reached",
+    "payload": {
+      "Script": "ch2_2_5_4",
+      "Point": 926,
+      "Kind": "say",
+      "historicalStatementsExecuted": 0
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:42.0383088Z",
+    "frame": 28958,
+    "scene": "Story",
+    "eventName": "story_replay_mask_hidden",
+    "payload": {
+      "reason": "presentation_restored",
+      "visibleSeconds": 1.361516899999998,
+      "generation": 5,
+      "phase": "ready"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:54.9253484Z",
+    "frame": 31134,
+    "scene": "Story",
+    "eventName": "branch_quick_load_requested",
+    "payload": {
+      "slot": "auto_branch"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:56.1942986Z",
+    "frame": 31250,
+    "scene": "Story",
+    "eventName": "continuation_state_validated",
+    "payload": {
+      "checkpoint": {
+        "Visit": 1,
+        "Token": 5,
+        "Script": "ch2_2_5_4",
+        "Sequence": 1,
+        "Kind": "dice",
+        "PayloadHash": "1daa8b7d5771840e58f0ddfb6d349abc929021d4cde00960e1a1ec31b2e7ed8c",
+        "PayloadPreview": "{\"options\":[\"O_2_2_5_4_001|<=33\",\"O_2_2_5_4_002|<=66\",\"O_2_2_5_4_003|>66\"],\"destinyPoint\":1,\"checkName\":\"Ch_2_2_5_4_001\"}"
+      },
+      "differenceCount": 0,
+      "differences": []
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:56.1942986Z",
+    "frame": 31250,
+    "scene": "Story",
+    "eventName": "continuation_target_reached",
+    "payload": {
+      "Script": "ch2_2_5_4",
+      "Point": 46,
+      "Kind": "dice",
+      "historicalStatementsExecuted": 0
+    }
+  },
+  {
+    "utc": "2026-10-25T14:45:56.1953179Z",
+    "frame": 31250,
+    "scene": "Story",
+    "eventName": "story_replay_mask_hidden",
+    "payload": {
+      "reason": "presentation_restored",
+      "visibleSeconds": 1.3352055999999948,
+      "generation": 7,
+      "phase": "ready"
+    }
+  },
+  {
+    "utc": "2026-10-25T14:46:07.0688743Z",
+    "frame": 33093,
+    "scene": "Story",
+    "eventName": "dice_outcome_requested",
+    "payload": {
+      "selection": 1
+    }
+  },
+  {
+    "utc": "2026-10-25T14:46:07.0738607Z",
+    "frame": 33094,
+    "scene": "Story",
+    "eventName": "dice_outcome_selected",
+    "payload": {
+      "selection": 1
+    }
+  }
+]

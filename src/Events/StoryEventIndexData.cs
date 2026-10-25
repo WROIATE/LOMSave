@@ -21,7 +21,7 @@ namespace LOMSave.Probe
     internal sealed class StoryIndexRate { public StoryIndexCondition Condition; public int Rate; }
     internal sealed class StoryIndexEvent
     {
-        public string Code, Note, NativeTitle;
+        public string Code, Note, NativeTitle, Script;
         public bool Conditional;
         public StoryIndexCondition Active;
         public int Rate;

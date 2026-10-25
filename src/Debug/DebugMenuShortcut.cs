@@ -38,7 +38,7 @@ namespace LOMSave.Probe
                 panel.AddComponent<DebugMenuShortcutLifetime>();
         }
 
-        private static bool HasTrainer()
+        internal static bool HasTrainer()
         {
             var loader = UnityChainloader.Instance;
             BepInEx.PluginInfo info;
