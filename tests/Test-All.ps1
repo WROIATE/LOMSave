@@ -13,10 +13,10 @@ try {
     $env:TEMP = $taskTemp
     $env:TMP = $taskTemp
     $scripts = @('ActionAutoSave','ActionAutoSaveRuntime','BranchAutoSave','StorySaveFiles','SaveOrigin','ManualSavePolicy','ReplayRuntime','DialogueAndImpact','BuildingLongPress',
-        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','TrainerIntegration','EventInspector','StoryEventIndex','StoryReplay','StoryContinuation','ReplayCharacter','ReplayStateValidation','CalendarRuntime','CalendarStoryEvents','RecallShortcut','DebugMenu','DebugMenuShortcut','TrainingLimits')
+        'CodeNames','PreviewFont','AudioSceneState','FeatureData','TeamBattleSkip','TrainerIntegration','EventInspector','StoryEventIndex','StoryReplay','StoryContinuation','ReplayCharacter','ReplayStateValidation','NativeStoryLog','CalendarRuntime','CalendarStoryEvents','RecallShortcut','DebugMenu','DebugMenuShortcut','TrainingLimits')
     foreach ($name in $scripts) {
         $arguments = @('-NoProfile', '-File', (Join-Path $PSScriptRoot "Test-$name.ps1"))
-        if ($name -in @('DialogueAndImpact','ReplayCharacter','CalendarStoryEvents')) { $arguments += @('-StoryDirectory', $StoryDirectory) }
+        if ($name -in @('DialogueAndImpact','ReplayCharacter','CalendarStoryEvents','EventInspector','StoryContinuation')) { $arguments += @('-StoryDirectory', $StoryDirectory) }
         & (Join-Path $PSHOME 'pwsh.exe') @arguments
         if ($LASTEXITCODE -ne 0) { throw "$name regression failed ($LASTEXITCODE)." }
     }

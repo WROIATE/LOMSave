@@ -78,11 +78,13 @@ for pointer, cls in classes.items():
         for _ in range(rd.integer()):
             kind, constant = rd.integer(), rd.integer()
             pointers = [rd.pointer() for _ in range(3)]
-            rd.integer(); rd.integer()  # random bounds; random values remain unknown
+            random_min, random_max = rd.integer(), rd.integer()
             pointers += [rd.pointer() for _ in range(5)]
             negative = rd.boolean()
             pointers += [rd.pointer() for _ in range(5)]
             value = {'Kind': kind, 'Constant': constant, 'Negative': negative}
+            if kind == 7:
+                value.update(RandomMin=random_min, RandomMax=random_max)
             if kind == 8:
                 value['Group'] = ident(pointers[7])
             elif kind == 16:

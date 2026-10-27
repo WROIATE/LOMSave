@@ -1,0 +1,162 @@
+[
+  {
+    "utc": "2026-10-25T16:20:53.979286Z",
+    "frame": 49778,
+    "scene": "Story",
+    "eventName": "event_index_ready",
+    "payload": {
+      "GameVersion": "release_1.0.6000.5",
+      "pools": 73,
+      "conditions": 533,
+      "switches": 3453,
+      "milliseconds": 670.6447000000001
+    }
+  },
+  {
+    "utc": "2026-10-25T16:21:13.1213808Z",
+    "frame": 53022,
+    "scene": "Story",
+    "eventName": "branch_event_applied",
+    "payload": {
+      "script": "section_01_free_03",
+      "kind": "Switch",
+      "key": "Section_01_Free_01_001",
+      "outcome": 1
+    }
+  },
+  {
+    "utc": "2026-10-25T16:21:29.0622678Z",
+    "eventName": "continuation_state_validated",
+    "script": "section_01_free_03",
+    "kind": "choose",
+    "differenceCount": 0
+  },
+  {
+    "utc": "2026-10-25T16:22:19.5766204Z",
+    "frame": 64182,
+    "scene": "Story",
+    "eventName": "branch_event_applied",
+    "payload": {
+      "script": "section_01_free_03",
+      "kind": "Switch",
+      "key": "Section_01_Free_01_001",
+      "outcome": 2
+    }
+  },
+  {
+    "utc": "2026-10-25T16:24:09.8707728Z",
+    "frame": 5353,
+    "scene": "Free",
+    "eventName": "event_index_ready",
+    "payload": {
+      "GameVersion": "release_1.0.6000.5",
+      "pools": 73,
+      "conditions": 533,
+      "switches": 3453,
+      "milliseconds": 617.3988
+    }
+  },
+  {
+    "utc": "2026-10-25T16:24:52.379093Z",
+    "frame": 12531,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "伙房",
+      "script": "kitchen_001",
+      "checkpointManagerPresent": false,
+      "count": 13,
+      "milliseconds": 92.1122
+    }
+  },
+  {
+    "utc": "2026-10-25T16:25:09.6626006Z",
+    "frame": 15447,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "弟子房",
+      "script": "room_001",
+      "checkpointManagerPresent": false,
+      "count": 0,
+      "milliseconds": 96.26700000000001
+    }
+  },
+  {
+    "utc": "2026-10-25T16:25:28.4805919Z",
+    "frame": 18616,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "鍛冶場",
+      "script": "forge_001",
+      "checkpointManagerPresent": false,
+      "count": 31,
+      "milliseconds": 156.53810000000001
+    }
+  },
+  {
+    "utc": "2026-10-25T16:28:35.8854937Z",
+    "frame": 50439,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "煉丹房",
+      "script": "alchemy_001",
+      "checkpointManagerPresent": false,
+      "count": 26,
+      "milliseconds": 42.491800000000005
+    }
+  },
+  {
+    "utc": "2026-10-25T16:29:21.8480905Z",
+    "frame": 58102,
+    "scene": "Story",
+    "eventName": "branch_event_applied",
+    "payload": {
+      "script": "alchemy_001",
+      "kind": "Switch",
+      "key": "Alchemy_001_001",
+      "outcome": 1
+    }
+  },
+  {
+    "utc": "2026-10-25T16:32:17.0058785Z",
+    "frame": 5357,
+    "scene": "Free",
+    "eventName": "event_index_ready",
+    "payload": {
+      "GameVersion": "release_1.0.6000.5",
+      "pools": 73,
+      "conditions": 533,
+      "switches": 3453,
+      "milliseconds": 610.7519
+    }
+  },
+  {
+    "utc": "2026-10-25T16:32:28.3430094Z",
+    "frame": 7237,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "弟子房",
+      "script": "room_001",
+      "checkpointManagerPresent": false,
+      "count": 10,
+      "milliseconds": 118.04560000000001
+    }
+  },
+  {
+    "utc": "2026-10-25T16:32:50.8407257Z",
+    "frame": 11043,
+    "scene": "Free",
+    "eventName": "building_events_scanned",
+    "payload": {
+      "position": "煉丹房",
+      "script": "alchemy_001",
+      "checkpointManagerPresent": false,
+      "count": 26,
+      "milliseconds": 77.09530000000001
+    }
+  }
+]

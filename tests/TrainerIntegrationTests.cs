@@ -85,15 +85,26 @@ namespace Mortal.Core
 namespace Mortal.Story
 {
     public class StoryManager { public static StoryManager Instance = new StoryManager(); public bool IsStoryPause; }
+    public class DiceOption : UnityEngine.MonoBehaviour
+    {
+        public bool Highlighted;
+        public void Select() { Highlighted = true; }
+        public void UnSelect() { Highlighted = false; }
+    }
     public class DiceMenuDialog : UnityEngine.MonoBehaviour
     {
         public UnityEngine.UI.Button[] CachedButtons;
         public Mortal.Core.MenuToggleButton _startButton;
         public bool _pressStartButton;
         public int _resultSelection, StartCalls, ContinueCalls, SelectionUpdates;
-        public void PressStartButton() { _pressStartButton = true; StartCalls++; }
+        public void PressStartButton() { LOMSave.Probe.DiceOutcomeSelection.BeforeStart(this); _pressStartButton = true; StartCalls++; }
         public void PressContinueButton() { ContinueCalls++; }
-        public void UpdateSelection() { SelectionUpdates++; }
+        public void UpdateSelection()
+        {
+            SelectionUpdates++;
+            foreach (var button in CachedButtons) button.GetComponent<DiceOption>().UnSelect();
+            CachedButtons[_resultSelection - 1].GetComponent<DiceOption>().Select();
+        }
     }
 }
 namespace Mortal.Combat
@@ -138,22 +149,39 @@ namespace LOMSave.Probe
         {
             var dice = New<Mortal.Story.DiceMenuDialog>();
             dice.CachedButtons = new[] { New<UnityEngine.UI.Button>(), New<UnityEngine.UI.Button>(), New<UnityEngine.UI.Button>() };
+            foreach (var button in dice.CachedButtons) button.gameObject.AddComponent<Mortal.Story.DiceOption>();
             dice._startButton = New<Mortal.Core.MenuToggleButton>();
             DiceOutcomeSelection.Bind(dice); DiceOutcomeSelection.Bind(dice);
             Check(dice.CachedButtons[2].GetComponent<OptionImpactLongPress>().Selection == 3, "one-based target binding");
             Check(dice.CachedButtons[0].GetComponentsInChildren<OptionImpactLongPress>(true).Length == 1, "no duplicate handlers on reuse");
+            var firstVisual = dice.CachedButtons[0].GetComponent<Mortal.Story.DiceOption>();
+            var secondVisual = dice.CachedButtons[1].GetComponent<Mortal.Story.DiceOption>();
+            var thirdVisual = dice.CachedButtons[2].GetComponent<Mortal.Story.DiceOption>();
+            DiceOutcomeSelection.Hover(dice, 1);
+            Check(firstVisual.Highlighted && dice.StartCalls == 0 && dice._resultSelection == 0
+                && dice.GetComponent<DiceOutcomeState>().Selection == 0, "hover changes appearance without starting or selecting a result");
+            DiceOutcomeSelection.Hover(dice, 2); DiceOutcomeSelection.ClearHover(dice, 1);
+            Check(!firstVisual.Highlighted && secondVisual.Highlighted, "moving between choices and delayed exit keep only the current hover");
+            DiceOutcomeSelection.ClearHover(dice, 2);
+            Check(!secondVisual.Highlighted, "leaving hovered choice restores native appearance");
             Check(!DiceOutcomeSelection.TrySelect(dice, 0) && !DiceOutcomeSelection.TrySelect(dice, 4), "invalid choices rejected");
-            OptionImpactPreview.IsOpen = true; Check(!DiceOutcomeSelection.TrySelect(dice, 1), "preview does not select"); OptionImpactPreview.IsOpen = false;
+            OptionImpactPreview.IsOpen = true;
+            DiceOutcomeSelection.Hover(dice, 1);
+            Check(!DiceOutcomeSelection.TrySelect(dice, 1) && !firstVisual.Highlighted, "preview blocks underlying hover and selection"); OptionImpactPreview.IsOpen = false;
             ReplayRuntime.IsRestoring = true; Check(!DiceOutcomeSelection.TrySelect(dice, 1), "restoration does not select"); ReplayRuntime.IsRestoring = false;
             StoryContinuation.IsPending = true; Check(!DiceOutcomeSelection.TrySelect(dice, 1), "pending continuation does not select"); StoryContinuation.IsPending = false;
             dice._startButton.Active = false; Check(!DiceOutcomeSelection.TrySelect(dice, 1), "rolling does not select"); dice._startButton.Active = true;
             dice.CachedButtons[1].gameObject.SetActive(false); Check(!DiceOutcomeSelection.TrySelect(dice, 2), "hidden choices rejected"); dice.CachedButtons[1].gameObject.SetActive(true);
             DebugMenuShortcut.Trainer = true; Check(!DiceOutcomeSelection.TrySelect(dice, 1), "old trainer owns its own input"); DebugMenuShortcut.Trainer = false;
+            DiceOutcomeSelection.Hover(dice, 3);
             Check(DiceOutcomeSelection.TrySelect(dice, 3), "last result selected");
+            Check(!thirdVisual.Highlighted && dice.GetComponent<DiceOutcomeState>().HoveredSelection == 0, "starting releases temporary hover ownership");
             Check(!DiceOutcomeSelection.TrySelect(dice, 1) && dice.StartCalls == 1, "double click does not change result");
             IEnumerator roll = null;
             Check(!DiceOutcomeSelection.BeforeRoll(dice, ref roll) && roll != null && !roll.MoveNext(), "native roll replaced with completed iterator");
             Check(dice._resultSelection == 3 && dice.SelectionUpdates == 1, "chosen branch highlighted");
+            DiceOutcomeSelection.ClearHover(dice, 3); DiceOutcomeSelection.Hover(dice, 1);
+            Check(thirdVisual.Highlighted && !firstVisual.Highlighted, "late exit and hover during roll cannot erase or replace the actual result");
             bool revolution = true;
             Check(!DiceOutcomeSelection.BeforeRevolution(dice, ref revolution) && !revolution && dice.ContinueCalls == 1, "native final wait released without fate reroll");
             Check(DiceOutcomeSelection.BeforeRoll(dice, ref roll) && DiceOutcomeSelection.BeforeRevolution(dice, ref revolution), "choice state consumed; normal next roll untouched");
@@ -161,6 +189,9 @@ namespace LOMSave.Probe
             Check(DiceOutcomeSelection.TrySelect(dice, 1), "first result selected on reused dialog");
             typeof(DiceOutcomeState).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(dice.GetComponent<DiceOutcomeState>(), null);
             Check(DiceOutcomeSelection.BeforeRoll(dice, ref roll), "closing dialog clears queued result");
+            dice._pressStartButton = false; DiceOutcomeSelection.Hover(dice, 1);
+            typeof(DiceOutcomeState).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(dice.GetComponent<DiceOutcomeState>(), null);
+            Check(!firstVisual.Highlighted && dice.GetComponent<DiceOutcomeState>().HoveredSelection == 0, "closing hovered dialog clears temporary visuals before reuse");
 
             var manager = New<Mortal.Combat.CombatManager>(); Mortal.Combat.CombatManager.Instance = manager;
             var ui = New<Mortal.Combat.CombatUIManager>(); Mortal.Combat.CombatUIManager.Instance = ui;

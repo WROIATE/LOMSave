@@ -3,17 +3,17 @@
 # context_* 为上下文摘要，不是官方 DevNote。
 version: 1
 locale: "zh-CN"
-generated_at: "2026-10-15T08:27:21.328484+00:00"
+generated_at: "2026-10-27T14:23:29.788064+00:00"
 statistics:
   conditions:
-    total: 531
-    named: 509
+    total: 534
+    named: 513
   events:
     total: 397
     named: 389
   flags:
-    total: 1064
-    named: 890
+    total: 1069
+    named: 894
   mission_groups:
     total: 211
     named: 139
@@ -21,12 +21,12 @@ statistics:
     total: 300
     named: 111
   switches:
-    total: 3446
-    named: 3360
+    total: 3459
+    named: 3372
 data_hashes:
-  "globalgamemanagers.assets": "4f9cf91ce1bd75adcf90007f0380276aec4acfdbe0b6386253fe4b662a701740"
-  "sharedassets2.assets": "aa934b3030d7989f8c0b5889dcfed69c1fbdad65ec992520098bed92b26ff438"
-  "resources.assets": "b5beecd144a48e7f00ac2af377943141c06145baf742bbb27f6ffba26c8e98c6"
+  "globalgamemanagers.assets": "f1615f455c8c8e35b540bc74b393d435564ca46e787f706acbd638039939900d"
+  "sharedassets2.assets": "bffa0ecd389b1b9b5bea10159b4789f5f6b9f24aa106d2a0f99ca895df859554"
+  "resources.assets": "a186e836044d095624bb58600371e8780fcfc093dcc30928236f0d81eeee5224"
 mappings:
   conditions:
     "A00001_01":
@@ -272,6 +272,9 @@ mappings:
     "Ch_4_9_3_3_Break_001":
       name: "道别可用条件"
       status: "context_gate"
+    "Ch_4_9_3_3_Break_002":
+      name: "小梅可用条件"
+      status: "option_gate"
     "Ch_5_4_1_001":
       name: "心相 ≥ 65"
       status: "condition_summary"
@@ -989,6 +992,9 @@ mappings:
     "S0030_01_001":
       name: "心相 ≥ 50"
       status: "condition_summary"
+    "S0032_04_001":
+      name: "银两 ≥ 1000"
+      status: "condition_summary"
     "S0104_01_001":
       name: "银两 ≥ 1000"
       status: "condition_summary"
@@ -1401,8 +1407,8 @@ mappings:
       name: "千面人魔可用条件"
       status: "option_gate"
     "Talk_Brother3_Prologue":
-      name: ""
-      status: "context_unresolved"
+      name: "与三师兄对话可用条件"
+      status: "context_gate"
     "Talk_Brother4":
       name: "弟子房四师兄閒聊 = 1 且 四师兄不在唐门 = 0"
       status: "condition_summary"
@@ -1583,6 +1589,9 @@ mappings:
     "Z00001_01":
       name: "旗標暫存1 = 1"
       status: "condition_summary"
+    "心上人_小梅或小竹":
+      name: "心上人 = 3 或 心上人 = 6"
+      status: "context_expression"
     "樊嘯天戰役出場":
       name: "樊啸天拜师夏侯兰 = 0 且 樊啸天好感 ＜ 15 且 救樊啸天的狗 = 0 且 樊啸天被关 = 0"
       status: "context_expression"
@@ -3916,6 +3925,15 @@ mappings:
     "M20067":
       name: "崆峒留学 瑞笙曾出手相救"
       status: "native"
+    "M20068":
+      name: "触发鎮魂獄"
+      status: "native"
+    "M20069":
+      name: "崆峒大試勝利次数"
+      status: "native"
+    "M20070":
+      name: "崆峒大試後进入鶴崖"
+      status: "native"
     "M21000":
       name: "飛天门好感"
       status: "native"
@@ -4368,6 +4386,9 @@ mappings:
       status: "native"
     "M40064":
       name: "进入世外桃源的來源"
+      status: "native"
+    "M40065":
+      name: "晚安"
       status: "native"
     "M50001":
       name: "唐门會議追加選項：前往崆峒"
@@ -5513,6 +5534,9 @@ mappings:
       name: "旗標暫存1"
       status: "native"
     "S0025_01":
+      name: ""
+      status: "unresolved"
+    "S0033_01":
       name: ""
       status: "unresolved"
     "S0100_01":
@@ -8669,7 +8693,7 @@ mappings:
       name: "虎战车命名分支"
       status: "context_subjects"
     "Ch_3_10_3_001":
-      name: "上官萤參战江陵大战、小竹參战江陵大战分支"
+      name: "上官萤參战江陵大战、小竹攜帶虎战车、製作虎战车分支"
       status: "context_subjects"
     "Ch_3_10_3_002":
       name: "郁竹好感 ≥ 40"
@@ -8785,6 +8809,9 @@ mappings:
     "Ch_3_16_1_005":
       name: "性情 ≥ 60 且 处世 ≥ 60"
       status: "condition_summary"
+    "Ch_3_16_1_006":
+      name: "轻微骨裂等级 ≥ 1"
+      status: "context_expression"
     "Ch_3_16_2_001":
       name: "二师兄好感 ≥ 35"
       status: "context_expression"
@@ -9182,7 +9209,7 @@ mappings:
       name: "战术等级分支"
       status: "context_subjects"
     "Ch_3_5_2_002":
-      name: "战术等级 ≥ 1"
+      name: "战术等级 ≥ 3"
       status: "context_expression"
     "Ch_3_5_2_003":
       name: "認識瑞笙 = 1"
@@ -10268,11 +10295,11 @@ mappings:
       name: "嘴力 ≥ 40"
       status: "condition_summary"
     "Ch_4_9_3_1_001":
-      name: "发生三门會談且小梅幫忙趕走敵人 = 1"
-      status: "condition_summary"
-    "Ch_4_9_3_2_001":
-      name: "虞小梅好感 ≥ 50"
+      name: "发生三门會談且小梅幫忙趕走敵人 = 1 或 全部非零(晚安、收留小梅) = 1"
       status: "context_expression"
+    "Ch_4_9_3_2_001":
+      name: "小竹在唐门 = 1 且 晚安 = 0"
+      status: "condition_summary"
     "Ch_4_9_3_3_001":
       name: "收留小竹、叶云裳在唐门、叶云裳好感分支"
       status: "context_subjects"
@@ -10348,6 +10375,9 @@ mappings:
     "Ch_5_1_1_005":
       name: "幫大师兄療傷 = 1 或 臥云崗回程結果 = 2"
       status: "condition_summary"
+    "Ch_5_1_1_006":
+      name: "心上人 = 3 且 晚安 = 1"
+      status: "context_expression"
     "Ch_5_2_1_001":
       name: "触发勸離事件 = 1"
       status: "condition_summary"
@@ -10562,7 +10592,7 @@ mappings:
       name: "二师兄好感 ≥ 40"
       status: "context_expression"
     "Ch_5_4_5_2_004":
-      name: "決鬥臥云崗路線 = 1 或 救大师兄選擇不收功被飛天弟子捅 = 0"
+      name: "決鬥臥云崗路線 = 2 或 晚安 = 0"
       status: "condition_summary"
     "Ch_5_4_5_3_001":
       name: "嘴力 ≥ 40"
@@ -10649,7 +10679,7 @@ mappings:
       name: ""
       status: "context_unresolved"
     "Ch_5_4_8_5_1_005":
-      name: "触发小竹回家 = 1"
+      name: "支線：小竹回家完成 = 1 且 晚安 = 0"
       status: "condition_summary"
     "Ch_5_4_8_5_3_001":
       name: "学問 ≥ 30 且 处世 < 60"
@@ -10679,7 +10709,7 @@ mappings:
       name: "心上人 = 0 且 小师妹好感 ≥ 65"
       status: "context_expression"
     "Ch_5_4_8_8_1_001":
-      name: "触发小竹回家 = 1"
+      name: "支線：小竹回家完成 = 1 且 晚安 = 0"
       status: "condition_summary"
     "Ch_5_4_8_8_2_001":
       name: "心上人 = 3 或 心上人 = 5 或 心上人 = 6 或 心上人 = 7"
@@ -11903,7 +11933,7 @@ mappings:
       name: "小梅同行武林大會 = 1 且 小梅告发申屠龙 = 1"
       status: "condition_summary"
     "Ch_6_8_3_021":
-      name: "友善的顏疆 = 1 或 飛天弟子顏疆死亡 = 0"
+      name: "友善的顏疆 = 1 且 飛天弟子顏疆死亡 = 0"
       status: "condition_summary"
     "Ch_6_8_4_001":
       name: "致哀中與南宫深談話 = 1 且 上官萤好感 ≥ 30"
@@ -12086,7 +12116,7 @@ mappings:
       name: "李富貴好感、丐帮好感度、福韫死亡、福韫好感分支"
       status: "context_subjects"
     "Ch_7_3_3_002":
-      name: "福韫死亡 = 0 且 福韫好感 ≥ 30"
+      name: "福韫死亡 = 0 且 福韫好感 ≥ 20"
       status: "context_expression"
     "Ch_7_3_3_003":
       name: "瑞笙好感 ≥ 20"
@@ -12464,7 +12494,7 @@ mappings:
       name: "攻略小梅、攻略小竹分支"
       status: "context_subjects"
     "Ch_8_1_1_2_010":
-      name: "萬里鵬程好感 ≥ 3"
+      name: "萬里鵬程好感 ≥ 2"
       status: "context_expression"
     "Ch_8_1_1_2_3_001":
       name: ""
@@ -13465,6 +13495,9 @@ mappings:
     "Ch_8_8_1_007":
       name: "小竹的秘密武器 = 1 且 鐵剑令 = 1"
       status: "condition_summary"
+    "Ch_8_8_1_008":
+      name: "攻略小师妹 = 0 且 瑞笙投降 = 1"
+      status: "condition_summary"
     "Ch_8_8_2_001":
       name: "攻略小师妹、攻略龙湘、攻略小兰分支"
       status: "context_subjects"
@@ -14209,6 +14242,9 @@ mappings:
     "M20044_01":
       name: "在南宫家宴時曾為南宫淺出頭 = 1"
       status: "condition_summary"
+    "M20045_00":
+      name: "火閃電 = 0"
+      status: "condition_summary"
     "M20045_GE_1":
       name: "火閃電 ≥ 1"
       status: "condition_summary"
@@ -14514,6 +14550,9 @@ mappings:
       status: "condition_summary"
     "M40063_01":
       name: "救大师兄選擇不收功被飛天弟子捅 = 1"
+      status: "condition_summary"
+    "M40065_01":
+      name: "晚安 = 1"
       status: "condition_summary"
     "M50003_01":
       name: "小师妹出嫁與三师兄決鬥 = 1"
@@ -15220,6 +15259,12 @@ mappings:
     "Meeting_Option_705_01_005":
       name: "行动次数=0"
       status: "native"
+    "Meeting_Option_705_01_006":
+      name: "行动次数=0"
+      status: "native"
+    "Meeting_Option_705_01_007":
+      name: "行动次数=0"
+      status: "native"
     "N00001_00":
       name: "已贖回外堡 = 0"
       status: "condition_summary"
@@ -15234,6 +15279,9 @@ mappings:
       status: "condition_summary"
     "Pharmacy_01_01_001":
       name: "叶云舟在唐门 = 1 且 随机判定(0～100) ≤ 40"
+      status: "condition_summary"
+    "Pinball_Broken_01":
+      name: "彈珠台本場是否搖壞(0/1) = 1"
       status: "condition_summary"
     "Pinball_Score_001":
       name: "旗標暫存1分支"
@@ -16436,13 +16484,13 @@ mappings:
       name: "旗標暫存4 = 1 且 樊啸天拜师夏侯兰 = 1"
       status: "condition_summary"
     "S2200_04_003":
-      name: "虞小梅好感 ≥ 25"
+      name: "虞小梅好感 ≥ 20"
       status: "context_expression"
     "S2200_04_004":
       name: "旗標暫存2分支"
       status: "context_subjects"
     "S2200_04_005":
-      name: "仙鹤迷踪拳数量 = 1"
+      name: "手抄仙鹤迷踪拳数量 ≥ 1"
       status: "context_expression"
     "S2200_04_006":
       name: "郁竹好感 ≥ 25"
@@ -16474,6 +16522,9 @@ mappings:
     "S2201_01_001":
       name: "拜夏侯兰為师 = 0"
       status: "condition_summary"
+    "S2201_01_002":
+      name: "心上人 = 3 或 心上人 = 6"
+      status: "context_expression"
     "S2300_01_001":
       name: "「没门！」后续分支"
       status: "context_option"
@@ -17605,6 +17656,15 @@ mappings:
     "Section_01_Free_08_06_01_001":
       name: "通用決鬥成败、決鬥泛用事件旗標1分支"
       status: "context_subjects"
+    "Section_01_Free_08_07_001":
+      name: "崆峒大試勝利次数 < 3"
+      status: "condition_summary"
+    "Section_01_Free_08_07_002":
+      name: "处世分支"
+      status: "context_subjects"
+    "Section_01_Free_Option_001":
+      name: "当前日期 ≥ 第2年5月下旬 且 崆峒大試後进入鶴崖 = 0"
+      status: "context_expression"
     "Section_02_02_001":
       name: "道学等级 ≥ 3"
       status: "context_expression"
@@ -17737,6 +17797,9 @@ mappings:
     "Talk_Brother4_04_005":
       name: "三獎 小竹打工券 = 0 且 小竹在唐门 = 1"
       status: "condition_summary"
+    "Talk_Brother4_04_006":
+      name: ""
+      status: "context_unresolved"
     "Talk_Count_01":
       name: ""
       status: "context_unresolved"

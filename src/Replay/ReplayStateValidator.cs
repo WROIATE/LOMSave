@@ -37,12 +37,10 @@ namespace LOMSave.Probe
                     var timer = System.Diagnostics.Stopwatch.StartNew();
                     IsRestoring = true;
                     var source = _expected.ToObject<GameSave>();
-                    Traverse.Create(SaveSystem.Instance)
-                        .Method("ExecuteLoadGameData", new[] { typeof(GameSave) }).GetValue(source);
+                    NativeSaveApi.Load(source);
                     PlayerStatManagerData.Instance.SetStartScript(source.StartStoryScript);
                     PlayerStatManagerData.Instance.SetStoryScript(source.CurrentStoryScript);
-                    _expected = JObject.FromObject(Traverse.Create(SaveSystem.Instance)
-                        .Method("CreateSaveData").GetValue<GameSave>());
+                    _expected = JObject.FromObject(NativeSaveApi.Capture(SaveSystem.Instance));
                     LOMSaveProbePlugin.WriteEvent("story_replay_target_migrated", new
                     {
                         fromVersion = gameSave.Version,
@@ -78,7 +76,7 @@ namespace LOMSave.Probe
         {
             var expected = _expected; _expected = null;
             if (expected == null || _prepareFailed) return false;
-            var actual = JObject.FromObject(Traverse.Create(SaveSystem.Instance).Method("CreateSaveData").GetValue<GameSave>());
+            var actual = JObject.FromObject(NativeSaveApi.Capture(SaveSystem.Instance));
             foreach (var field in IgnoredFields) { expected.Remove(field); actual.Remove(field); }
             expected.Remove("RestoreData"); actual.Remove("RestoreData");
             var differences = new List<StateDifference>(); var count = 0;
@@ -114,9 +112,7 @@ namespace LOMSave.Probe
                 authoritativeSave.CurrentStoryScript = script;
                 authoritativeSave.StartStoryScript = script;
                 IsRestoring = true;
-                Traverse.Create(SaveSystem.Instance)
-                    .Method("ExecuteLoadGameData", new[] { typeof(GameSave) })
-                    .GetValue(authoritativeSave);
+                NativeSaveApi.Load(authoritativeSave);
                 // Loading data alone leaves the old Lua coroutine suspended in place.
                 // A real scene reload discards it and begins the checkpoint script afresh.
                 ReplayCharacterContext.PrepareFallback(script);
@@ -173,7 +169,7 @@ namespace LOMSave.Probe
             {
                 if (strict)
                 {
-                    var replayed = JObject.FromObject(Traverse.Create(SaveSystem.Instance).Method("CreateSaveData").GetValue<GameSave>());
+                    var replayed = JObject.FromObject(NativeSaveApi.Capture(SaveSystem.Instance));
                     var wanted = (JObject)expected.DeepClone();
                     foreach (var field in IgnoredFields) { wanted.Remove(field); replayed.Remove(field); }
                     // Native automatic-save backup text is not gameplay state;
@@ -196,9 +192,7 @@ namespace LOMSave.Probe
             {
                 var authoritativeSave = expected.ToObject<GameSave>();
                 IsRestoring = true;
-                Traverse.Create(SaveSystem.Instance)
-                    .Method("ExecuteLoadGameData", new[] { typeof(GameSave) })
-                    .GetValue(authoritativeSave);
+                NativeSaveApi.Load(authoritativeSave);
                 PlayerStatManagerData.Instance.SetStartScript(
                     authoritativeSave.StartStoryScript);
                 PlayerStatManagerData.Instance.SetStoryScript(checkpoint.Script);
@@ -225,9 +219,7 @@ namespace LOMSave.Probe
 
             try
             {
-                var currentSave = Traverse.Create(SaveSystem.Instance)
-                    .Method("CreateSaveData")
-                    .GetValue<GameSave>();
+                var currentSave = NativeSaveApi.Capture(SaveSystem.Instance);
                 var actual = JObject.FromObject(currentSave);
                 var changedFields = new List<string>();
                 foreach (var property in expected.Properties())

@@ -103,11 +103,10 @@ namespace LOMSave.Probe
             if (trace == null) return;
             try
             {
-                var log = FungusManager.Instance.NarrativeLog;
                 var title = EventConditions.CheckpointName(trace.Key, trace.Data);
                 var text = "<color=#E3B86B>剧情检查点 · " + title + "</color>  " + result;
                 if (trace.Lines.Count > 0) text += "\n" + string.Join("\n", trace.Lines.Distinct().ToArray());
-                if (log != null) log.AddLine(new NarrativeLogEntry { name = "剧情判定", text = "<size=20>" + text + "</size>" });
+                StoryLogData.AddText("<size=20>" + text + "</size>", false);
                 CheckpointToast.Publish(trace.Key, title, result, trace.Lines);
                 LOMSaveProbePlugin.WriteEvent("checkpoint_recall", new { trace.Key, result, text });
             }

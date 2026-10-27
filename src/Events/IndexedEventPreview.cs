@@ -36,11 +36,17 @@ namespace LOMSave.Probe
                 result.Add(new EventInspector.Entry { Title = title, Detail = detail, Conditions = conditions, Group = group,
                     IndexedPool = key, IndexedEvent = item.Code, CanSelect = rate.HasValue && rate.Value > 0,
                     Eligible = rate.HasValue ? (bool?)(rate.Value > 0) : null });
+                foreach (var branch in BranchEventSelection.ForScript(item.Script))
+                {
+                    branch.Group = title + " · 后续条件剧情";
+                    if (!rate.HasValue || rate.Value <= 0) { branch.CanSelect = false; branch.Eligible = rate.HasValue ? (bool?)false : null; }
+                    result.Add(branch);
+                }
             }
             return result;
         }
 
-        private static string Describe(StoryEventIndexData data, StoryIndexCondition condition)
+        internal static string Describe(StoryEventIndexData data, StoryIndexCondition condition)
         {
             if (condition == null || condition.Comparisons == null) return "条件未知";
             if (condition.Comparisons.Length == 0) return "无额外限制";

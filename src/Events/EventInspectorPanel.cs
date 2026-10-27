@@ -24,6 +24,7 @@ namespace LOMSave.Probe
         private static string _title;
         private static string _dataHint;
         private static Action _refresh;
+        private static Action _onClose;
         private static int _indexRevision;
 
         internal static void Update()
@@ -47,16 +48,17 @@ namespace LOMSave.Probe
             _refresh = null;
             Expanded.Clear();
             if (wasOpen) _closedAt = Time.unscaledTime;
+            var closed = _onClose; _onClose = null; closed?.Invoke();
         }
         private static void DestroyView()
         {
             if (_root != null) { _root.SetActive(false); UnityEngine.Object.Destroy(_root); }
             _root = null; _scroll = null; _status = null;
         }
-        internal static void Show(string title, List<EventInspector.Entry> entries, string dataHint = null, Action refresh = null)
+        internal static void Show(string title, List<EventInspector.Entry> entries, string dataHint = null, Action refresh = null, Action onClose = null)
         {
             Close();
-            _title = title; _dataHint = dataHint;
+            _title = title; _dataHint = dataHint; _onClose = onClose;
             _refresh = refresh; _indexRevision = StoryEventIndex.Revision;
             _tabs = entries.GroupBy(x => x.TabKey ?? "events").Select(x => new Tab {
                 Key = x.Key, Title = x.First().TabTitle ?? "相关事件", Entries = x.ToList() }).ToList();
@@ -93,7 +95,7 @@ namespace LOMSave.Probe
             panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             panel.rectTransform.sizeDelta = new Vector2(1240, 860);
             Label(panel.transform, _title, 30, Gold, 36, 20, 1168, 46);
-            Label(panel.transform, "主线、已就绪人物剧情优先；随机指定在对应事件池生效。固定选择跨读档保留。", 21, Color.white, 36, 76, 1168, 36);
+            Label(panel.transform, "主线、已就绪人物剧情优先；指定只影响对应随机事件或条件分支，不绕过前置条件。固定选择跨读档保留。", 21, Color.white, 36, 76, 1168, 36);
             _status = Label(panel.transform, "下次事件：" + EventInspector.PendingName, 21, Gold, 36, 114, 820, 40);
             var hidden = entries.Count(x => x.Eligible == false);
             Button(panel.transform, _selected.ShowUnavailable ? "隐藏不可触发事件" : "查看不可触发（" + hidden + "）", 900, 110, 304, 42,

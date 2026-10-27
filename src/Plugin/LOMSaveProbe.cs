@@ -23,7 +23,7 @@ namespace LOMSave.Probe
     {
         public const string PluginGuid = "bk.plugins.LOMSave.Probe";
         public const string PluginName = "LOMSave Probe";
-        public const string PluginVersion = "0.25.19";
+        public const string PluginVersion = "0.25.23";
 
         private const float PortraitLoadTimeoutSeconds = 5f;
         private static readonly object LogLock = new object();
@@ -70,6 +70,7 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(DeathLoadMenu));
                 harmony.PatchAll(typeof(SaveButtonAvailability));
                 harmony.PatchAll(typeof(ContinuationShopGuard));
+                harmony.PatchAll(typeof(NativeStoryLog));
                 harmony.PatchAll(typeof(AutoDialogueSpeed));
                 harmony.PatchAll(typeof(SaveNotes));
                 harmony.PatchAll(typeof(ReplayAudio));
@@ -85,6 +86,7 @@ namespace LOMSave.Probe
                 harmony.PatchAll(typeof(OptionImpactPreview));
                 harmony.PatchAll(typeof(PreviewInteraction));
                 harmony.PatchAll(typeof(EventInspector));
+                harmony.PatchAll(typeof(BranchEventSelection));
                 harmony.PatchAll(typeof(CheckpointRecall));
                 harmony.PatchAll(typeof(TeamBattleSkip));
                 harmony.PatchAll(typeof(DuelDirectVictory));
@@ -197,8 +199,7 @@ namespace LOMSave.Probe
             try
             {
                 var saveSystem = SaveSystem.Instance;
-                var createSaveData = Traverse.Create(saveSystem).Method("CreateSaveData");
-                var gameSave = createSaveData.GetValue<GameSave>();
+                var gameSave = NativeSaveApi.Capture(saveSystem);
                 WriteGameSave("state_snapshot", reason, gameSave);
             }
             catch (Exception exception)
@@ -654,9 +655,7 @@ namespace LOMSave.Probe
 
             try
             {
-                var gameSave = Traverse.Create(SaveSystem.Instance)
-                    .Method("CreateSaveData")
-                    .GetValue<GameSave>();
+                var gameSave = NativeSaveApi.Capture(SaveSystem.Instance);
                 _storyBeginningSave = gameSave == null
                     ? null
                     : JObject.FromObject(gameSave);

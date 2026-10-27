@@ -181,13 +181,20 @@ namespace LOMSave.Probe
             var position = EventInspector.Read<PositionType>(building, "_position");
             if (manager.ActiveSubMissions != null && manager.ActiveSubMissions.Values.Any(x => x != null && x.Position == position && !string.IsNullOrEmpty(x.StartScript))) return;
             var data = EventInspector.Read<FreePositionData>(building, "_positionData");
-            foreach (var route in Routes.Scan(EventInspector.Read<string>(data, "_defaultScript"), EventInspector.Load))
+            foreach (var route in Routes.Scan(EventInspector.Read<string>(data, "_defaultScript"), EventInspector.Load, true))
             {
-                if (route.Guards.Any(x => StoryEventRoutes.Check(x, Condition, Selector) != true)) continue;
                 var actionCost = 0;
                 foreach (var option in route.Options)
                 { var parts = option.Split('+'); int cost; if (parts.Length == 4 && int.TryParse(parts[2], out cost)) actionCost += Math.Max(0, cost); }
                 if (actionCost > PlayerStatManagerData.Instance.CurrentActionCount) continue;
+                if (route.Checkpoint != null)
+                {
+                    foreach (var entry in BranchEventSelection.ForRoute(route).Where(x => x.Eligible == true && !x.BranchFallback))
+                        result.Add(new CalendarStoryEvent { Key = entry.BranchScope + ":" + entry.BranchOutcome, Title = entry.Title,
+                            Kind = "条件剧情", Trigger = Location(position) + " · " + entry.Group, Random = true });
+                    continue;
+                }
+                if (route.Guards.Any(x => StoryEventRoutes.Check(x, Condition, Selector) != true)) continue;
                 PositionResultData pool;
                 var trigger = Location(position);
                 if (route.Options.Length > 0) trigger += " · " + string.Join(" → ", route.Options.Select(EventInspector.OptionName).Distinct().ToArray());

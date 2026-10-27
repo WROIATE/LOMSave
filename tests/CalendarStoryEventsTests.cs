@@ -102,7 +102,12 @@ end";
             Check(nativeBack.Select(r => r.Pool).OrderBy(x => x).SequenceEqual(new[] { "Back_02", "Back_03", "Back_Free_001", "Back_Work_001" }.OrderBy(x => x)), "Native rear mountain routes retain all four pools");
             Check(nativeBack.Where(r => r.Options.Contains("pickwood+work+pickwood")).Count() == 2, "Rear mountain work encounters have the correct trigger action");
             var nativeDoor = new StoryEventRoutes().Scan("door_001", key => { var path = Path.Combine(storyDirectory, key + ".txt"); return File.Exists(path) ? File.ReadAllText(path) : null; });
-            Check(nativeDoor.Any(r => r.Pool == "Door_Free_001" && r.Options.Contains("move+闹市+0+0") && r.Options.Contains("walk+free+walk")), "Outing includes downstream stroll menu, not merely the first menu");
+            var doorSource = File.ReadAllText(Path.Combine(storyDirectory, "door_001.txt"));
+            if (doorSource.Contains("move+闹市+0+0"))
+                Check(nativeDoor.Any(r => r.Pool == "Door_Free_001" && r.Options.Contains("move+闹市+0+0") && r.Options.Contains("walk+free+walk")), "Legacy outing includes downstream stroll menu");
+            else
+                Check(doorSource.Contains("checkpointmanager.Position(\"Door_02\")") && nativeDoor.Any(r => r.Pool == "Door_02")
+                    && !nativeDoor.Any(r => r.Options.Contains("move+闹市+0+0")), "Current native outing follows Door_02 instead of inventing the obsolete town menu");
             Check(CalendarStoryEvents.IsSpecial("Back_02_E_01", "龙湘的挑战", "P_特殊_001"), "Named special encounter is included");
             Check(CalendarStoryEvents.IsSpecial("Pharmacy_Work_E_01", "", "P_特殊_001"), "Unnamed special encounter is included");
             Check(CalendarStoryEvents.IsSpecial("Back_Work_M_02", "登崖眺望", "P_其他_002"), "Named miscellaneous story is included");

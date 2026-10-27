@@ -22,7 +22,7 @@
 
 ## 安装方法
 
-当前实测游戏版本为 `release_1.0.6000.5`，运行环境为 Windows x64、Unity 2020.3.49f1、BepInEx 6 Unity.Mono。
+当前适配游戏版本为 `release_1.0.6001.0`，已通过离线回归与原生接口检查，新版实机效果（含 F9 入口修复）待验收；此前实测版本为 `release_1.0.6000.5`。运行环境为 Windows x64、Unity 2020.3.49f1、BepInEx 6 Unity.Mono。
 
 1. 退出游戏并备份存档；安装可用的 **[BepInEx 6 Unity.Mono Windows x64](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_mono.html)**，安装包不包含该框架。
 2. 从 [Releases](https://github.com/WROIATE/LOMSave/releases) 下载安装 ZIP，将其中的 `BepInEx` 文件夹合并到游戏根目录（`Mortal.exe` 所在目录），保留包内许可证。

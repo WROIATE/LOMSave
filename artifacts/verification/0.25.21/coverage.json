@@ -1,0 +1,164 @@
+{
+  "scripts": 2199,
+  "callSites": 31,
+  "scriptCount": 16,
+  "checkpointCount": 13,
+  "milliseconds": 2414.975,
+  "calls": [
+    {
+      "script": "alchemy_001",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_001_001"
+    },
+    {
+      "script": "alchemy_work_502",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_Work_502_001"
+    },
+    {
+      "script": "alchemy_work_502",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_Work_502_001"
+    },
+    {
+      "script": "alchemy_work_502",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_Work_502_001"
+    },
+    {
+      "script": "alchemy_work_502",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_Work_502_001"
+    },
+    {
+      "script": "alchemy_work_502",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_Work_502_001"
+    },
+    {
+      "script": "alchemy_work_502",
+      "kind": "Switch",
+      "checkpoint": "Alchemy_Work_502_001"
+    },
+    {
+      "script": "back_free_001",
+      "kind": "Switch",
+      "checkpoint": "Back_Free_001_001"
+    },
+    {
+      "script": "center_001",
+      "kind": "Switch",
+      "checkpoint": "Center_001_001"
+    },
+    {
+      "script": "center_free_503",
+      "kind": "Switch",
+      "checkpoint": "Center_Free_503_001"
+    },
+    {
+      "script": "center_free_503",
+      "kind": "Switch",
+      "checkpoint": "Center_Free_503_001"
+    },
+    {
+      "script": "center_free_503",
+      "kind": "Switch",
+      "checkpoint": "Center_Free_503_001"
+    },
+    {
+      "script": "center_free_503",
+      "kind": "Switch",
+      "checkpoint": "Center_Free_503_001"
+    },
+    {
+      "script": "center_free_503",
+      "kind": "Switch",
+      "checkpoint": "Center_Free_503_001"
+    },
+    {
+      "script": "center_free_503",
+      "kind": "Switch",
+      "checkpoint": "Center_Free_503_001"
+    },
+    {
+      "script": "ch3_1_7_2_01_101",
+      "kind": "Switch",
+      "checkpoint": "Ch_3_1_7_2_01_101_001"
+    },
+    {
+      "script": "ch3_6_4",
+      "kind": "Switch",
+      "checkpoint": "Ch_3_6_4_002"
+    },
+    {
+      "script": "forge_work_502",
+      "kind": "Switch",
+      "checkpoint": "Forge_Work_502_001"
+    },
+    {
+      "script": "forge_work_502",
+      "kind": "Switch",
+      "checkpoint": "Forge_Work_502_001"
+    },
+    {
+      "script": "forge_work_502",
+      "kind": "Switch",
+      "checkpoint": "Forge_Work_502_001"
+    },
+    {
+      "script": "forge_work_502",
+      "kind": "Switch",
+      "checkpoint": "Forge_Work_502_001"
+    },
+    {
+      "script": "forge_work_502",
+      "kind": "Switch",
+      "checkpoint": "Forge_Work_502_001"
+    },
+    {
+      "script": "forge_work_502",
+      "kind": "Switch",
+      "checkpoint": "Forge_Work_502_001"
+    },
+    {
+      "script": "pharmacy_01_01",
+      "kind": "Switch",
+      "checkpoint": "Pharmacy_01_01_001"
+    },
+    {
+      "script": "section_01_free_01",
+      "kind": "Switch",
+      "checkpoint": "Section_01_Free_01_001"
+    },
+    {
+      "script": "section_01_free_03",
+      "kind": "Switch",
+      "checkpoint": "Section_01_Free_01_001"
+    },
+    {
+      "script": "section_01_free_04",
+      "kind": "Switch",
+      "checkpoint": "Section_01_Free_01_001"
+    },
+    {
+      "script": "section_01_free_05",
+      "kind": "Switch",
+      "checkpoint": "Section_01_Free_01_001"
+    },
+    {
+      "script": "travel_result_s2501_01_901",
+      "kind": "Switch",
+      "checkpoint": "Travel_S2501_01_901_001"
+    },
+    {
+      "script": "travel_result_s2501_01_902",
+      "kind": "Switch",
+      "checkpoint": "Travel_S2501_01_902_001"
+    },
+    {
+      "script": "travel_result_s2501_01_903",
+      "kind": "Switch",
+      "checkpoint": "Travel_S2501_01_903_001"
+    }
+  ]
+}

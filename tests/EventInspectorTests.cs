@@ -9,6 +9,13 @@ using Mortal.Story;
 // Minimal game boundary; selection and both Harmony prefixes are production code.
 namespace HarmonyLib
 {
+    public sealed class Traverse {
+        private object target; private System.Reflection.FieldInfo field;
+        public static Traverse Create(object value) { return new Traverse { target = value }; }
+        public Traverse Field(string name) { field = target.GetType().GetField(name); return this; }
+        public T GetValue<T>() { return (T)field.GetValue(target); }
+        public void SetValue(object value) { field.SetValue(target, value); }
+    }
     public class HarmonyPrefix : Attribute { }
     public class HarmonyPostfix : Attribute { }
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
@@ -50,8 +57,16 @@ namespace Mortal.Core
 {
     public enum PositionType { 無 = -1, 弟子房, 大門, 後山 }
     public class FlagData : UnityEngine.Object { }
-    public class ConditionResultItem { public bool? Pass = true; }
-    public class ConditionResultData : UnityEngine.Object { public bool? Pass = true; }
+    public enum LogicOperatorType { AND, OR }
+    public enum StatCompareType { Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual }
+    public enum StatGroupType { None, Sum, Max, Min, Product }
+    public class StatCompareItem { public StatGroupVariable _value1, _value2; public StatCompareType _compareOp; }
+    public class StatGroupVariable { public StatGroupType _groupType = StatGroupType.Sum; public List<StatValueReference> _value = new List<StatValueReference>(); }
+    public class StatValueReference { public int CheckType, _constant, _randomMin, _randomMax, Native; public bool _negative;
+        public StatGroupVariable _statGroup; public ConditionResultData _condition;
+        public int GetValue() { if (CheckType == 7 || CheckType == 16) throw new Exception("Preview executed a random/condition getter"); return Native; } }
+    public class ConditionResultItem { public bool? Pass = true; public LogicOperatorType _logicOp; public List<StatCompareItem> _items = new List<StatCompareItem>(); }
+    public class ConditionResultData : UnityEngine.Object { public bool? Pass = true; public int _count; public List<ConditionResultItem> _items = new List<ConditionResultItem>(); }
     public class GameStat { }
     public class RelationshipStat { }
     public class GameSave { }
@@ -71,6 +86,7 @@ namespace Mortal.Core
     {
         public static PlayerStatManagerData Instance = new PlayerStatManagerData();
         public string Story;
+        public string CurrentStoryScript { get { return Story; } }
         public int CurrentActionCount = 4;
         public void SetStoryScript(string script) { Story = script; }
     }
@@ -106,7 +122,7 @@ namespace Mortal.Story
         public ConditionResultConfig _condition = new ConditionResultConfig(); public SwitchResultConfig[] _switchList = new SwitchResultConfig[0]; }
     public class ConditionResultConfig : UnityEngine.Object { public List<ConditionResultData> List = new List<ConditionResultData>(); }
     public class SwitchResultConfig : UnityEngine.Object { public List<SwitchResultData> List = new List<SwitchResultData>(); }
-    public class SwitchResultData : UnityEngine.Object { public bool _useCount; public List<ConditionResultItem> _items = new List<ConditionResultItem>(); }
+    public class SwitchResultData : UnityEngine.Object { public bool _useCount; public int _count; public List<ConditionResultItem> _items = new List<ConditionResultItem>(); }
     public class PositionResultConfig : UnityEngine.Object { public List<PositionResultData> List = new List<PositionResultData>(); }
     public class PositionResultData : UnityEngine.Object
     {
@@ -144,7 +160,7 @@ namespace LOMSave.Probe
         internal static bool IsOpen;
         internal static string DescribeAction(string method, string[] args) { return null; }
     }
-    internal static class ReplayRuntime { internal static bool IsRestoring; }
+    internal static class ReplayRuntime { internal static bool IsRestoring, IsReplaying; }
     internal static class StoryCommandTrace { internal static bool IsReplayPending; }
     internal static class SaveNotes { internal static bool IsOpen; }
     internal static class FeaturePanel { internal static bool BlocksInput; }
@@ -164,6 +180,7 @@ namespace LOMSave.Probe
         internal void Bind(PositionController controller) { }
     }
 #if !CALENDAR_JOURNAL
+    internal static class ReplayStateValidator { internal static bool IsRestoring; }
     internal static class StoryEventIndex
     {
         internal static StoryEventIndexData Data;
@@ -179,7 +196,7 @@ namespace LOMSave.Probe
     internal static class LOMSaveProbePlugin
     {
         internal static void WriteEvent(string name, object data) { }
-        internal static void WriteError(string name, Exception error) { throw error; }
+        internal static void WriteError(string name, Exception error, object context = null) { throw error; }
     }
     public static class EventInspectorTests
     {
@@ -196,8 +213,10 @@ namespace LOMSave.Probe
         private static List<EventInspector.Entry> Scan(string source)
         {
             UnityEngine.Resources.Scripts["story/chinesetraditional/preview_test"] = new UnityEngine.TextAsset { text = source };
+            var name = "preview_test_" + _checks;
+            UnityEngine.Resources.Scripts["story/chinesetraditional/" + name] = new UnityEngine.TextAsset { text = source };
             return (List<EventInspector.Entry>)typeof(EventInspector).GetMethod("ScriptPools", BindingFlags.Static | BindingFlags.NonPublic)
-                .Invoke(null, new object[] { "preview_test" });
+                .Invoke(null, new object[] { name });
         }
         public static string Run()
         {
@@ -336,6 +355,28 @@ end");
             Check(!EventInspector.IsFixed(firstCopy), "Cancelling fixed selection from another tab updates the same scope");
             entries = Scan("checkpointmanager.Position(\"Pharmacy_Work_001\")");
             Check(entries.Count == 10 && entries.All(x => x.Group == "随机事件" && x.TabKey == "random"), "Entry-only pools remain available without option markers");
+            UnityEngine.Resources.Scripts["story/chinesetraditional/nested_rest"] = new UnityEngine.TextAsset { text = @"
+local menu = {}
+menu[1] = ""O_REST""
+local choice = choose(menu)
+if choice == 1 then
+    checkpointmanager.Position(""Pharmacy_Work_001"")
+end" };
+            entries = Scan(@"
+local menu = {}
+menu[1] = ""sleep+free+sleep""
+local choice = choose(menu)
+if choice == 1 then
+    luamanager.SetNextScript(""nested_rest"")
+end");
+            Check(entries.Count == 10 && entries.All(x => x.TabKey == "option:sleep+free+sleep") && entries.Count(x => x.CanSelect) == 4,
+                "Building preview follows a second action menu in the next script without losing its root tab");
+            entries = Scan(@"
+if unrecognized_runtime_value then
+    luamanager.SetNextScript(""nested_rest"")
+end");
+            Check(entries.Count == 10 && entries.All(x => x.Eligible == null && !x.CanSelect),
+                "Nested-menu fallback never enables an unknown parent guard");
 
             foreach (var key in new[] { "Back_Work_001", "Back_02", "Back_Free_001", "Back_03" })
                 config.List.Add(new PositionResultData { name = key, _scriptPrefix = key.ToLowerInvariant(),

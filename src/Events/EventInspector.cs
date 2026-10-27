@@ -22,6 +22,10 @@ namespace LOMSave.Probe
             internal PositionResultData Pool;
             internal PositionEventData Event;
             internal string IndexedPool, IndexedEvent;
+            internal string BranchScript, BranchKind, BranchKey;
+            internal int BranchOutcome;
+            internal bool BranchFallback;
+            internal string BranchScope { get { return BranchScript == null ? null : BranchEventSelection.Scope(BranchScript, BranchKind, BranchKey); } }
             internal string PoolCode { get { return Pool != null ? Pool.name : IndexedPool; } }
             internal string EventCode { get { return Event != null ? Event.name : IndexedEvent; } }
             internal MissionCheckData Mission;
@@ -37,6 +41,7 @@ namespace LOMSave.Probe
         }
 
         private static Entry _pending;
+        private static readonly StoryEventRoutes PoolRoutes = new StoryEventRoutes();
         internal static PositionResultConfig KnownPositionConfig { get { return StoryEventConfigs.Position; } }
 
         [HarmonyPostfix, HarmonyPatch(typeof(CheckPointManager), "Awake")]
@@ -56,9 +61,11 @@ namespace LOMSave.Probe
             catch (Exception e) { LOMSaveProbePlugin.WriteError("event_preferences_load_failed", e); }
         }
         private static string Scope(Entry entry)
-        { return entry == null ? null : entry.PoolCode != null ? "pool:" + entry.PoolCode : entry.Mission != null ? "mission:" + (int)entry.Mission.Position : null; }
+        { return entry == null ? null : entry.BranchScope != null ? entry.BranchScope : entry.PoolCode != null ? "pool:" + entry.PoolCode : entry.Mission != null ? "mission:" + (int)entry.Mission.Position : null; }
         private static string Key(Entry entry)
-        { return entry == null ? null : entry.EventCode ?? (entry.Mission != null ? entry.Mission.name : null); }
+        { return entry == null ? null : entry.BranchScope != null ? entry.BranchOutcome.ToString() : entry.EventCode ?? (entry.Mission != null ? entry.Mission.name : null); }
+        internal static string BranchChoice(string scope) { return _pending != null && _pending.BranchScope == scope ? Key(_pending) : _fixed.Get(scope); }
+        internal static void ConsumeBranch(string scope) { if (_pending != null && _pending.BranchScope == scope) _pending = null; }
         internal static bool IsFixed(Entry entry) { return Key(entry) != null && _fixed.Get(Scope(entry)) == Key(entry); }
         internal static void ToggleFixed(Entry entry)
         {
@@ -230,6 +237,12 @@ namespace LOMSave.Probe
                     result.Add(new Entry { Title = title, Pool = pool, Event = data, Detail = detail, Conditions = conditions,
                         Group = group, CanSelect = rate.HasValue && rate.Value > 0,
                         Eligible = rate.HasValue ? (bool?)(rate.Value > 0) : null });
+                    foreach (var branch in BranchEventSelection.ForScript(script))
+                    {
+                        branch.Group = title + " · 后续条件剧情";
+                        if (!rate.HasValue || rate.Value <= 0) { branch.CanSelect = false; branch.Eligible = rate.HasValue ? (bool?)false : null; }
+                        result.Add(branch);
+                    }
                 }
             }
             return result;
@@ -272,11 +285,32 @@ namespace LOMSave.Probe
                     result.AddRange(entries.Select(x => x.InTab(tab.Key, tab.Title, group)));
                 }
             }
+            // Nested action menus can live in another script (e.g. room rest).
+            // The impact scanner stops at those menus; follow their static
+            // routes as well, without running Lua or guessing unknown guards.
+            var extra = new List<Entry>();
+            foreach (var route in PoolRoutes.Scan(script, Load))
+            {
+                var key = route.Options.Length == 0 ? "random" : "option:" + route.Options[0];
+                if (result.Any(x => x.PoolCode == route.Pool && x.TabKey == key)) continue;
+                var title = route.Options.Length == 0 ? "随机事件" : OptionName(route.Options[0]);
+                var group = route.Options.Length == 0 ? "随机事件" : "选项 · " + string.Join(" → ", route.Options.Select(OptionName));
+                var checks = route.Guards.Select(BranchEventSelection.Guard).ToArray();
+                var reachable = checks.Any(x => x == false) ? (bool?)false : checks.Any(x => !x.HasValue) ? null : (bool?)true;
+                foreach (var item in PoolsFor(new[] { new LuaImpactScanner.Action { Method = "PositionPool", Arguments = new[] { route.Pool } } }, null))
+                {
+                    var copy = item.InTab(key, title, group);
+                    if (reachable != true) { copy.CanSelect = false; copy.Eligible = reachable; }
+                    extra.Add(copy);
+                }
+            }
+            result.AddRange(extra.GroupBy(x => x.TabKey + ":" + (x.BranchScope ?? x.PoolCode) + ":" + (x.EventCode ?? x.BranchOutcome.ToString()))
+                .Select(g => g.OrderByDescending(x => x.Eligible == true ? 2 : x.Eligible == null ? 1 : 0).First()));
             foreach (var tab in result.GroupBy(x => x.TabKey))
             {
-                var pools = tab.Select(x => x.PoolCode).Distinct().ToList();
+                var pools = tab.Where(x => x.PoolCode != null).Select(x => x.PoolCode).Distinct().ToList();
                 if (pools.Count < 2) continue;
-                foreach (var entry in tab) entry.Group += " · 事件组 " + (pools.IndexOf(entry.PoolCode) + 1);
+                foreach (var entry in tab.Where(x => x.PoolCode != null)) entry.Group += " · 事件组 " + (pools.IndexOf(entry.PoolCode) + 1);
             }
             return result;
         }
@@ -304,6 +338,7 @@ namespace LOMSave.Probe
                 var data = Read<FreePositionData>(controller, "_positionData");
                 var script = Read<string>(data, "_defaultScript");
                 entries.AddRange(ScriptPools(script));
+                entries.AddRange(BranchEventSelection.ForScript(script));
                 LOMSaveProbePlugin.WriteEvent("building_events_scanned", new { position = position.ToString(), script,
                     checkpointManagerPresent = CheckPointManager.Instance != null, count = entries.Count,
                     milliseconds = timer.Elapsed.TotalMilliseconds });

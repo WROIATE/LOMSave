@@ -57,9 +57,16 @@ namespace LOMSave.Probe
         internal static void Toggle()
         {
             if (_owned) { Close(); return; }
-            // Existing installations retain their trainer's configured shortcut.
-            // Check only when pressed, after all plugins have finished loading.
-            if (HasTrainer() || !CanOpen()) return;
+            // Awake can bind another additive scene's panel, which is later
+            // unloaded. Reacquire the current scene's panel on demand only.
+            try { EnsureCurrentPanel(); }
+            catch (Exception error) { LOMSaveProbePlugin.WriteError("debug_shortcut_bind_failed", error); return; }
+            var blocked = HasTrainer() ? "external_trainer" : BlockedReason();
+            if (blocked != null)
+            {
+                LOMSaveProbePlugin.WriteEvent("debug_shortcut_blocked", new { reason = blocked });
+                return;
+            }
             _speed = Time.timeScale;
             _story = StoryManager.Instance;
             _storyPause = _story != null && _story.IsStoryPause;
@@ -87,23 +94,49 @@ namespace LOMSave.Probe
             }
         }
 
-        private static bool CanOpen()
+        private static void EnsureCurrentPanel()
         {
-            if (_panel == null || !Application.isFocused || FeaturePanel.BlocksInput || SaveNotes.IsOpen
-                || EventInspectorPanel.BlocksInput || OptionImpactPreview.IsOpen || AutoDialogueSpeed.SettingsVisible
-                || ReplayRuntime.IsRestoring || ReplayRuntime.IsReplaying || StoryCommandTrace.IsReplayPending
-                || ReplayStateValidator.IsRestoring) return false;
-            if (VisibleParent() == null) return false;
+            var active = SceneManager.GetActiveScene();
+            if (active.name != "Free" && active.name != "Story") return;
+            if (_panel != null && _panel.scene == active) return;
+            foreach (var status in Resources.FindObjectsOfTypeAll<PlayerStatusPanel>())
+            {
+                if (status == null || status.gameObject.scene != active) continue;
+                var panel = EventInspector.Read<GameObject>(status, "_testPanel");
+                if (panel == null) continue;
+                DebugMenuEnhancements.Attach(panel);
+                LOMSaveProbePlugin.WriteEvent("debug_shortcut_rebound", new { scene = active.name });
+                return;
+            }
+            // Never expose a panel from a different or unloading scene.
+            Attach(null);
+        }
+
+        private static string BlockedReason()
+        {
+            if (_panel == null) return "panel_missing";
+            if (!Application.isFocused) return "unfocused";
+            if (FeaturePanel.BlocksInput) return "feature_panel";
+            if (SaveNotes.IsOpen) return "save_notes";
+            if (EventInspectorPanel.BlocksInput) return "event_preview";
+            if (OptionImpactPreview.IsOpen) return "option_preview";
+            if (AutoDialogueSpeed.SettingsVisible) return "settings";
+            if (ReplayRuntime.IsRestoring || ReplayRuntime.IsReplaying || StoryCommandTrace.IsReplayPending
+                || ReplayStateValidator.IsRestoring) return "restoring";
+            if (VisibleParent() == null) return "panel_host_hidden";
             var scene = SceneController.Instance;
-            if (scene == null || scene.IsPrepare || scene.IsLoading) return false;
+            if (scene == null || scene.IsPrepare || scene.IsLoading) return "scene_loading";
             var selected = EventSystem.current == null ? null : EventSystem.current.currentSelectedGameObject;
-            if (selected != null && selected.GetComponentInParent<InputField>() != null) return false;
+            if (selected != null && selected.GetComponentInParent<InputField>() != null) return "text_input";
             var name = SceneManager.GetActiveScene().name;
             if (name == "Free")
-                return FreeManager.Instance != null && FreeManager.Instance.EnableHotKey && !FreeManager.Instance.IsProcessing;
+                return FreeManager.Instance != null && FreeManager.Instance.EnableHotKey && !FreeManager.Instance.IsProcessing
+                    ? null : "free_action_or_menu";
             var story = StoryManager.Instance;
-            return name == "Story" && story != null && story.EnableAction && !story.IsStoryPause
-                && !EventInspector.Read<bool>(story, "_panelOpen") && !EventInspector.Read<bool>(story, "_logOpen");
+            if (name != "Story" || story == null) return "unsupported_scene";
+            if (!story.EnableAction) return "story_action_disabled";
+            if (story.IsStoryPause || EventInspector.Read<bool>(story, "_panelOpen")) return "story_menu";
+            return EventInspector.Read<bool>(story, "_logOpen") ? "story_log" : null;
         }
 
         internal static void Close()

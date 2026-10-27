@@ -135,6 +135,13 @@ try {
             }
         }
     }
+    # Private reflection signatures need exact validation too: optional native
+    # parameters are not supplied by Traverse.Method(name).
+    $core = $resolver.Resolve([Mono.Cecil.AssemblyNameReference]::new('Mortal.Core', [Version]'0.0.0.0'))
+    $capture = @($core.MainModule.GetType('Mortal.Core.SaveSystem').Methods | Where-Object {
+        $_.Name -eq 'CreateSaveData' -and $_.Parameters.Count -eq 1 -and $_.Parameters[0].ParameterType.FullName -eq 'System.Boolean' -and $_.ReturnType.FullName -eq 'Mortal.Core.GameSave'
+    })
+    if ($capture.Count -ne 1) { $problems.Add('Native snapshot signature changed: CreateSaveData(bool).') }
     # Traverse.Method(name) selects an empty parameter list; GetValue(arguments)
     # does not participate in overload selection. Catch this before deployment.
     foreach ($source in Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../src') -Filter '*.cs' -Recurse) {

@@ -8,6 +8,12 @@ namespace UnityEngine
     public static class Time { public static float timeScale = 1; }
     public enum KeyCode { None, F9, Escape }
     public static class Input { public static KeyCode Pressed; public static bool GetKeyDown(KeyCode key) { return key == Pressed; } }
+    public static class Resources
+    {
+        public static Mortal.Core.PlayerStatusPanel[] Panels = new Mortal.Core.PlayerStatusPanel[0];
+        public static int Searches;
+        public static T[] FindObjectsOfTypeAll<T>() { Searches++; return (T[])(object)Panels; }
+    }
     public class Behaviour { public bool enabled = true; public bool isActiveAndEnabled { get { return enabled; } } }
     public class MonoBehaviour : Behaviour { public GameObject gameObject; }
     public class Transform
@@ -24,6 +30,7 @@ namespace UnityEngine
     }
     public class GameObject
     {
+        public SceneManagement.Scene scene = SceneManagement.SceneManager.GetActiveScene();
         public bool activeSelf, InputField, FailOnOpen;
         public readonly Transform transform;
         private readonly Dictionary<Type, MonoBehaviour> _components = new Dictionary<Type, MonoBehaviour>();
@@ -57,7 +64,14 @@ namespace UnityEngine.EventSystems
 }
 namespace UnityEngine.SceneManagement
 {
-    public struct Scene { public string name; }
+    public struct Scene
+    {
+        public string name;
+        public static bool operator ==(Scene a, Scene b) { return a.name == b.name; }
+        public static bool operator !=(Scene a, Scene b) { return !(a == b); }
+        public override bool Equals(object value) { return value is Scene && this == (Scene)value; }
+        public override int GetHashCode() { return name == null ? 0 : name.GetHashCode(); }
+    }
     public static class SceneManager { public static string Name = "Story"; public static Scene GetActiveScene() { return new Scene { name = Name }; } }
 }
 namespace BepInEx { public class PluginInfo { public object Instance; } }
@@ -78,6 +92,7 @@ namespace HarmonyLib
 namespace Mortal.Core
 {
     public class DevelopmentOnly : UnityEngine.MonoBehaviour { }
+    public class PlayerStatusPanel : UnityEngine.MonoBehaviour { public UnityEngine.GameObject _testPanel; }
     public class SceneController { public static SceneController Instance; public bool IsPrepare, IsLoading; }
 }
 namespace Mortal.Free
@@ -90,6 +105,7 @@ namespace Mortal.Story
 }
 namespace LOMSave.Probe
 {
+    internal static class DebugMenuEnhancements { internal static void Attach(UnityEngine.GameObject panel) { DebugMenuShortcut.Attach(panel); } }
     internal static class FeaturePanel { internal static bool Blocked; internal static bool BlocksInput { get { return Blocked || DebugMenuShortcut.IsOpen; } } }
     internal static class SaveNotes { internal static bool IsOpen; }
     internal static class EventInspectorPanel { internal static bool BlocksInput; }
@@ -101,8 +117,8 @@ namespace LOMSave.Probe
     internal static class EventInspector { internal static T Read<T>(object value, string field) { return (T)value.GetType().GetField(field).GetValue(value); } }
     internal static class LOMSaveProbePlugin
     {
-        internal static int Opened, Closed, Errors;
-        internal static void WriteEvent(string name, object value) { if (name == "debug_shortcut_opened") Opened++; if (name == "debug_shortcut_closed") Closed++; }
+        internal static int Opened, Closed, Errors, Blocked;
+        internal static void WriteEvent(string name, object value) { if (name == "debug_shortcut_opened") Opened++; if (name == "debug_shortcut_closed") Closed++; if (name == "debug_shortcut_blocked") Blocked++; }
         internal static void WriteError(string name, Exception error) { Errors++; }
     }
     public static class DebugMenuShortcutTests
@@ -118,6 +134,8 @@ namespace LOMSave.Probe
             UnityEngine.Time.timeScale = 1.75f;
             UnityEngine.Input.Pressed = UnityEngine.KeyCode.None;
             UnityEngine.SceneManagement.SceneManager.Name = "Story";
+            UnityEngine.Resources.Panels = new Mortal.Core.PlayerStatusPanel[0];
+            UnityEngine.Resources.Searches = 0;
             UnityEngine.EventSystems.EventSystem.current = new UnityEngine.EventSystems.EventSystem();
             Mortal.Core.SceneController.Instance = new Mortal.Core.SceneController();
             Mortal.Free.FreeManager.Instance = new Mortal.Free.FreeManager();
@@ -125,7 +143,7 @@ namespace LOMSave.Probe
             BepInEx.Unity.Mono.Bootstrap.UnityChainloader.Instance = null;
             FeaturePanel.Blocked = SaveNotes.IsOpen = EventInspectorPanel.BlocksInput = OptionImpactPreview.IsOpen = AutoDialogueSpeed.SettingsVisible = false;
             ReplayRuntime.IsRestoring = ReplayRuntime.IsReplaying = StoryCommandTrace.IsReplayPending = ReplayStateValidator.IsRestoring = false;
-            LOMSaveProbePlugin.Opened = LOMSaveProbePlugin.Closed = LOMSaveProbePlugin.Errors = 0;
+            LOMSaveProbePlugin.Opened = LOMSaveProbePlugin.Closed = LOMSaveProbePlugin.Errors = LOMSaveProbePlugin.Blocked = 0;
             _panel = new UnityEngine.GameObject(false);
             _panel.transform.parent = new UnityEngine.GameObject().transform;
             _panel.transform.Children.Add(new UnityEngine.GameObject(false).transform);
@@ -156,6 +174,7 @@ namespace LOMSave.Probe
             Press(UnityEngine.KeyCode.F9); DebugMenuShortcut.Attach(new UnityEngine.GameObject(false));
             Check(UnityEngine.Time.timeScale == 1.75f && !Mortal.Story.StoryManager.Instance.IsStoryPause, "Replacing scene panel cannot retain old pause");
             Reset(); UnityEngine.SceneManagement.SceneManager.Name = "Free"; Mortal.Story.StoryManager.Instance = null;
+            _panel.scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             Press(UnityEngine.KeyCode.F9); Check(DebugMenuShortcut.IsOpen, "Free map works without StoryManager");
             Press(UnityEngine.KeyCode.Escape); Check(UnityEngine.Time.timeScale == 1.75f, "Free map speed restored");
             Reset();
@@ -205,6 +224,28 @@ namespace LOMSave.Probe
             Reset(); _panel.FailOnOpen = true; Press(UnityEngine.KeyCode.F9);
             Check(!DebugMenuShortcut.IsOpen && LOMSaveProbePlugin.Errors == 1, "Activation failure is reported");
             Check(UnityEngine.Time.timeScale == 1.75f && !Mortal.Story.StoryManager.Instance.IsStoryPause, "Failed open cannot freeze gameplay");
+            Reset();
+            UnityEngine.Resources.Panels = new[] { new Mortal.Core.PlayerStatusPanel { gameObject = _panel.transform.parent.gameObject, _testPanel = _panel } };
+            DebugMenuShortcut.Attach(null);
+            Press(UnityEngine.KeyCode.None);
+            Check(UnityEngine.Resources.Searches == 0, "Missing binding never scans during idle frames");
+            Press(UnityEngine.KeyCode.F9);
+            Check(DebugMenuShortcut.IsOpen && UnityEngine.Resources.Searches == 1, "Missing Awake binding recovers on F9");
+            Press(UnityEngine.KeyCode.F9); Press(UnityEngine.KeyCode.F9);
+            Check(DebugMenuShortcut.IsOpen && UnityEngine.Resources.Searches == 1, "Valid scene binding is reused without resource scans");
+            Reset();
+            var currentPanel = _panel;
+            var stalePanel = new UnityEngine.GameObject(false);
+            stalePanel.scene = new UnityEngine.SceneManagement.Scene { name = "Free" };
+            var staleStatus = new UnityEngine.GameObject(false); staleStatus.scene = stalePanel.scene;
+            UnityEngine.Resources.Panels = new[] {
+                new Mortal.Core.PlayerStatusPanel { gameObject = staleStatus, _testPanel = stalePanel },
+                new Mortal.Core.PlayerStatusPanel { gameObject = currentPanel.transform.parent.gameObject, _testPanel = currentPanel }
+            };
+            DebugMenuShortcut.Attach(stalePanel); Press(UnityEngine.KeyCode.F9);
+            Check(currentPanel.activeSelf && !stalePanel.activeSelf, "Additive scene stale binding cannot mask the current scene panel");
+            Reset(); DebugMenuShortcut.Attach(null); Press(UnityEngine.KeyCode.F9);
+            Check(LOMSaveProbePlugin.Blocked == 1 && UnityEngine.Time.timeScale == 1.75f, "Missing panel is diagnosed without pausing gameplay");
             return _checks + " built-in F9 shortcut assertions passed.";
         }
     }

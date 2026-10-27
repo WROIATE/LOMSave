@@ -23,6 +23,7 @@ namespace LOMSave.Probe
             new HashSet<string>(StringComparer.Ordinal);
         private static readonly StoryImpactCache ParsedStories = new StoryImpactCache();
 
+        private static readonly Dictionary<string, string> SourceScripts = new Dictionary<string, string>(StringComparer.Ordinal);
         private static GUIStyle _hintStyle;
         private static string _holdingText;
         private static float _holdProgress;
@@ -132,7 +133,7 @@ namespace LOMSave.Probe
             var builder = new StringBuilder();
             if (impacts == null || impacts.Count == 0)
             {
-                builder.Append("此选项主要改变对话或剧情走向，未发现本段数值变化。");
+                builder.Append("本段未发现直接数值变化，可查看后续影响与事件。");
             }
             else
             {
@@ -149,6 +150,8 @@ namespace LOMSave.Probe
                 includeLater ? "收起后续影响" : "查看后续影响",
                 () => Show(key, text, font, !includeLater));
             var events = EventInspector.PoolsFor(actions, "选项 · " + text);
+            string script;
+            if (SourceScripts.TryGetValue(key, out script)) events.AddRange(BranchEventSelection.ForScript(script, key));
             if (events.Count > 0)
             {
                 var panel = _overlay.transform.Find("Backdrop/Panel");
@@ -227,7 +230,10 @@ namespace LOMSave.Probe
                     parsed = LuaImpactScanner.Scan(lua, name => LoadStoryScript(name, scriptName));
                     if (fullSource) ParsedStories.Store(scriptName, lua, parsed);
                 }
-                foreach (var pair in parsed) Actions[pair.Key] = pair.Value;
+                foreach (var pair in parsed) {
+                    Actions[pair.Key] = pair.Value;
+                    if (fullSource) SourceScripts[pair.Key] = scriptName.Replace(".LuaScript", "");
+                }
                 if (parsed.Count > 0)
                     LOMSaveProbePlugin.WriteEvent("option_impacts_parse_summary", new
                     { scriptName, source, markerCount = parsed.Count, cached, elapsedMilliseconds = timer.Elapsed.TotalMilliseconds });
@@ -839,7 +845,7 @@ namespace LOMSave.Probe
     internal sealed class OptionImpactLongPress : MonoBehaviour,
         IPointerDownHandler,
         IPointerUpHandler,
-        IPointerExitHandler, IPointerClickHandler
+        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         private Button _button;
         private bool _bound;
@@ -880,6 +886,7 @@ namespace LOMSave.Probe
 
         internal void Unbind()
         {
+            DiceOutcomeSelection.ClearHover(_diceDialog, _diceSelection);
             ResetHold();
             _bound = false;
             _key = null;
@@ -906,7 +913,10 @@ namespace LOMSave.Probe
         public void OnPointerClick(PointerEventData eventData)
         {
             if (_bound && !FeaturePanel.BlocksInput && eventData.button == PointerEventData.InputButton.Middle)
+            {
+                DiceOutcomeSelection.ClearHover(_diceDialog, _diceSelection);
                 OptionImpactPreview.Show(_key, OptionText, _font);
+            }
             else if (eventData.button == PointerEventData.InputButton.Left && !_previewTriggered)
                 DiceOutcomeSelection.TrySelect(_diceDialog, _diceSelection);
         }
@@ -926,13 +936,20 @@ namespace LOMSave.Probe
             }
         }
 
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            DiceOutcomeSelection.Hover(_diceDialog, _diceSelection);
+        }
+
         public void OnPointerExit(PointerEventData eventData)
         {
+            DiceOutcomeSelection.ClearHover(_diceDialog, _diceSelection);
             ResetHold();
         }
 
         private void OnDisable()
         {
+            DiceOutcomeSelection.ClearHover(_diceDialog, _diceSelection);
             ResetHold();
         }
 
@@ -958,6 +975,7 @@ namespace LOMSave.Probe
             }
 
             _previewTriggered = true;
+            DiceOutcomeSelection.ClearHover(_diceDialog, _diceSelection);
             if (_button != null && _buttonWasInteractable)
             {
                 _button.interactable = false;

@@ -14,6 +14,7 @@ namespace LOMSave.Probe
         internal static void Bind(DiceMenuDialog __instance)
         {
             var state = __instance.GetComponent<DiceOutcomeState>() ?? __instance.gameObject.AddComponent<DiceOutcomeState>();
+            state.ClearHover();
             state.Selection = 0;
             var buttons = __instance.CachedButtons;
             for (var i = 0; i < buttons.Length; i++)
@@ -25,6 +26,15 @@ namespace LOMSave.Probe
         }
 
         internal static bool TrySelect(DiceMenuDialog dialog, int selection)
+        {
+            if (!CanSelect(dialog, selection)) return false;
+            dialog.GetComponent<DiceOutcomeState>().Selection = selection;
+            dialog.PressStartButton();
+            LOMSaveProbePlugin.WriteEvent("dice_outcome_requested", new { selection });
+            return true;
+        }
+
+        private static bool CanSelect(DiceMenuDialog dialog, int selection)
         {
             if (dialog == null || !dialog.gameObject.activeInHierarchy || DebugMenuShortcut.HasTrainer()
                 || FeaturePanel.BlocksInput || OptionImpactPreview.IsOpen || SaveNotes.IsOpen || DebugMenuShortcut.IsOpen
@@ -39,15 +49,37 @@ namespace LOMSave.Probe
                 || EventInspector.Read<bool>(dialog, "_pressStartButton")
                 || selection < 1 || selection > buttons.Length || buttons[selection - 1] == null
                 || !buttons[selection - 1].gameObject.activeInHierarchy) return false;
-            state.Selection = selection;
-            dialog.PressStartButton();
-            LOMSaveProbePlugin.WriteEvent("dice_outcome_requested", new { selection });
             return true;
         }
+
+        internal static void Hover(DiceMenuDialog dialog, int selection)
+        {
+            if (!CanSelect(dialog, selection)) return;
+            var option = dialog.CachedButtons[selection - 1].GetComponent<DiceOption>();
+            if (option == null) return;
+            var state = dialog.GetComponent<DiceOutcomeState>();
+            state.ClearHover();
+            state.HoveredSelection = selection;
+            state.HoveredOption = option;
+            option.Select();
+        }
+
+        internal static void ClearHover(DiceMenuDialog dialog, int selection = 0)
+        {
+            var state = dialog == null ? null : dialog.GetComponent<DiceOutcomeState>();
+            if (state != null && (selection == 0 || state.HoveredSelection == selection)) state.ClearHover();
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(DiceMenuDialog), "PressStartButton")]
+        internal static void BeforeStart(DiceMenuDialog __instance) { ClearHover(__instance); }
 
         [HarmonyPrefix, HarmonyPatch(typeof(DiceMenuDialog), "Roll")]
         internal static bool BeforeRoll(DiceMenuDialog __instance, ref IEnumerator __result)
         {
+            // Hover and the actual roll result use the same native highlight.
+            // Release hover ownership before the result is shown, so a later
+            // pointer-exit event cannot erase the game's selected result.
+            ClearHover(__instance);
             var state = __instance.GetComponent<DiceOutcomeState>();
             if (state == null || state.Selection == 0) return true;
             Traverse.Create(__instance).Field("_resultSelection").SetValue(state.Selection);
@@ -77,6 +109,14 @@ namespace LOMSave.Probe
     internal sealed class DiceOutcomeState : MonoBehaviour
     {
         internal int Selection;
-        private void OnDisable() { Selection = 0; }
+        internal int HoveredSelection;
+        internal DiceOption HoveredOption;
+        internal void ClearHover()
+        {
+            if (HoveredOption != null) HoveredOption.UnSelect();
+            HoveredOption = null;
+            HoveredSelection = 0;
+        }
+        private void OnDisable() { ClearHover(); Selection = 0; }
     }
 }

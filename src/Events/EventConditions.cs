@@ -78,7 +78,10 @@ namespace LOMSave.Probe
                 case 2: return values.Count == 0 ? (int?)null : values.Max();
                 case 3: return values.Count == 0 ? (int?)null : values.Min();
                 case 4: return values.Aggregate(1, (a, b) => a * b);
-                default: return 0;
+                case 5: return values.All(v => v != 0) ? 1 : 0;
+                case 6: return values.Any(v => v != 0) ? 1 : 0;
+                case 0: return 0;
+                default: return null;
             }
         }
 

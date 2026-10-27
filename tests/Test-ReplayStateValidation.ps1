@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Add-Type -Path (Join-Path $root 'artifacts/LOMSaveProbe/Newtonsoft.Json.dll')
 Add-Type -Path @(
+    (Join-Path $root 'src/Saves/NativeSaveApi.cs'),
     (Join-Path $root 'src/Replay/ReplayStateValidator.cs'),
     (Join-Path $root 'src/Replay/ContinuationShopGuard.cs'),
     (Join-Path $root 'src/Replay/ReplayOriginPolicy.cs'),

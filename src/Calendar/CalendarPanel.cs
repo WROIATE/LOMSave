@@ -25,6 +25,18 @@ namespace LOMSave.Probe
             FeaturePanel.Button(panel, "可触发剧情", 36, 90, 224, 48, ShowCurrent);
             FeaturePanel.Button(panel, "全年总览", 280, 90, 224, 48, () => ShowOverview(time.Year));
             FeaturePanel.Button(panel, "今日行动 / 备注", 524, 90, 272, 48, () => Show(time.Year, time.Month, (int)time.Stage));
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Story")
+                FeaturePanel.Button(panel, "本段剧情分支", 820, 90, 260, 48, () => {
+                    var script = Mortal.Core.PlayerStatManagerData.Instance.CurrentStoryScript;
+                    var entries = BranchEventSelection.ForScript(script);
+                    FeaturePanel.Close();
+                    var story = Mortal.Story.StoryManager.Instance;
+                    var paused = story != null && story.IsStoryPause;
+                    if (story != null) HarmonyLib.Traverse.Create(story).Property("IsStoryPause").SetValue(true);
+                    EventInspectorPanel.Show("本段剧情 · 条件分支", entries,
+                        "仅影响随后执行的对应判定；已经经过的判定不会重播。", null,
+                        () => { if (story != null) HarmonyLib.Traverse.Create(story).Property("IsStoryPause").SetValue(paused); });
+                });
             _eventHeading = FeaturePanel.Label(panel, "", 25, 36, 160, 1168, 42);
             _events = FeaturePanel.ScrollText(panel, "", 36, 216, 1168, 544);
             FeaturePanel.Label(panel, "查看本页即标为已读；◇ 仅提示当前可做且未读的事件。随机剧情仍可能受后续选择影响。\n已读和剧情记录随存档恢复，新周目重新记录；手动备注跨周目保留，不预测未经历的日期。", 20, 36, 782, 1168, 66);

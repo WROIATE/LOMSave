@@ -80,6 +80,15 @@ namespace LOMSave.Probe
                 "Native value binding caches identity, never the player's value");
             Check(UnityEngine.Resources.Queries == 1, "Subsequent checks do not enumerate resources again");
             Check(data.Group("negative") == -2 && data.Group("missing") == null, "Signed constants and unknown expression handling");
+            foreach (var op in new[] { 5, 6 })
+            {
+                data.Groups["boolean"] = new StoryIndexGroup { Operation = op, Values = new[] { new StoryIndexValue { Constant = -2 }, new StoryIndexValue { Constant = 0 } } };
+                Check(data.Group("boolean") == (op == 5 ? 0 : 1), "Native boolean group uses nonzero, including negative values");
+                data.Groups["boolean"].Values = new StoryIndexValue[0];
+                Check(data.Group("boolean") == (op == 5 ? 1 : 0), "Empty All/Any matches native Enumerable semantics");
+            }
+            data.Groups["boolean"].Operation = 99;
+            Check(data.Group("boolean") == null, "Unsupported future operation remains unknown");
             var queries = UnityEngine.Resources.Queries;
             Check(data.Group("random") == null && UnityEngine.Resources.Queries == queries, "Random values remain unknown without calling native RNG");
             var condition = Compare("one", 2, "two");

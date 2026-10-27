@@ -305,6 +305,13 @@ class ContextNames:
             values.append(self.atomic((kind, constant, pointers, low, high, negative), seen + (key,)))
         if rd.pos != len(rd.raw):
             raise ValueError("Unsupported group layout " + rd.name)
+        if operation in (5, 6):
+            text = ("全部非零" if operation == 5 else "任一非零") + "(" + "、".join(v.text for v in values) + ")"
+            result = Expression(text, all(v.complete for v in values),
+                                tuple(dict.fromkeys(s for v in values for s in v.subjects)),
+                                tuple(u for v in values for u in v.unknown))
+            self.groups[key] = result
+            return result
         if not values or operation not in (1, 2, 3, 4):
             return Expression(rd.name, False, unknown=(rd.name,))
         if len(values) == 1:

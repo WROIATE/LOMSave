@@ -11,7 +11,7 @@ namespace LOMSave.Probe
     internal static class DebugMenuEnhancements
     {
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerStatusPanel), "Awake")]
-        private static void Attach(GameObject ____testPanel)
+        internal static void Attach(GameObject ____testPanel)
         {
             DebugMenuShortcut.Attach(____testPanel);
             if (____testPanel != null && ____testPanel.GetComponent<DebugMenuView>() == null)

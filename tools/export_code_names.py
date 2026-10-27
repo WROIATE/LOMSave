@@ -63,6 +63,33 @@ def label(text, key=""):
     return text if re.search(r"[\u3400-\u9fff]", text) else ""
 
 
+def story_resources(data):
+    # LuaManager always executes this resource path, even with simplified UI.
+    # TextAsset names alone collide with older simplified-language scripts.
+    env = UnityPy.load(str(data / "globalgamemanagers"))
+    manager = next(obj for obj in env.objects if obj.type.name == "ResourceManager")
+    assets, result = {}, {}
+    prefix = "story/chinesetraditional/"
+    for key, pointer in manager.read_typetree()["m_Container"]:
+        if not key.startswith(prefix):
+            continue
+        filename = manager.assets_file.externals[pointer["m_FileID"] - 1].path.rsplit("/", 1)[-1]
+        if filename not in assets:
+            loaded = UnityPy.load(str(data / filename))
+            assets[filename] = {obj.path_id: obj for obj in loaded.objects
+                                if pathlib.Path(obj.assets_file.name).name == filename}
+        obj = assets[filename][pointer["m_PathID"]]
+        if obj.type.name != "TextAsset":
+            raise ValueError("Story resource is not text: " + key)
+        name = key[len(prefix):]
+        if name in result or "/" in name:
+            raise ValueError("Ambiguous story resource: " + key)
+        result[name] = obj.read().m_Script.lstrip("\ufeff")
+    if not result:
+        raise ValueError("Native story resource root changed")
+    return result
+
+
 def export(game, output, analysis_output=None, enums_json=None, sources_output=None):
     data = game / "Mortal_Data"
     objects, classes, catalog, scripts, locales = {}, {}, {}, {}, {}
@@ -88,14 +115,6 @@ def export(game, output, analysis_output=None, enums_json=None, sources_output=N
                                 locales.pop(key)
                             if key not in ambiguous_locales:
                                 locales[key] = value
-                if "checkpointmanager." in content or "statmodifymanager." in content:
-                    old = scripts.get(text.m_Name.lower())
-                    if old is not None and old != content:
-                        # Story scripts for multiple languages must not be
-                        # silently merged. Resources contains the loaded Lua.
-                        if path.name != "resources.assets":
-                            continue
-                    scripts[text.m_Name.lower()] = content
             if obj.type.name != "MonoBehaviour":
                 continue
             asset = obj.read(check_read=False)
@@ -106,6 +125,7 @@ def export(game, output, analysis_output=None, enums_json=None, sources_output=N
             pointer = (path.name.lower(), obj.path_id)
             objects[pointer], classes[pointer] = obj, cls
 
+    scripts = story_resources(data)
     scopes = {"FlagData": "flags", "ConditionResultData": "conditions", "SwitchResultData": "switches",
               "PositionEventData": "events", "MissionCheckData": "missions", "MissionData": "mission_groups"}
     for pointer, cls in classes.items():

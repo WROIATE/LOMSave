@@ -21,15 +21,22 @@ namespace HarmonyLib
         public Traverse Method(string name, params Type[] types) { method = name; return this; }
         public object GetValue(params object[] args)
         { return target.GetType().GetMethod(method).Invoke(target, args); }
-        public T GetValue<T>() { return (T)GetValue(new object[0]); }
+        public T GetValue<T>(params object[] args) { return (T)GetValue(args); }
     }
 }
 namespace Mortal.Core
 {
+    public static class StoryLogData
+    {
+        public static void Load(GameSave save) { }
+        public static void Save(GameSave save, bool restart)
+        { if (restart) throw new Exception("Snapshot truncated history"); save.StoryLogs = new List<string>(SaveSystem.Instance.Live.StoryLogs); }
+    }
     public sealed class GameSave
     {
         public string Version = "current";
         public int AddedFlag;
+        public List<string> StoryLogs = new List<string>();
         public string StartStoryScript = "origin", CurrentStoryScript = "target", RestoreData = "backup";
         public long TimeTick = 1;
         public int FreeRandomState, Money = 10, Flag = 2;
@@ -64,8 +71,8 @@ namespace Mortal.Core
         public GameSave Live = new GameSave();
         public int Loads;
         public bool FailCapture;
-        public GameSave CreateSaveData()
-        { if (FailCapture) throw new InvalidOperationException("native capture failed"); return JObject.FromObject(Live).ToObject<GameSave>(); }
+        public GameSave CreateSaveData(bool restart)
+        { if (restart) throw new Exception("Snapshot requested stale restart history"); if (FailCapture) throw new InvalidOperationException("native capture failed"); return JObject.FromObject(Live).ToObject<GameSave>(); }
         public void ExecuteLoadGameData(GameSave save)
         {
             Loads++; Live = JObject.FromObject(save).ToObject<GameSave>();
@@ -285,6 +292,13 @@ namespace LOMSave.Probe
             Check(ReferenceEquals(ContinuationShopGuard.EndLoad(failure, loadState), failure)
                 && ContinuationShopGuard.BeforeRestock(), "Native loading exceptions release restock isolation and propagate unchanged");
             StoryContinuation.IsPending = false;
+            StoryContinuation.IsPending = false;
+            target = new Mortal.Core.GameSave(); target.StoryLogs.Add("saved dialogue");
+            system.Live = JObject.FromObject(target).ToObject<Mortal.Core.GameSave>();
+            ReplayStateValidator.Prepare(target);
+            Check(ReplayStateValidator.ValidateDirect(checkpoint), "Saved native history participates in direct restoration validation");
+            ReplayStateValidator.Prepare(target); system.Live.StoryLogs.Add("duplicated dialogue");
+            Check(!ReplayStateValidator.ValidateDirect(checkpoint), "Duplicated native history is rejected, never ignored or overwritten");
             return checks + " replay state validation assertions passed";
         }
     }

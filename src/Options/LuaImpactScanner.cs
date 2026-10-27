@@ -146,7 +146,7 @@ namespace LOMSave.Probe
             var block = root;
             var tables = new Dictionary<string, string>();
             var choices = new Dictionary<string, string>();
-            foreach (var raw in (lua ?? "").Split('\n'))
+            foreach (var raw in LuaRouteLiterals.Expand(lua).Split('\n'))
             {
                 var line = raw.Trim();
                 var assignment = Assignment.Match(line);

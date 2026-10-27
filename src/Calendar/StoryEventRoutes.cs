@@ -11,12 +11,12 @@ namespace LOMSave.Probe
     {
         internal sealed class Route
         {
-            internal string Pool;
+            internal string Pool, Checkpoint, Kind, Script;
             internal string[] Options, Guards;
         }
         private sealed class Edge
         {
-            internal string Pool, Script;
+            internal string Pool, Script, Checkpoint, Kind;
             internal string[] Options, Guards;
         }
         private sealed class Branch
@@ -36,12 +36,12 @@ namespace LOMSave.Probe
         private static readonly Regex PoolCall = new Regex("checkpointmanager\\.Position\\(\\s*[\"']([^\"']+)[\"']");
         private static readonly Regex NextCall = new Regex("luamanager\\.SetNextScript\\(\\s*[\"']([^\"']+)[\"']");
 
-        internal List<Route> Scan(string script, Func<string, string> load)
+        internal List<Route> Scan(string script, Func<string, string> load, bool checkpoints = false)
         {
             var result = new List<Route>();
             var budget = 64;
             Walk(script, load, new string[0], new string[0], new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0, ref budget, result);
-            return result;
+            return checkpoints ? result : result.Where(x => x.Pool != null).ToList();
         }
 
         private void Walk(string script, Func<string, string> load, string[] options, string[] guards,
@@ -59,7 +59,8 @@ namespace LOMSave.Probe
             {
                 var path = options.Concat(edge.Options).ToArray();
                 var checks = guards.Concat(edge.Guards).ToArray();
-                if (edge.Pool != null) result.Add(new Route { Pool = edge.Pool, Options = path, Guards = checks });
+                if (edge.Checkpoint != null) result.Add(new Route { Checkpoint = edge.Checkpoint, Kind = edge.Kind, Script = script, Options = path, Guards = checks });
+                else if (edge.Pool != null) result.Add(new Route { Pool = edge.Pool, Options = path, Guards = checks });
                 else Walk(edge.Script, load, path, checks, new HashSet<string>(visited, StringComparer.OrdinalIgnoreCase), depth + 1, ref budget, result);
             }
         }
@@ -71,7 +72,7 @@ namespace LOMSave.Probe
             var choices = new Dictionary<string, string>();
             var variables = new Dictionary<string, string>();
             var branches = new List<Branch>();
-            foreach (var raw in (lua ?? "").Split('\n'))
+            foreach (var raw in LuaRouteLiterals.Expand(lua).Split('\n'))
             {
                 var line = raw.Trim();
                 if (line.Length == 0 || line.StartsWith("--")) continue;
@@ -111,7 +112,7 @@ namespace LOMSave.Probe
 
                 var pool = PoolCall.Match(line);
                 var next = NextCall.Match(line);
-                if (!pool.Success && !next.Success) continue;
+                if (!pool.Success && !next.Success && !variable.Success) continue;
                 var checks = new List<string>();
                 foreach (var branch in branches)
                 {
@@ -122,6 +123,7 @@ namespace LOMSave.Probe
                 }
                 edges.Add(new Edge { Pool = pool.Success ? pool.Groups[1].Value : null,
                     Script = next.Success ? next.Groups[1].Value : null,
+                    Checkpoint = variable.Success ? variable.Groups[3].Value : null, Kind = variable.Success ? variable.Groups[2].Value : null,
                     Options = branches.Where(x => x.Option != null).Select(x => x.Option).ToArray(),
                     Guards = checks.Where(x => x != "@choice" && x != "true").ToArray() });
             }

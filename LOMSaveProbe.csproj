@@ -12,6 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="src/Saves/NativeSaveApi.cs" />
+    <Compile Include="src/Replay/NativeStoryLog.cs" />
     <Compile Include="src/Saves/ActionAutoSave.cs" />
     <Compile Include="src/Saves/ActionAutoSavePolicy.cs" />
     <Compile Include="src/Saves/BranchAutoSave.cs" />
@@ -26,6 +28,10 @@
     <Compile Include="src/Options/OptionImpactText.cs" />
     <Compile Include="src/Events/EventConditions.cs" />
     <Compile Include="src/Events/EventInspector.cs" />
+    <Compile Include="src/Events/BranchPossibilities.cs" />
+    <Compile Include="src/Events/NativeBranchConditions.cs" />
+    <Compile Include="src/Events/BranchEventSelection.cs" />
+    <Compile Include="src/Options/LuaRouteLiterals.cs" />
     <Compile Include="src/Events/StoryEventConfigs.cs" />
     <Compile Include="src/Events/StoryEventIndexData.cs" />
     <Compile Include="src/Events/StoryEventIndex.cs" />
