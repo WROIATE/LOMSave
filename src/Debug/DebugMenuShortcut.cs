@@ -21,8 +21,10 @@ namespace LOMSave.Probe
         private static StoryManager _story;
         private static Transform _parent;
         private static int _sibling;
+        private static float _closedAt = -1;
 
         internal static bool IsOpen { get { return _panel != null && _panel.activeInHierarchy; } }
+        internal static bool BlocksTrainingInput { get { return IsOpen || Time.unscaledTime - _closedAt < 0.2f; } }
         internal static bool Contains(Transform item)
         { return _panel != null && item != null && item.IsChildOf(_panel.transform); }
 
@@ -59,7 +61,7 @@ namespace LOMSave.Probe
             if (_owned) { Close(); return; }
             // Awake can bind another additive scene's panel, which is later
             // unloaded. Reacquire the current scene's panel on demand only.
-            try { EnsureCurrentPanel(); }
+            try { EnsureCurrentPanel(); TrainingPointLimits.Discover(); }
             catch (Exception error) { LOMSaveProbePlugin.WriteError("debug_shortcut_bind_failed", error); return; }
             var blocked = HasTrainer() ? "external_trainer" : BlockedReason();
             if (blocked != null)
@@ -80,11 +82,17 @@ namespace LOMSave.Probe
                 // opening that page or firing its unrelated enable callbacks.
                 var host = VisibleParent();
                 if (host != _parent) _panel.transform.SetParent(host, false);
+                _panel.transform.SetAsLastSibling();
                 if (_story != null) Traverse.Create(_story).Property("IsStoryPause").SetValue(true);
                 Time.timeScale = 0;
+                var view = _panel.GetComponent<DebugMenuView>() ?? _panel.AddComponent<DebugMenuView>();
                 _panel.SetActive(true);
                 for (var i = 0; i < _panel.transform.childCount; i++)
                     _panel.transform.GetChild(i).gameObject.SetActive(true);
+                // Native Awake callbacks need active rows, but the view keeps
+                // them invisible until the enhanced layout is ready this frame.
+                if (!view.PrepareForDisplay())
+                    throw new InvalidOperationException("Debug menu layout is not ready.");
                 LOMSaveProbePlugin.WriteEvent("debug_shortcut_opened", new { nativePanel = true });
             }
             catch (Exception error)
@@ -129,6 +137,9 @@ namespace LOMSave.Probe
             var selected = EventSystem.current == null ? null : EventSystem.current.currentSelectedGameObject;
             if (selected != null && selected.GetComponentInParent<InputField>() != null) return "text_input";
             var name = SceneManager.GetActiveScene().name;
+            // Training panels deliberately disable the map/story hotkeys. They
+            // are a valid F9 entry, not evidence of a loading/replay operation.
+            if ((name == "Free" || name == "Story") && TrainingPointLimits.HasOpenPanel()) return null;
             if (name == "Free")
                 return FreeManager.Instance != null && FreeManager.Instance.EnableHotKey && !FreeManager.Instance.IsProcessing
                     ? null : "free_action_or_menu";
@@ -143,6 +154,7 @@ namespace LOMSave.Probe
         {
             if (!_owned) return;
             _owned = false;
+            _closedAt = Time.unscaledTime;
             try { if (_panel != null) _panel.SetActive(false); }
             finally
             {
@@ -155,6 +167,8 @@ namespace LOMSave.Probe
                 Time.timeScale = _speed;
                 if (_story != null) Traverse.Create(_story).Property("IsStoryPause").SetValue(_storyPause);
                 _story = null;
+                try { TrainingPointLimits.RefreshOpenPanels(); }
+                catch (Exception error) { LOMSaveProbePlugin.WriteError("debug_training_refresh_failed", error); }
                 LOMSaveProbePlugin.WriteEvent("debug_shortcut_closed", new { });
             }
         }

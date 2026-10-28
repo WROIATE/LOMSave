@@ -5,7 +5,7 @@ using System.Reflection;
 namespace UnityEngine
 {
     public static class Application { public static bool isFocused = true; }
-    public static class Time { public static float timeScale = 1; }
+    public static class Time { public static float timeScale = 1, unscaledTime; }
     public enum KeyCode { None, F9, Escape }
     public static class Input { public static KeyCode Pressed; public static bool GetKeyDown(KeyCode key) { return key == Pressed; } }
     public static class Resources
@@ -25,6 +25,7 @@ namespace UnityEngine
         public Transform GetChild(int index) { return Children[index]; }
         public bool IsChildOf(Transform value) { for (var item = this; item != null; item = item.parent) if (item == value) return true; return false; }
         public int GetSiblingIndex() { return parent == null ? 0 : parent.Children.IndexOf(this); }
+        public void SetAsLastSibling() { if (parent == null) return; parent.Children.Remove(this); parent.Children.Add(this); }
         public void SetSiblingIndex(int index) { if (parent == null) return; parent.Children.Remove(this); parent.Children.Insert(Math.Max(0, Math.Min(index, parent.Children.Count)), this); }
         public void SetParent(Transform next, bool worldPositionStays) { if (parent != null) parent.Children.Remove(this); parent = next; if (next != null) next.Children.Add(this); }
     }
@@ -105,7 +106,26 @@ namespace Mortal.Story
 }
 namespace LOMSave.Probe
 {
+    internal static class TrainingPointLimits
+    {
+        internal static bool Open; internal static int Refreshed;
+        internal static void Discover() { }
+        internal static bool HasOpenPanel() { return Open; }
+        internal static void RefreshOpenPanels() { Refreshed++; }
+    }
     internal static class DebugMenuEnhancements { internal static void Attach(UnityEngine.GameObject panel) { DebugMenuShortcut.Attach(panel); } }
+    internal sealed class DebugMenuView : UnityEngine.MonoBehaviour
+    {
+        internal bool Ready = true, ActiveAtPrepare;
+        internal int Prepared, OpenedAtPrepare;
+        internal bool PrepareForDisplay()
+        {
+            Prepared++; OpenedAtPrepare = LOMSaveProbePlugin.Opened;
+            ActiveAtPrepare = gameObject.activeInHierarchy;
+            foreach (var child in gameObject.transform.Children) ActiveAtPrepare &= child.gameObject.activeSelf;
+            return Ready;
+        }
+    }
     internal static class FeaturePanel { internal static bool Blocked; internal static bool BlocksInput { get { return Blocked || DebugMenuShortcut.IsOpen; } } }
     internal static class SaveNotes { internal static bool IsOpen; }
     internal static class EventInspectorPanel { internal static bool BlocksInput; }
@@ -130,6 +150,7 @@ namespace LOMSave.Probe
         private static void Reset()
         {
             DebugMenuShortcut.Close();
+            TrainingPointLimits.Open = false; TrainingPointLimits.Refreshed = 0;
             UnityEngine.Application.isFocused = true;
             UnityEngine.Time.timeScale = 1.75f;
             UnityEngine.Input.Pressed = UnityEngine.KeyCode.None;
@@ -156,12 +177,16 @@ namespace LOMSave.Probe
             Reset(); Press(UnityEngine.KeyCode.F9);
             Check(!_panel.GetComponent<Mortal.Core.DevelopmentOnly>().enabled && !_panel.transform.GetChild(0).gameObject.GetComponent<Mortal.Core.DevelopmentOnly>().enabled, "Release-only destruction markers disabled on retained panel and children");
             Check(DebugMenuShortcut.IsOpen && _panel.transform.GetChild(0).gameObject.activeSelf, "F9 opens native panel and its rows without trainer");
+            var view = _panel.GetComponent<DebugMenuView>();
+            Check(view != null && view.Prepared == 1 && view.ActiveAtPrepare && view.OpenedAtPrepare == 0,
+                "First open prepares enhanced layout synchronously after native row activation and before reporting visible");
             Check(UnityEngine.Time.timeScale == 0 && Mortal.Story.StoryManager.Instance.IsStoryPause, "Story is paused while editing");
             Check(FeaturePanel.BlocksInput, "Other shortcuts are blocked by debug panel");
             var button = new UnityEngine.GameObject().transform; button.SetParent(_panel.transform, false);
             Check(DebugMenuShortcut.Contains(button) && !DebugMenuShortcut.Contains(new UnityEngine.GameObject().transform), "Debug buttons remain clickable while unrelated buttons are blocked");
             Press(UnityEngine.KeyCode.None);
             Check(DebugMenuShortcut.IsOpen && LOMSaveProbePlugin.Opened == 1, "No per-frame reopen or repeated activation");
+            Check(view.Prepared == 1, "Idle shortcut ticks do not rebuild or re-prepare layout");
             Press(UnityEngine.KeyCode.F9);
             Check(!DebugMenuShortcut.IsOpen && UnityEngine.Time.timeScale == 1.75f && !Mortal.Story.StoryManager.Instance.IsStoryPause, "F9 restores exact pause and speed state");
             Check(LOMSaveProbePlugin.Closed == 1, "Native disable callback cannot close twice");
@@ -224,6 +249,11 @@ namespace LOMSave.Probe
             Reset(); _panel.FailOnOpen = true; Press(UnityEngine.KeyCode.F9);
             Check(!DebugMenuShortcut.IsOpen && LOMSaveProbePlugin.Errors == 1, "Activation failure is reported");
             Check(UnityEngine.Time.timeScale == 1.75f && !Mortal.Story.StoryManager.Instance.IsStoryPause, "Failed open cannot freeze gameplay");
+            Reset(); _panel.AddComponent<DebugMenuView>().Ready = false; Press(UnityEngine.KeyCode.F9);
+            Check(!DebugMenuShortcut.IsOpen && LOMSaveProbePlugin.Opened == 0 && LOMSaveProbePlugin.Errors == 1,
+                "Unready enhanced layout cannot expose the native fallback panel");
+            Check(UnityEngine.Time.timeScale == 1.75f && !Mortal.Story.StoryManager.Instance.IsStoryPause,
+                "Layout preparation failure releases pause and speed immediately");
             Reset();
             UnityEngine.Resources.Panels = new[] { new Mortal.Core.PlayerStatusPanel { gameObject = _panel.transform.parent.gameObject, _testPanel = _panel } };
             DebugMenuShortcut.Attach(null);
@@ -246,6 +276,17 @@ namespace LOMSave.Probe
             Check(currentPanel.activeSelf && !stalePanel.activeSelf, "Additive scene stale binding cannot mask the current scene panel");
             Reset(); DebugMenuShortcut.Attach(null); Press(UnityEngine.KeyCode.F9);
             Check(LOMSaveProbePlugin.Blocked == 1 && UnityEngine.Time.timeScale == 1.75f, "Missing panel is diagnosed without pausing gameplay");
+            Reset(); TrainingPointLimits.Open = true;
+            Mortal.Story.StoryManager.Instance.IsStoryPause = true; Mortal.Story.StoryManager.Instance.EnableAction = false; Mortal.Story.StoryManager.Instance._panelOpen = true;
+            Press(UnityEngine.KeyCode.F9); Check(DebugMenuShortcut.IsOpen, "F9 works over native training even when story hotkeys and actions are disabled");
+            Press(UnityEngine.KeyCode.Escape);
+            Check(!DebugMenuShortcut.IsOpen && Mortal.Story.StoryManager.Instance.IsStoryPause && TrainingPointLimits.Refreshed == 1, "Closing training overlay preserves native pause and refreshes native controls once");
+            Check(DebugMenuShortcut.BlocksTrainingInput, "Escape cannot fall through to the underlying training menu");
+            Reset(); TrainingPointLimits.Open = true; UnityEngine.SceneManagement.SceneManager.Name = "Free"; _panel.scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            Mortal.Free.FreeManager.Instance.EnableHotKey = false; Mortal.Free.FreeManager.Instance.IsProcessing = true;
+            Press(UnityEngine.KeyCode.F9); Check(DebugMenuShortcut.IsOpen, "Map action processing does not exclude an explicitly open training panel");
+            Reset(); TrainingPointLimits.Open = true; ReplayRuntime.IsRestoring = true; Press(UnityEngine.KeyCode.F9);
+            Check(!DebugMenuShortcut.IsOpen, "An open training panel never bypasses restoration safety");
             return _checks + " built-in F9 shortcut assertions passed.";
         }
     }

@@ -8,6 +8,7 @@ import hashlib
 import json
 import pathlib
 import sys
+import struct
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--game', type=pathlib.Path, required=True)
@@ -159,7 +160,40 @@ for obj in env.objects:
         break
 if not settings or not settings.get('bundleVersion'):
     raise ValueError('Game version is unavailable')
-files = sorted({key.split(':', 1)[0] for key in used_groups} | mapping_sources
+training_limits, training_sources = {}, set()
+for pointer, cls in classes.items():
+    if cls != 'StatConvertCollectionData':
+        continue
+    rd = Reader(objects[pointer])
+    kind = {'修練次數_總和': 'Martial', '煉丹次數_總和': 'Alchemy', '鍛造次數_總和': 'Forge'}.get(rd.name)
+    if kind is None:
+        continue
+    if kind in training_limits:
+        raise ValueError('Ambiguous training formula: ' + kind)
+    training_sources.add(pointer[0])
+    refs = [rd.pointer() for _ in range(rd.integer())]
+    rate = struct.unpack_from('<f', rd.raw, rd.pos)[0]; rd.pos += 4; finish(rd)
+    curves = []
+    for ref in refs:
+        if classes.get(ref) != 'GameStatConvertData':
+            raise ValueError('Unsupported training converter: ' + str(ref))
+        training_sources.add(ref[0])
+        cr = Reader(objects[ref]); keys = []
+        for _ in range(cr.integer()):
+            keys.append(list(struct.unpack_from('<ffffiff', cr.raw, cr.pos))); cr.pos += 28
+        pre, post = cr.integer(), cr.integer()
+        cr.integer()  # AnimationCurve rotation order (unused for scalar Evaluate)
+        cr.integer()  # editor-only test value
+        stat = cr.pointer(); finish(cr)
+        if classes.get(stat) != 'GameStat':
+            raise ValueError('Training curve does not reference a GameStat')
+        training_sources.add(stat[0])
+        sr = Reader(objects[stat]); stat_type = sr.integer()
+        curves.append({'Stat': stat_type, 'PreWrap': pre, 'PostWrap': post, 'Keys': keys})
+    training_limits[kind] = {'Rate': rate, 'Curves': curves}
+if len(training_limits) != 3:
+    raise ValueError('Missing native training formula')
+files = sorted({key.split(':', 1)[0] for key in used_groups} | mapping_sources | training_sources
                | {pointer[0] for pointer, cls in classes.items() if cls in (
                    'ConditionResultData', 'SwitchResultData', 'PositionEventData', 'PositionResultData')}
                | {'Managed/Mortal.Core.dll', 'Managed/Mortal.Story.dll'})
@@ -167,6 +201,7 @@ index = {'Version': 1, 'GameVersion': settings['bundleVersion'],
          'Hashes': {path: hashlib.sha256((root / path).read_bytes()).hexdigest() for path in files},
          'Groups': {key: groups[key] for key in sorted(used_groups)},
          'Conditions': conditions, 'Switches': switches,
+         'TrainingLimits': training_limits,
          'Pools': {key: [{k: v for k, v in events[event].items() if k != 'ResultType'}
                         | {'Script': prefixes[key] + '_' + events[event]['ResultType']}
                         for event in values] for key, values in pools.items()}}

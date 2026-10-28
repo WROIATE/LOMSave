@@ -21,6 +21,9 @@ namespace Mortal.Core
         }
     }
     public class PlayerStatData { public List<GameStat> List = new List<GameStat>(); }
+    public enum RelationshipStatType { Old, New, Future, 主角, 葉雲啾_1, 葉雲啾_2, 虞小梅_探險隊長 }
+    public class RelationshipStat { public RelationshipStatType Type; }
+    public class RelationshipData { public List<RelationshipStat> List; }
     public class FlagData
     {
         public string name, DevNote;
@@ -56,6 +59,25 @@ namespace LOMSave.Probe
         public static string Run(string mapping)
         {
             string error;
+            var oldRelation = new RelationshipStat { Type = RelationshipStatType.Old };
+            var newRelation = new RelationshipStat { Type = RelationshipStatType.New };
+            var futureRelation = new RelationshipStat { Type = RelationshipStatType.Future };
+            var relations = DebugMenuData.Relationships(new RelationshipData { List = new List<RelationshipStat> { newRelation, null, oldRelation, futureRelation } }, new[] { oldRelation, oldRelation });
+            Check(relations.Count == 3 && relations[0] == oldRelation && relations[1] == newRelation && relations[2] == futureRelation, "Keep original order and include all current and future relationships without duplicates");
+            Check(DebugMenuData.Relationships(null, null).Count == 0, "Missing relationships are safe");
+            var pages = DebugMenuData.Pages(65, 38, 900);
+            Check(pages[0].Count == 36 && pages[0].LeftCount == 18, "Common and all flags use the same fixed 48-unit row height");
+            Check(pages.SelectMany(p=>Enumerable.Range(p.Offset,p.Count)).SequenceEqual(Enumerable.Range(0,65)), "Paging neither drops nor duplicates flags, including odd final count");
+            Check(pages.All(p=>48*p.LeftCount<=900 && 48*(p.Count-p.LeftCount)<=900)
+                && DebugMenuData.Pages(0,38,900).Single().Count==0, "Both flag columns fit available space; empty search retains a valid page");
+            Check(DebugMenuData.Ellipsize("南宫世家好感度", 7, s=>s.Length)=="南宫世家好感度", "A fitting flag name remains unchanged");
+            Check(DebugMenuData.Ellipsize("南宫世家好感度", 5, s=>s.Length)=="南宫世家…", "Long names fit the fixed column with an ellipsis");
+            Check(DebugMenuData.Ellipsize("南宫世家好感度", 1, s=>s.Length)=="…", "A narrow column keeps the ellipsis without leaking the full title");
+            Check(DebugMenuData.Ellipsize("a\u0301bcd", 4, s=>s.Length)=="a\u0301b…", "Ellipsis preserves combining characters");
+            Check(DebugMenuData.Ellipsize("a\U0001F600bc", 3, s=>s.Length)=="a…", "Ellipsis cannot split a surrogate pair");
+            Check(DebugMenuData.Ellipsize("名\n称", 5, s=>s.Length)=="名 称", "Embedded newlines cannot alter row height");
+            var internalEntries = new[] { RelationshipStatType.主角, RelationshipStatType.葉雲啾_1, RelationshipStatType.葉雲啾_2, RelationshipStatType.虞小梅_探險隊長 };
+            Check(DebugMenuData.Relationships(new RelationshipData { List=internalEntries.Select(x=>new RelationshipStat { Type=x }).Concat(new[] { newRelation }).ToList() }, null).SequenceEqual(new[] { newRelation }), "Internal alternate-role counters do not appear as new NPCs");
             CodeNameMapping.Store = new CodeNameMapStore(mapping);
             Check(CodeNameMapping.Store.Reload(out error) == CodeNameMapStore.LoadResult.Loaded, "Production YAML loads");
             var named = new FlagData { name = "E13003", DevNote = "other description", State = 7 };

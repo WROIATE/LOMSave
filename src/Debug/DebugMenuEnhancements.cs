@@ -10,6 +10,16 @@ namespace LOMSave.Probe
 {
     internal static class DebugMenuEnhancements
     {
+        [HarmonyPrefix, HarmonyPatch(typeof(InputButton), "InputActionChanged")]
+        [HarmonyPatch(typeof(MartialPanel), "LearnButtonClick")]
+        [HarmonyPatch(typeof(MartialPanel), "LearnNextButtonClick")]
+        [HarmonyPatch(typeof(MartialPanel), "CloseButtonClick")]
+        [HarmonyPatch(typeof(UpgradePanel), "UpgradeButtonClick")]
+        [HarmonyPatch(typeof(UpgradePanel), "NextLevelButtonClick")]
+        [HarmonyPatch(typeof(UpgradePanel), "DevelopButtonClick")]
+        [HarmonyPatch(typeof(UpgradePanel), "CloseButtonClick")]
+        private static bool GuardTrainingInput() { return !DebugMenuShortcut.BlocksTrainingInput; }
+
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerStatusPanel), "Awake")]
         internal static void Attach(GameObject ____testPanel)
         {
@@ -40,14 +50,14 @@ namespace LOMSave.Probe
             text.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
-        internal static void LayoutStatName(Text text, float rowHeight)
+        internal static void LayoutStatName(Text text, float rowHeight, float width)
         {
             if (text == null) return;
             StyleStatText(text, TextAnchor.MiddleLeft);
             // Six-character cap and lifetime-total names need the same width
             // as short attributes. Never shrink individual labels to fit.
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            FeaturePanel.Place(text.rectTransform, 8, 0, 154, rowHeight);
+            FeaturePanel.Place(text.rectTransform, 8, 0, width, rowHeight);
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(TestGameStatPanel), "AddValue")]
@@ -123,8 +133,7 @@ namespace LOMSave.Probe
         }
     }
 
-    // Keep native rows and their +/- button actions. Only attributes need scrolling.
-    // Flags stay the original subset supplied by the game's TestPanel.
+    // Native editing actions, with bounded lists for the current game data.
     internal sealed class DebugMenuView : MonoBehaviour
     {
         private bool _ready, _failed, _clearTips;
@@ -133,15 +142,32 @@ namespace LOMSave.Probe
         private readonly List<LimitRow> _limitRows = new List<LimitRow>();
         private int _mappingRevision = -1;
         private TestFlagStatPanel[] _flags;
+        private DebugMenuLists _lists;
+        private CanvasGroup _visibility;
+        private bool _visible;
 
         private sealed class LimitRow
         {
             internal TrainingLimitKind Kind;
             internal Text Value;
-            internal Button Minus, Plus, Restore;
+            internal Button Switch;
         }
 
-        private void OnEnable() { _clearTips = true; _discoverLimits = true; }
+        private void OnEnable()
+        {
+            _clearTips = true; _discoverLimits = true;
+            // Our own group does not overwrite a native parent's opacity.
+            if (_visibility == null) { _visibility = gameObject.AddComponent<CanvasGroup>(); _visible = true; }
+            SetVisible(false);
+        }
+
+        private void SetVisible(bool visible)
+        {
+            if (_visibility == null || _visible == visible) return;
+            _visible = visible;
+            _visibility.alpha = visible ? 1 : 0;
+            _visibility.interactable = _visibility.blocksRaycasts = visible;
+        }
 
         private void OnDisable() { HideTips(); }
 
@@ -173,106 +199,45 @@ namespace LOMSave.Probe
             FeaturePanel.Place(title.rectTransform, x, 0, 300, 50);
         }
 
-        private float HeadingLeft(Text title)
-        {
-            var rect = title.rectTransform;
-            var point = transform.InverseTransformPoint(rect.TransformPoint(new Vector3(rect.rect.xMin, 0, 0)));
-            return point.x - ((RectTransform)transform).rect.xMin;
-        }
+        private void Update() { PrepareForDisplay(); }
 
-        private static void PlaceFlagText(Text text, Transform parent, Font font,
-            float x, float y, float width, float height, TextAnchor alignment)
+        internal bool PrepareForDisplay()
         {
-            if (text == null) return;
-            text.transform.SetParent(parent, false);
-            text.transform.localScale = Vector3.one;
-            var fitter = text.GetComponent<ContentSizeFitter>();
-            if (fitter != null) fitter.enabled = false;
-            text.font = font;
-            text.fontStyle = FontStyle.Normal;
-            text.fontSize = 20;
-            text.lineSpacing = 1;
-            text.resizeTextForBestFit = false;
-            text.supportRichText = false;
-            text.alignment = alignment;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            FeaturePanel.Place(text.rectTransform, x, y, width, height);
-        }
-
-        private void LayoutFlags(Text[] headings, Text style, Font bodyFont)
-        {
-            var groups = _flags.GroupBy(x => x.transform.parent).ToArray();
-            if (groups.Length == 0 || headings.Length == 0) return;
-            var left = headings.Min(HeadingLeft);
-            var columnWidth = (((RectTransform)transform).rect.width - left - 24) / groups.Length;
-            var width = columnWidth - 24;
-            const float rowHeight = 28, buttonWidth = 46, valueWidth = 50, gap = 8;
-            var nameWidth = width - valueWidth - buttonWidth * 2 - gap * 3;
-            for (var column = 0; column < groups.Length; column++)
-            {
-                var rows = groups[column].OrderBy(x => x.transform.GetSiblingIndex()).ToArray();
-                var content = new GameObject("LOMSaveFlagColumn" + column, typeof(RectTransform)).GetComponent<RectTransform>();
-                content.SetParent(transform, false);
-                FeaturePanel.Place(content, left + column * columnWidth, 55, width, rows.Length * rowHeight);
-                if (column < headings.Length)
-                    AlignHeading(headings[column], "旗标", left + column * columnWidth, style);
-                for (var i = 0; i < rows.Length; i++)
-                {
-                    var row = rows[i];
-                    var buttons = row.GetComponentsInChildren<Button>(true)
-                        .OrderBy(x => x.transform.GetSiblingIndex()).ToArray();
-                    row.transform.SetParent(content, false);
-                    row.transform.localScale = Vector3.one;
-                    var layout = row.GetComponent<LayoutGroup>();
-                    if (layout != null) layout.enabled = false;
-                    var fitter = row.GetComponent<ContentSizeFitter>();
-                    if (fitter != null) fitter.enabled = false;
-                    FeaturePanel.Place((RectTransform)row.transform, 0, i * rowHeight, width, rowHeight);
-                    PlaceFlagText(EventInspector.Read<Text>(row, "_nameText"), row.transform, bodyFont,
-                        0, 0, nameWidth, rowHeight, TextAnchor.MiddleLeft);
-                    PlaceFlagText(EventInspector.Read<Text>(row, "_valueText"), row.transform, bodyFont,
-                        nameWidth + gap, 0, valueWidth, rowHeight, TextAnchor.MiddleCenter);
-                    for (var b = 0; b < buttons.Length; b++)
-                    {
-                        var button = buttons[b];
-                        button.transform.SetParent(row.transform, false);
-                        button.transform.localScale = Vector3.one;
-                        FeaturePanel.Place((RectTransform)button.transform,
-                            nameWidth + valueWidth + gap * 2 + b * (buttonWidth + gap), 2, buttonWidth, 24);
-                        PlaceFlagText(button.GetComponentInChildren<Text>(true), button.transform, bodyFont,
-                            0, -2, buttonWidth, rowHeight, TextAnchor.MiddleCenter);
-                    }
-                }
-            }
-        }
-
-        private void Update()
-        {
-            if (_failed) return;
+            if (_failed) return false;
             try
             {
                 if (_discoverLimits) { TrainingPointLimits.Discover(); _discoverLimits = false; }
                 if (!_ready)
                 {
                     var player = PlayerStatManagerData.Instance;
-                    if (player == null || player.Stats == null) return;
-                    Build(player.Stats);
+                    if (player == null || player.Stats == null) return false;
+                    // Resolve native sizes before building, once per panel;
+                    // never rebuild the whole hierarchy on subsequent opens.
+                    var root = (RectTransform)transform;
+                    root.ForceUpdateRectTransforms();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+                    if (!Build(player.Stats)) return false;
                     _ready = true;
                 }
                 if (Time.unscaledTime >= _nextLimitRefresh)
-                { _nextLimitRefresh = Time.unscaledTime + 0.25f; RefreshLimits(); }
-                // The trainer enables the menu's direct children when opening
-                // it. Reparented native tips must be hidden after that pass.
+                { _nextLimitRefresh = Time.unscaledTime + 0.25f; RefreshLimits(); if (_lists != null) _lists.Refresh(); }
+                // Opening enables direct children. Clear old hover tips before
+                // revealing the panel, including on subsequent F9 opens.
                 if (_clearTips) { HideTips(); _clearTips = false; }
-                if (_mappingRevision == CodeNameMapping.Revision) return;
-                _mappingRevision = CodeNameMapping.Revision;
-                foreach (var row in _flags)
-                    if (row != null) DebugMenuEnhancements.UpdateFlagName(
-                        EventInspector.Read<FlagData>(row, "_stat"), EventInspector.Read<Text>(row, "_nameText"),
-                        EventInspector.Read<Text>(row, "_textTip"));
+                if (_mappingRevision != CodeNameMapping.Revision)
+                {
+                    _mappingRevision = CodeNameMapping.Revision;
+                    if (_lists != null) _lists.ReloadNames();
+                }
+                SetVisible(true);
+                return true;
             }
-            catch (Exception e) { _failed = true; LOMSaveProbePlugin.WriteError("debug_menu_failed", e); }
+            catch (Exception e)
+            {
+                _failed = true; SetVisible(false);
+                LOMSaveProbePlugin.WriteError("debug_menu_failed", e);
+                return false;
+            }
         }
 
         private void RefreshLimits()
@@ -280,7 +245,7 @@ namespace LOMSave.Probe
             foreach (var row in _limitRows)
             {
                 row.Value.text = TrainingPointLimits.Display(row.Kind);
-                row.Restore.interactable = !TrainingPointLimits.IsDefault(row.Kind);
+                row.Switch.GetComponentInChildren<Text>(true).text = TrainingPointLimits.Unlimited(row.Kind) ? "解除限制：开" : "解除限制：关";
             }
         }
 
@@ -299,12 +264,10 @@ namespace LOMSave.Probe
                 name.text = TrainingPointLimits.Name(kind);
                 var value = UnityEngine.Object.Instantiate(valueTemplate, root, false);
                 var row = new LimitRow { Kind = kind, Value = value };
-                row.Restore = LimitButton(buttonTemplate, root, "原生", () => { TrainingPointLimits.Restore(kind); RefreshLimits(); });
-                row.Minus = LimitButton(buttonTemplate, root, "-5", () => { TrainingPointLimits.Change(kind, -5); RefreshLimits(); });
-                row.Plus = LimitButton(buttonTemplate, root, "+5", () => { TrainingPointLimits.Change(kind, 5); RefreshLimits(); });
+                row.Switch = LimitButton(buttonTemplate, root, "", () => { TrainingPointLimits.Toggle(kind); RefreshLimits(); });
                 FreezeRowLayout(root);
-                PlaceStatColumns(name, value, null, new[] { row.Minus, row.Plus }, height);
-                PlaceStatButton(row.Restore, 220, 80, height);
+                PlaceStatColumns(name, value, null, new Button[0], width, height);
+                PlaceStatButton(row.Switch, width - 220, 208, height);
                 _limitRows.Add(row);
             }
             RefreshLimits();
@@ -319,17 +282,17 @@ namespace LOMSave.Probe
             row.localScale = Vector3.one;
         }
 
-        private static void PlaceStatColumns(Text name, Text value, Text bonus, Button[] buttons, float height)
+        private static void PlaceStatColumns(Text name, Text value, Text bonus, Button[] buttons, float width, float height)
         {
-            DebugMenuEnhancements.LayoutStatName(name, height);
+            DebugMenuEnhancements.LayoutStatName(name, height, width - 316);
             DebugMenuEnhancements.StyleStatText(value, TextAnchor.MiddleRight);
-            FeaturePanel.Place(value.rectTransform, 164, 0, 46, height);
+            FeaturePanel.Place(value.rectTransform, width - 300, 0, 70, height);
             if (bonus != null)
             {
                 DebugMenuEnhancements.StyleStatText(bonus, TextAnchor.MiddleCenter);
-                FeaturePanel.Place(bonus.rectTransform, 220, 0, 80, height);
+                FeaturePanel.Place(bonus.rectTransform, width - 220, 0, 80, height);
             }
-            for (var i = 0; i < buttons.Length; i++) PlaceStatButton(buttons[i], 314 + i * 64, 50, height);
+            for (var i = 0; i < buttons.Length; i++) PlaceStatButton(buttons[i], width - 126 + i * 64, 50, height);
         }
 
         private static void PlaceStatButton(Button button, float x, float width, float rowHeight)
@@ -339,6 +302,7 @@ namespace LOMSave.Probe
             var label = button.GetComponentInChildren<Text>(true);
             if (label == null) return;
             DebugMenuEnhancements.StyleStatText(label, TextAnchor.MiddleCenter);
+            label.text = (label.text ?? "").Trim();
             label.fontSize = 20;
             FeaturePanel.Place(label.rectTransform, 0, 0, width, 30);
         }
@@ -353,24 +317,35 @@ namespace LOMSave.Probe
             return button;
         }
 
-        private void Build(PlayerStatData data)
+        private bool Build(PlayerStatData data)
         {
             var original = GetComponentsInChildren<TestGameStatPanel>(true)
                 .OrderBy(x => x.transform.parent.GetSiblingIndex()).ThenBy(x => x.transform.GetSiblingIndex()).ToList();
-            if (original.Count == 0) return;
+            if (original.Count == 0) return false;
             _flags = GetComponentsInChildren<TestFlagStatPanel>(true);
             var flagHeadings = GetComponentsInChildren<Text>(true)
                 .Where(x => x.text == "旗標" || x.text == "旗标").ToArray();
             var relationshipHeading = GetComponentsInChildren<Text>(true).FirstOrDefault(x => x.text == "好感度");
             var headingStyle = relationshipHeading ?? EventInspector.Read<Text>(original[0], "_nameText");
-            LayoutFlags(flagHeadings, headingStyle, EventInspector.Read<Text>(original[0], "_nameText").font);
+            var panel = ((RectTransform)transform).rect;
+            var width = panel.width * 0.28f;
+            const float sectionGap = 44;
+            var relationshipLeft = 16 + width + sectionGap;
+            var relationshipWidth = panel.width * 0.18f;
+            var flagLeft = relationshipLeft + relationshipWidth + sectionGap;
+            _lists = new DebugMenuLists(transform, EventInspector.Read<Text>(original[0], "_nameText").font);
+            if (_flags.Length > 0)
+            {
+                _flags = _lists.BuildFlags(_flags, flagLeft);
+                if (flagHeadings.Length > 0) AlignHeading(flagHeadings[0], "旗标", flagLeft, headingStyle);
+                // Both columns belong to one searchable flag section. Remove
+                // duplicate Text components so reopening cannot re-enable them.
+                foreach (var duplicate in flagHeadings.Skip(1)) UnityEngine.Object.Destroy(duplicate);
+            }
             if (relationshipHeading != null)
             {
-                var group = relationshipHeading.transform.parent as RectTransform;
-                AlignHeading(relationshipHeading, "好感度", HeadingLeft(relationshipHeading), headingStyle);
-                // Removing a native layout child also removes its header slot.
-                // Reserve that space explicitly for the detached shared heading.
-                if (group != null) group.anchoredPosition -= new Vector2(0, 40);
+                AlignHeading(relationshipHeading, "好感度", relationshipLeft, headingStyle);
+                _lists.BuildRelationships(PlayerStatManagerData.Instance.Relationships, relationshipLeft, relationshipWidth);
             }
             var oldGroups = original.Select(x => x.transform.parent.gameObject).Distinct().ToList();
             var all = DebugMenuData.Stats(data);
@@ -378,23 +353,9 @@ namespace LOMSave.Probe
             var missing = all.Where(x => !existing.Contains(x)).ToList();
             var template = original[0];
             var nativeRow = (RectTransform)template.transform;
-            var width = nativeRow.rect.width;
             var height = Math.Max(55, nativeRow.rect.height);
-
-            var viewport = new GameObject("LOMSaveNativeStats", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
-            viewport.transform.SetParent(transform, false);
-            var rect = (RectTransform)viewport.transform;
-            FeaturePanel.Place(rect, 0, 55, 440, 945);
-            viewport.GetComponent<Image>().color = new Color(0, 0, 0, 0.001f);
-            var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
-            content.SetParent(viewport.transform, false);
-            FeaturePanel.Place(content, 0, 0, 440, Math.Max(945, (original.Count + missing.Count + 3) * height));
-            var scroll = viewport.GetComponent<ScrollRect>();
-            scroll.viewport = rect;
-            scroll.content = content;
-            scroll.horizontal = false;
-            scroll.scrollSensitivity = 35;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
+            var content = _lists.Content("LOMSaveNativeStats", 16, 55, width, panel.height - 80,
+                (original.Count + missing.Count + 3) * height);
             AddLimitRows(content, template, width, height);
 
             // Clone under an inactive parent so Awake subscribes to the new stat,
@@ -428,11 +389,11 @@ namespace LOMSave.Probe
                 var row = ordered[i];
                 row.transform.SetParent(content, false);
                 FreezeRowLayout(row.transform);
-                FeaturePanel.Place((RectTransform)row.transform, 0, (i + _limitRows.Count) * height, 440, height);
+                FeaturePanel.Place((RectTransform)row.transform, 0, (i + _limitRows.Count) * height, width, height);
                 row.gameObject.SetActive(true);
                 var buttons = row.GetComponentsInChildren<Button>(true).OrderBy(x => x.transform.GetSiblingIndex()).ToArray();
                 PlaceStatColumns(EventInspector.Read<Text>(row, "_nameText"), EventInspector.Read<Text>(row, "_valueText"),
-                    EventInspector.Read<Text>(row, "_addText"), buttons, height);
+                    EventInspector.Read<Text>(row, "_addText"), buttons, width, height);
             }
             foreach (var group in oldGroups)
             {
@@ -445,6 +406,7 @@ namespace LOMSave.Probe
             UnityEngine.Object.Destroy(staging);
             LOMSaveProbePlugin.WriteEvent("debug_menu_ready", new { nativeStyle = true, stats = ordered.Count,
                 addedStats = missing.Count, originalFlags = _flags.Length });
+            return true;
         }
     }
 }

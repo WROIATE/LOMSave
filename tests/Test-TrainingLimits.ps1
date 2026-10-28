@@ -5,9 +5,11 @@ Add-Type -Path @(
     (Join-Path $root 'src/Saves/LocalJsonFile.cs'),
     (Join-Path $root 'src/Debug/TrainingLimitSettings.cs'),
     (Join-Path $root 'src/Debug/TrainingPointLimits.cs'),
+    (Join-Path $root 'src/Debug/TrainingLimitFormulas.cs'),
+    (Join-Path $root 'src/Events/StoryEventIndexData.cs'),
     (Join-Path $PSScriptRoot 'TrainingLimitTests.cs')
 ) -ReferencedAssemblies $references -CompilerOptions '/nowarn:1701,0649'
-[LOMSave.Probe.TrainingLimitTests]::Run((Join-Path $root ('obj/training-limit-tests/' + [Guid]::NewGuid().ToString('N'))))
+[LOMSave.Probe.TrainingLimitTests]::Run((Join-Path $root ('obj/training-limit-tests/' + [Guid]::NewGuid().ToString('N'))), (Join-Path $root 'artifacts/LOMSaveProbe/LOMSaveProbe.StoryEvents.json'))
 
 # Verify both coroutine initialization sites and both count labels against the
 # installed game's actual IL, rather than assuming a compiler-generated name.
@@ -34,4 +36,23 @@ try {
         }
     }
     '4 native training initialization/display sites matched.'
+    $targets = @{
+        MartialPanel = @('CanUseLearnButton','HandleLearnNextItem')
+        UpgradePanel = @('UpgradeButtonClick','NextLevelButtonClick','UpdateButton','HandleUpgradeNextItem')
+    }
+    $count = 0
+    foreach ($typeName in $targets.Keys) {
+        $owner = $native.MainModule.Types | Where-Object Name -eq $typeName
+        foreach ($method in $targets[$typeName]) {
+            $target = @($owner.Methods | Where-Object Name -eq $method)
+            if ($target.Count -ne 1) { throw "Missing/ambiguous native budget check: $typeName.$method" }
+            $reads = @($target[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq 'Ldfld' -and $_.Operand.Name -eq '_currentCount' -and $_.Operand.DeclaringType.FullName -eq $owner.FullName })
+            if ($reads.Count -ne 1) { throw "Native budget-check pattern changed: $typeName.$method" }
+            $count++
+        }
+        $spend = @($owner.NestedTypes | Where-Object Name -like '<StartHandleUpgarde>*')
+        $body = ($spend[0].Methods | Where-Object Name -eq 'MoveNext').Body.Instructions
+        if (@($body | Where-Object { $_.OpCode.Code -eq 'Stfld' -and $_.Operand.Name -eq '_currentCount' -and $_.Previous.OpCode.Code -eq 'Sub' }).Count -ne 1) { throw "Native spending no longer decrements the original counter: $typeName" }
+    }
+    "$count native budget-check sites matched; both original spending counters remain separate from patched methods."
 } finally { $native.Dispose() }

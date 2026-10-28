@@ -6,6 +6,10 @@ using Mortal.Core;
 
 namespace LOMSave.Probe
 {
+    internal sealed class DebugMenuPage
+    {
+        internal int Offset, Count, LeftCount;
+    }
     internal static class DebugMenuData
     {
         internal static bool IsEditing { get; private set; }
@@ -64,6 +68,22 @@ namespace LOMSave.Probe
                 .GroupBy(x => x.name, StringComparer.Ordinal).Select(x => x.First()).OrderBy(x => x.name, StringComparer.Ordinal).ToList();
         }
 
+        internal static List<RelationshipStat> Relationships(RelationshipData data, IEnumerable<RelationshipStat> original)
+        {
+            var result = new List<RelationshipStat>();
+            var seen = new HashSet<RelationshipStatType>();
+            foreach (var stat in (original ?? Enumerable.Empty<RelationshipStat>()).Concat(
+                data == null || data.List == null ? Enumerable.Empty<RelationshipStat>() : data.List))
+                if (stat != null && IsCharacter(stat.Type) && seen.Add(stat.Type)) result.Add(stat);
+            return result;
+        }
+        internal static bool IsCharacter(RelationshipStatType type)
+        {
+            // Internal alternate-role counters are not additional NPC affection.
+            var key = type.ToString();
+            return key != "主角" && key != "葉雲啾_1" && key != "葉雲啾_2" && key != "虞小梅_探險隊長";
+        }
+
         internal static string FlagName(FlagData flag)
         {
             string localized = null;
@@ -82,6 +102,39 @@ namespace LOMSave.Probe
         {
             query = (query ?? "").Trim();
             return query.Length == 0 || text.Any(x => x != null && x.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        internal static string Ellipsize(string name, float width, Func<string, float> measure)
+        {
+            name = (name ?? "").Replace('\r', ' ').Replace('\n', ' ');
+            if (measure(name) <= width) return name;
+            const string suffix = "…";
+            var elements = StringInfo.ParseCombiningCharacters(name);
+            var low = 0; var high = elements.Length;
+            while (low < high)
+            {
+                var middle = (low + high + 1) / 2;
+                var end = middle == elements.Length ? name.Length : elements[middle];
+                if (measure(name.Substring(0, end) + suffix) <= width) low = middle;
+                else high = middle - 1;
+            }
+            return name.Substring(0, low == elements.Length ? name.Length : elements[low]) + suffix;
+        }
+
+        internal static List<DebugMenuPage> Pages(int itemCount, int maximumRows, float availableHeight)
+        {
+            if (maximumRows < 2 || availableHeight < 48) throw new ArgumentOutOfRangeException();
+            var pages = new List<DebugMenuPage>();
+            var perColumn = Math.Min(maximumRows / 2, (int)(availableHeight / 48));
+            for (var offset = 0; offset < itemCount;)
+            {
+                var count = Math.Min(perColumn * 2, itemCount - offset);
+                var page = new DebugMenuPage { Offset = offset, Count = count, LeftCount = Math.Min(count, perColumn) };
+                pages.Add(page);
+                offset += page.Count;
+            }
+            if (pages.Count == 0) pages.Add(new DebugMenuPage());
+            return pages;
         }
 
         internal static bool TryValue(string text, int min, int max, out int value, out string error)

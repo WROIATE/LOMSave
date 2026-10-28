@@ -28,6 +28,13 @@ namespace LOMSave.Probe
         public int Rate;
         public StoryIndexRate[] Rates;
     }
+    internal sealed class TrainingCurveData
+    {
+        public int Stat, PreWrap, PostWrap;
+        // time, value, in tangent, out tangent, weighted mode, in/out weight
+        public float[][] Keys;
+    }
+    internal sealed class TrainingFormulaData { public float Rate; public TrainingCurveData[] Curves; }
     internal sealed class StoryEventIndexData
     {
         public int Version;
@@ -37,6 +44,7 @@ namespace LOMSave.Probe
         public Dictionary<string, StoryIndexCondition[]> Conditions;
         public Dictionary<string, StoryIndexSwitch> Switches;
         public Dictionary<string, StoryIndexEvent[]> Pools;
+        public Dictionary<string, TrainingFormulaData> TrainingLimits;
         internal Func<StoryIndexValue, int?> ReadNative;
         internal double LoadMilliseconds;
 

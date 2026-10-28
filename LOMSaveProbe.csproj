@@ -91,6 +91,8 @@
     <Compile Include="src/Debug/DebugMenuData.cs" />
     <Compile Include="src/Debug/TrainingLimitSettings.cs" />
     <Compile Include="src/Debug/TrainingPointLimits.cs" />
+    <Compile Include="src/Debug/TrainingLimitFormulas.cs" />
+    <Compile Include="src/Debug/DebugMenuLists.cs" />
     <Compile Include="src/Debug/DebugMenuEnhancements.cs" />
     <Compile Include="src/Debug/DebugMenuShortcut.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

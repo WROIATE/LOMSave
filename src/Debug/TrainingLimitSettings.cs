@@ -7,21 +7,21 @@ namespace LOMSave.Probe
     internal sealed class TrainingLimitSettings
     {
         public int? Martial, Alchemy, Forge;
-        internal const int Maximum = 9999;
-        internal int? Get(TrainingLimitKind kind)
+        public int Version;
+        public bool MartialUnlimited, AlchemyUnlimited, ForgeUnlimited;
+        // Old numeric caps do not silently turn into unlimited training.
+        internal void Migrate()
+        { if (Version < 2) { MartialUnlimited = AlchemyUnlimited = ForgeUnlimited = false; Version = 2; } Martial = Alchemy = Forge = null; }
+        internal bool Get(TrainingLimitKind kind)
+        { return kind == TrainingLimitKind.Martial ? MartialUnlimited : kind == TrainingLimitKind.Alchemy ? AlchemyUnlimited : ForgeUnlimited; }
+        internal void Set(TrainingLimitKind kind, bool value)
         {
-            var value = kind == TrainingLimitKind.Martial ? Martial : kind == TrainingLimitKind.Alchemy ? Alchemy : Forge;
-            return value >= 1 && value <= Maximum ? value : null;
+            Version = 2;
+            if (kind == TrainingLimitKind.Martial) MartialUnlimited = value;
+            else if (kind == TrainingLimitKind.Alchemy) AlchemyUnlimited = value;
+            else ForgeUnlimited = value;
         }
-        internal void Set(TrainingLimitKind kind, int? value)
-        {
-            if (value.HasValue && (value < 1 || value > Maximum)) throw new ArgumentOutOfRangeException(nameof(value));
-            if (kind == TrainingLimitKind.Martial) Martial = value;
-            else if (kind == TrainingLimitKind.Alchemy) Alchemy = value;
-            else Forge = value;
-        }
-        internal float Resolve(TrainingLimitKind kind, float native) { return Get(kind) ?? native; }
-        internal int Adjusted(TrainingLimitKind kind, int native, int delta)
-        { return (int)Math.Max(1, Math.Min(Maximum, (long)(Get(kind) ?? native) + delta)); }
+        internal int Remaining(TrainingLimitKind kind, int nativeRemaining, int availablePoints)
+        { return Math.Max(0, Get(kind) ? availablePoints : nativeRemaining); }
     }
 }
